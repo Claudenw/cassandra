@@ -20,10 +20,10 @@ package org.apache.cassandra.tools;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.Set;
@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 
 import org.apache.cassandra.db.Directories;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -42,6 +41,7 @@ import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.StartupException;
 import org.apache.cassandra.io.sstable.LegacySSTableTest;
 import org.apache.cassandra.service.StorageService;
+import org.apache.cassandra.tools.ToolRunner.ToolResult;
 import org.assertj.core.api.Assertions;
 
 import static org.junit.Assert.assertEquals;
@@ -56,7 +56,8 @@ import static org.junit.Assert.assertNotEquals;
 public class StandaloneUpgraderOnSStablesTest
 {
 
-    static final String EXECUTABLE = StandaloneUpgrader.class.getClassLoader().getResource( StandaloneUpgrader.class.getCanonicalName()).getFile();
+
+    //static String EXECUTABLE = StandaloneUpgrader.class.getClassLoader().getResource( StandaloneUpgrader.class.getCanonicalName()).getFile();
     String legacyId = LegacySSTableTest.legacyVersions[LegacySSTableTest.legacyVersions.length - 1];
 
     @BeforeClass
@@ -72,56 +73,6 @@ public class StandaloneUpgraderOnSStablesTest
         //System.clearProperty(Util.ALLOW_TOOL_REINIT_FOR_TEST);
     }
 
-    class ToolResult {
-        private int exitValue;
-        private String stdout;
-        private String stderr;
-
-        public ToolResult(int exitValue, String stdout, String stderr)
-        {
-            this.exitValue = exitValue;
-            this.stdout = stdout;
-            this.stderr = stderr;
-        }
-
-        public int getExitValue()
-        {
-            return exitValue;
-        }
-
-        public String getStdout()
-        {
-            return stdout;
-        }
-
-        public String getStderr()
-        {
-            return stderr;
-        }
-
-        public boolean assertOnCleanExit() {
-            return exitValue == 0;
-        }
-    }
-
-    private ToolResult execTool( int waitFor, String... args) throws InterruptedException, IOException
-    {
-        List<String> command = new ArrayList<>();
-        command.add( EXECUTABLE );
-        command.addAll(Arrays.asList(args ));
-        Process process =  new ProcessBuilder( command ).start();
-        if (!process.waitFor(waitFor, TimeUnit.SECONDS))
-        {
-            process.destroyForcibly();
-        }
-
-        StringWriter stdout = new StringWriter();
-        org.apache.commons.io.IOUtils.copy(process.getInputStream(), stdout, StandardCharsets.UTF_8 );
-        StringWriter stderr = new StringWriter();
-        org.apache.commons.io.IOUtils.copy(process.getErrorStream(), stderr, StandardCharsets.UTF_8 );
-        return new ToolResult(process.exitValue(), stdout.toString(), stderr.toString());
-    }
-
     @Test
     public void testUpgradeKeepFiles() throws Throwable
     {
@@ -129,9 +80,9 @@ public class StandaloneUpgraderOnSStablesTest
         LegacySSTableTest.loadLegacyTables(legacyId);
 
         List<String> origFiles = getSStableFiles("legacy_tables", "legacy_" + legacyId + "_simple");
-        ToolResult tool = execTool(5,
-                                            "-k",
-                                                 "legacy_tables",
+        ToolRunner.ToolResult tool =  ToolRunner.invokeClass(StandaloneUpgrader.class,
+                                                             "-k",
+                                                             "legacy_tables",
                                                  "legacy_" + legacyId + "_simple");
         Assertions.assertThat(tool.getStdout()).contains("Found 1 sstables that need upgrading.");
         Assertions.assertThat(tool.getStdout()).contains("legacy_tables/legacy_" + legacyId + "_simple");
@@ -152,17 +103,16 @@ public class StandaloneUpgraderOnSStablesTest
         LegacySSTableTest.truncateLegacyTables(legacyId);
         LegacySSTableTest.loadLegacyTables(legacyId);
         StorageService.instance.takeSnapshot("testsnapshot",
-                                             Collections.emptyMap(),
                                              "legacy_tables.legacy_" + legacyId + "_simple");
 
-        ToolResult tool = execTool(5,
-                                                 "-k",
-                                                 "legacy_tables",
+        ToolRunner.ToolResult tool =  ToolRunner.invokeClass(StandaloneUpgrader.class,
+                                                             "-k",
+                                                             "legacy_tables",
                                                  "legacy_" + legacyId + "_simple",
-                                                 "wrongsnapshot");
+                                                             "wrongsnapshot");
         Assertions.assertThat(tool.getStdout()).contains("Found 0 sstables that need upgrading.");
 
-        tool = execTool(5,
+        tool = ToolRunner.invokeClass(StandaloneUpgrader.class,
                                       "legacy_tables",
                                       "legacy_" + legacyId + "_simple",
                                       "testsnapshot");
@@ -179,7 +129,7 @@ public class StandaloneUpgraderOnSStablesTest
         LegacySSTableTest.loadLegacyTables(legacyId);
 
         List<String> origFiles = getSStableFiles("legacy_tables", "legacy_" + legacyId + "_simple");
-        ToolResult tool = execTool(5,
+        ToolResult tool =  ToolRunner.invokeClass(StandaloneUpgrader.class,
                                                  "legacy_tables",
                                                  "legacy_" + legacyId + "_simple");
         Assertions.assertThat(tool.getStdout()).contains("Found 1 sstables that need upgrading.");
@@ -208,7 +158,7 @@ public class StandaloneUpgraderOnSStablesTest
         treeSet.addAll(origFiles);
         assertNotEquals("Initial data was not in the incorret order", treeSet.toArray(), origFiles.toArray());
 
-        ToolResult tool = execTool(5,
+        ToolResult tool =  ToolRunner.invokeClass(StandaloneUpgrader.class,
                                                  "legacy_tables",
                                                  tableName);
         Assertions.assertThat(tool.getStdout()).contains("Found 3 sstables that need upgrading.");
