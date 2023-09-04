@@ -104,7 +104,7 @@ public class SequentialWriter extends BufferedDataOutputStreamPlus implements Tr
     }
 
     // TODO: we should specify as a parameter if we permit an existing file or not
-    private static FileChannel openChannel(File file)
+    protected static FileChannel openChannel(File file)
     {
         try
         {
@@ -151,7 +151,7 @@ public class SequentialWriter extends BufferedDataOutputStreamPlus implements Tr
      */
     public SequentialWriter(File file, SequentialWriterOption option)
     {
-        this(file, option, true);
+        this(new ChannelProxy(file,openChannel(file)), option, true);
     }
 
     /**
@@ -162,11 +162,42 @@ public class SequentialWriter extends BufferedDataOutputStreamPlus implements Tr
      */
     public SequentialWriter(File file, SequentialWriterOption option, boolean strictFlushing)
     {
-        super(openChannel(file), option.allocateBuffer());
-        this.strictFlushing = strictFlushing;
-        this.fchannel = (FileChannel)channel;
+        this(new ChannelProxy(file,openChannel(file)), option, strictFlushing);
+    }
 
-        this.file = file;
+    /**
+     * Create SequentialWriter for given file with specific writer option.
+     * @param proxy
+     */
+    public SequentialWriter(ChannelProxy proxy)
+    {
+        this(proxy, SequentialWriterOption.DEFAULT);
+    }
+
+    /**
+     * Create SequentialWriter for given file with specific writer option.
+     * @param proxy
+     * @param option
+     */
+    public SequentialWriter(ChannelProxy proxy, SequentialWriterOption option)
+    {
+       this(proxy, option, true);
+    }
+
+
+    /**
+     * Create SequentialWriter for given file with specific writer option.
+     * @param proxy
+     * @param option
+     * @param strictFlushing
+     */
+    public SequentialWriter(ChannelProxy proxy, SequentialWriterOption option, boolean strictFlushing)
+    {
+        super(proxy.channel(), option.allocateBuffer());
+        this.strictFlushing = strictFlushing;
+        this.fchannel = proxy.channel();
+
+        this.file = proxy.file();
         this.filePath = file.absolutePath();
 
         this.option = option;

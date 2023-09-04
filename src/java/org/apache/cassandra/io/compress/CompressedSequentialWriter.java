@@ -29,6 +29,7 @@ import org.apache.cassandra.io.FSReadError;
 import org.apache.cassandra.io.FSWriteError;
 import org.apache.cassandra.io.sstable.CorruptSSTableException;
 import org.apache.cassandra.io.sstable.metadata.MetadataCollector;
+import org.apache.cassandra.io.util.ChannelProxy;
 import org.apache.cassandra.io.util.ChecksumWriter;
 import org.apache.cassandra.io.util.DataPosition;
 import org.apache.cassandra.io.util.File;
@@ -63,7 +64,7 @@ public class CompressedSequentialWriter extends SequentialWriter
     private final MetadataCollector sstableMetadataCollector;
 
     private final ByteBuffer crcCheckBuffer = ByteBuffer.allocate(4);
-    private final Optional<File> digestFile;
+    private final Optional<ChannelProxy> digestFile;
 
     private final int maxCompressedLength;
 
@@ -91,6 +92,35 @@ public class CompressedSequentialWriter extends SequentialWriter
                             .bufferType(parameters.getSstableCompressor().preferredBufferType())
                             .finishOnClose(option.finishOnClose())
                             .build());
+        this.compressor = parameters.getSstableCompressor();
+        this.digestFile = Optional.ofNullable(digestFile==null?null:new ChannelProxy(file,SequentialWriter.openChannel(digestFile)));
+
+        // buffer for compression should be the same size as buffer itself
+        compressed = compressor.preferredBufferType().allocate(compressor.initialCompressedBufferLength(buffer.capacity()));
+
+        maxCompressedLength = parameters.maxCompressedLength();
+
+        /* Index File (-CompressionInfo.db component) and it's header */
+        metadataWriter = CompressionMetadata.Writer.open(parameters, offsetsFile);
+
+        this.sstableMetadataCollector = sstableMetadataCollector;
+        crcMetadata = new ChecksumWriter(new DataOutputStream(Channels.newOutputStream(channel)));
+    }
+
+    public CompressedSequentialWriter(ChannelProxy proxy,
+                                      ChannelProxy offsetsFile,
+                                      ChannelProxy digestFile,
+                                      SequentialWriterOption option,
+                                      CompressionParams parameters,
+                                      MetadataCollector sstableMetadataCollector)
+    {
+        super(proxy, SequentialWriterOption.newBuilder()
+                                          .bufferSize(option.bufferSize())
+                                          .bufferType(option.bufferType())
+                                          .bufferSize(parameters.chunkLength())
+                                          .bufferType(parameters.getSstableCompressor().preferredBufferType())
+                                          .finishOnClose(option.finishOnClose())
+                                          .build());
         this.compressor = parameters.getSstableCompressor();
         this.digestFile = Optional.ofNullable(digestFile);
 

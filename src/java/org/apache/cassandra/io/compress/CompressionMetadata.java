@@ -38,6 +38,7 @@ import org.apache.cassandra.io.FSWriteError;
 import org.apache.cassandra.io.IVersionedSerializer;
 import org.apache.cassandra.io.sstable.CorruptSSTableException;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
+import org.apache.cassandra.io.util.ChannelProxy;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.io.util.File;
@@ -345,6 +346,7 @@ public class CompressionMetadata extends WrappedSharedCloseable
         // path to the file
         private final CompressionParams parameters;
         private final File file;
+        private final ChannelProxy proxy;
         private int maxCount = 100;
         private SafeMemory offsets = new SafeMemory(maxCount * 8L);
         private int count = 0;
@@ -352,15 +354,22 @@ public class CompressionMetadata extends WrappedSharedCloseable
         // provided by user when setDescriptor
         private long dataLength, chunkCount;
 
-        private Writer(CompressionParams parameters, File file)
+        private Writer(CompressionParams parameters, File file, ChannelProxy proxy)
         {
             this.parameters = parameters;
             this.file = file;
+            this.proxy = proxy;
+        }
+
+
+        public static Writer open(CompressionParams parameters, ChannelProxy proxy)
+        {
+            return new Writer(parameters, proxy.file(), proxy);
         }
 
         public static Writer open(CompressionParams parameters, File file)
         {
-            return new Writer(parameters, file);
+            return new Writer(parameters, file, null);
         }
 
         public void addOffset(long offset)
@@ -421,23 +430,44 @@ public class CompressionMetadata extends WrappedSharedCloseable
                 tmp.free();
             }
 
-            // flush the data to disk
-            try (FileOutputStreamPlus out = file.newOutputStream(File.WriteMode.OVERWRITE))
+            if (proxy == null)
             {
-                writeHeader(out, dataLength, count);
-                for (int i = 0; i < count; i++)
-                    out.writeLong(offsets.getLong(i * 8L));
+                // flush the data to disk
+                try (FileOutputStreamPlus out = file.newOutputStream(File.WriteMode.OVERWRITE))
+                {
+                    writeHeader(out, dataLength, count);
+                    for (int i = 0; i < count; i++)
+                        out.writeLong(offsets.getLong(i * 8L));
 
-                out.flush();
-                out.sync();
-            }
-            catch (FileNotFoundException | NoSuchFileException fnfe)
-            {
-                throw new RuntimeException(fnfe);
-            }
-            catch (IOException e)
-            {
-                throw new FSWriteError(e, file);
+                    out.flush();
+                    out.sync();
+                }
+                catch (FileNotFoundException | NoSuchFileException fnfe)
+                {
+                    throw new RuntimeException(fnfe);
+                }
+                catch (IOException e)
+                {
+                    throw new FSWriteError(e, file);
+                }
+            } else {
+                try (FileOutputStreamPlus out = new FileOutputStreamPlus(proxy.channel()))
+                {
+                    writeHeader(out, dataLength, count);
+                    for (int i = 0; i < count; i++)
+                        out.writeLong(offsets.getLong(i * 8L));
+
+                    out.flush();
+                    out.sync();
+                }
+                catch (FileNotFoundException | NoSuchFileException fnfe)
+                {
+                    throw new RuntimeException(fnfe);
+                }
+                catch (IOException e)
+                {
+                    throw new FSWriteError(e, file);
+                }
             }
         }
 

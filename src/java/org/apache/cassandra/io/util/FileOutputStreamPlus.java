@@ -47,6 +47,11 @@ public class FileOutputStreamPlus extends BufferedDataOutputStreamPlus
         super(file.newWriteChannel(mode));
     }
 
+    public FileOutputStreamPlus(FileChannel channel) throws NoSuchFileException
+    {
+        super(channel);
+    }
+
     public FileOutputStreamPlus(Path path) throws NoSuchFileException
     {
         this(path, OVERWRITE);

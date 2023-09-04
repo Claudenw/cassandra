@@ -138,6 +138,10 @@ public final class ChannelProxy extends SharedCloseableImpl
         return file;
     }
 
+    public FileChannel channel() {
+        return channel;
+    }
+
     public int read(ByteBuffer buffer, long position)
     {
         try

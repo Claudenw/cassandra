@@ -25,6 +25,7 @@ import org.apache.cassandra.io.compress.ICompressor;
 import org.apache.cassandra.io.sstable.Descriptor;
 import org.apache.cassandra.io.sstable.format.SSTableFormat.Components;
 import org.apache.cassandra.io.sstable.metadata.MetadataCollector;
+import org.apache.cassandra.io.util.ChannelProxyFactory;
 import org.apache.cassandra.io.util.ChecksummedSequentialWriter;
 import org.apache.cassandra.io.util.SequentialWriter;
 import org.apache.cassandra.io.util.SequentialWriterOption;
@@ -40,23 +41,46 @@ public class DataComponent
                                                OperationType operationType,
                                                FlushCompression flushCompression)
     {
+        ChannelProxyFactory channelProxyFactory = ChannelProxyFactory.instance();
+
         if (metadata.params.compression.isEnabled())
         {
             final CompressionParams compressionParams = buildCompressionParams(metadata, operationType, flushCompression);
 
-            return new CompressedSequentialWriter(descriptor.fileFor(Components.DATA),
-                                                  descriptor.fileFor(Components.COMPRESSION_INFO),
-                                                  descriptor.fileFor(Components.DIGEST),
-                                                  options,
-                                                  compressionParams,
-                                                  metadataCollector);
+            if (channelProxyFactory == null)
+            {
+                return new CompressedSequentialWriter(descriptor.fileFor(Components.DATA),
+                                                      descriptor.fileFor(Components.COMPRESSION_INFO),
+                                                      descriptor.fileFor(Components.DIGEST),
+                                                      options,
+                                                      compressionParams,
+                                                      metadataCollector);
+            } else {
+                return new CompressedSequentialWriter(descriptor.proxyFor(Components.DATA, channelProxyFactory),
+                                                      descriptor.proxyFor(Components.COMPRESSION_INFO, channelProxyFactory),
+                                                      descriptor.proxyFor(Components.DIGEST, channelProxyFactory),
+                                                      options,
+                                                      compressionParams,
+                                                      metadataCollector);
+
+            }
         }
         else
         {
-            return new ChecksummedSequentialWriter(descriptor.fileFor(Components.DATA),
-                                                   descriptor.fileFor(Components.CRC),
-                                                   descriptor.fileFor(Components.DIGEST),
-                                                   options);
+            if (channelProxyFactory == null)
+            {
+                return new ChecksummedSequentialWriter(descriptor.fileFor(Components.DATA),
+                                                       descriptor.fileFor(Components.CRC),
+                                                       descriptor.fileFor(Components.DIGEST),
+                                                       options);
+            } else {
+                return new ChecksummedSequentialWriter(descriptor.proxyFor(Components.DATA, channelProxyFactory),
+                                                       descriptor.proxyFor(Components.CRC, channelProxyFactory),
+                                                       descriptor.proxyFor(Components.DIGEST, channelProxyFactory),
+                                                       options);
+
+            }
+
         }
     }
 

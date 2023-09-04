@@ -101,5 +101,19 @@ public class ChecksumWriter
             throw new FSWriteError(e, digestFile);
         }
     }
+
+    public void writeFullChecksum(@Nonnull ChannelProxy proxy)
+    {
+        try (FileOutputStreamPlus fos = new FileOutputStreamPlus(proxy.channel()))
+        {
+            fos.write(String.valueOf(fullChecksum.getValue()).getBytes(StandardCharsets.UTF_8));
+            fos.flush();
+            fos.getChannel().force(true);
+        }
+        catch (IOException e)
+        {
+            throw new FSWriteError(e, proxy.file());
+        }
+    }
 }
 
