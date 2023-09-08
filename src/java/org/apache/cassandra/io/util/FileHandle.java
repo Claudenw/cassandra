@@ -357,8 +357,7 @@ public class FileHandle extends SharedCloseableImpl
          */
         public FileHandle complete()
         {
-            ChannelProxyFactory factory = ChannelProxyFactory.instance();
-            return complete(factory == null ? ChannelProxy::new : factory);
+            return complete(ChannelProxyFactory.instance().reader());
         }
 
         @VisibleForTesting

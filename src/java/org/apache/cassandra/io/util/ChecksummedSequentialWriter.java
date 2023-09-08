@@ -32,11 +32,7 @@ public class ChecksummedSequentialWriter extends SequentialWriter
 
     public ChecksummedSequentialWriter(File file, File crcPath, File digestFile, SequentialWriterOption option)
     {
-        super(file, option);
-        crcWriter = new SequentialWriter(crcPath, CRC_WRITER_OPTION);
-        crcMetadata = new ChecksumWriter(crcWriter);
-        crcMetadata.writeChunkSize(buffer.capacity());
-        this.digestFile = Optional.ofNullable(digestFile==null?null:new ChannelProxy(digestFile,SequentialWriter.openChannel(digestFile)));
+        this(ChannelProxyFactory.forWriting(file), ChannelProxyFactory.forWriting(crcPath), ChannelProxyFactory.forWriting(digestFile), option);
     }
 
     public ChecksummedSequentialWriter(ChannelProxy proxy, ChannelProxy crcPath, ChannelProxy digestFile, SequentialWriterOption option)

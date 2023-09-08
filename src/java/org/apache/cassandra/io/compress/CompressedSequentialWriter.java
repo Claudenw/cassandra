@@ -29,13 +29,7 @@ import org.apache.cassandra.io.FSReadError;
 import org.apache.cassandra.io.FSWriteError;
 import org.apache.cassandra.io.sstable.CorruptSSTableException;
 import org.apache.cassandra.io.sstable.metadata.MetadataCollector;
-import org.apache.cassandra.io.util.ChannelProxy;
-import org.apache.cassandra.io.util.ChecksumWriter;
-import org.apache.cassandra.io.util.DataPosition;
-import org.apache.cassandra.io.util.File;
-import org.apache.cassandra.io.util.FileUtils;
-import org.apache.cassandra.io.util.SequentialWriter;
-import org.apache.cassandra.io.util.SequentialWriterOption;
+import org.apache.cassandra.io.util.*;
 import org.apache.cassandra.schema.CompressionParams;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
@@ -85,26 +79,7 @@ public class CompressedSequentialWriter extends SequentialWriter
                                       CompressionParams parameters,
                                       MetadataCollector sstableMetadataCollector)
     {
-        super(file, SequentialWriterOption.newBuilder()
-                            .bufferSize(option.bufferSize())
-                            .bufferType(option.bufferType())
-                            .bufferSize(parameters.chunkLength())
-                            .bufferType(parameters.getSstableCompressor().preferredBufferType())
-                            .finishOnClose(option.finishOnClose())
-                            .build());
-        this.compressor = parameters.getSstableCompressor();
-        this.digestFile = Optional.ofNullable(digestFile==null?null:new ChannelProxy(file,SequentialWriter.openChannel(digestFile)));
-
-        // buffer for compression should be the same size as buffer itself
-        compressed = compressor.preferredBufferType().allocate(compressor.initialCompressedBufferLength(buffer.capacity()));
-
-        maxCompressedLength = parameters.maxCompressedLength();
-
-        /* Index File (-CompressionInfo.db component) and it's header */
-        metadataWriter = CompressionMetadata.Writer.open(parameters, offsetsFile);
-
-        this.sstableMetadataCollector = sstableMetadataCollector;
-        crcMetadata = new ChecksumWriter(new DataOutputStream(Channels.newOutputStream(channel)));
+        this(ChannelProxyFactory.forWriting(file), ChannelProxyFactory.forWriting(offsetsFile), ChannelProxyFactory.forWriting(digestFile), option, parameters, sstableMetadataCollector);
     }
 
     public CompressedSequentialWriter(ChannelProxy proxy,

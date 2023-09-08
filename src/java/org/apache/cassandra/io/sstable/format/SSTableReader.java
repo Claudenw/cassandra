@@ -1790,9 +1790,6 @@ public abstract class SSTableReader extends SSTable implements UnfilteredSource,
         public Builder(Descriptor descriptor)
         {
             super(descriptor);
-//            ChannelProxyFactory factory = ChannelProxyFactory.instance();
-//            if (factory != null) {
-//                factory.create(descriptor.ksname, descriptor.cfname,
         }
 
         public B setMaxDataAge(long maxDataAge)

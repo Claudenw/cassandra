@@ -88,18 +88,13 @@ public class ChecksumWriter
         }
     }
 
+    /**
+     * @deprecated Use ChannelProxy
+     */
+    @Deprecated
     public void writeFullChecksum(@Nonnull File digestFile)
     {
-        try (FileOutputStreamPlus fos = new FileOutputStreamPlus(digestFile))
-        {
-            fos.write(String.valueOf(fullChecksum.getValue()).getBytes(StandardCharsets.UTF_8));
-            fos.flush();
-            fos.getChannel().force(true);
-        }
-        catch (IOException e)
-        {
-            throw new FSWriteError(e, digestFile);
-        }
+        writeFullChecksum(ChannelProxyFactory.forWriting(digestFile));
     }
 
     public void writeFullChecksum(@Nonnull ChannelProxy proxy)

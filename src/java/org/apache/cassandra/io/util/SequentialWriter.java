@@ -64,6 +64,8 @@ public class SequentialWriter extends BufferedDataOutputStreamPlus implements Tr
 
     private final TransactionalProxy txnProxy = txnProxy();
 
+
+
     // due to lack of multiple-inheritance, we proxy our transactional implementation
     protected class TransactionalProxy extends AbstractTransactional
     {
@@ -137,7 +139,9 @@ public class SequentialWriter extends BufferedDataOutputStreamPlus implements Tr
      * Create heap-based, non-compressed SequenialWriter with default buffer size(64k).
      *
      * @param file File to write
+     * @deprecated  use SequentialWrite(ChannelProxy)
      */
+    @Deprecated
     public SequentialWriter(File file)
     {
        this(file, SequentialWriterOption.DEFAULT);
@@ -148,10 +152,12 @@ public class SequentialWriter extends BufferedDataOutputStreamPlus implements Tr
      *
      * @param file File to write
      * @param option Writer option
+     * @deprecated  use SequentialWrite(ChannelProxy,SequentialWriterOption)
      */
+    @Deprecated
     public SequentialWriter(File file, SequentialWriterOption option)
     {
-        this(new ChannelProxy(file,openChannel(file)), option, true);
+        this(file, option, true);
     }
 
     /**
@@ -159,10 +165,12 @@ public class SequentialWriter extends BufferedDataOutputStreamPlus implements Tr
      * @param file
      * @param option
      * @param strictFlushing
+     * @deprecated  use SequentialWrite(ChannelProxy,SequentialWriterOption,boolean)
      */
+    @Deprecated
     public SequentialWriter(File file, SequentialWriterOption option, boolean strictFlushing)
     {
-        this(new ChannelProxy(file,openChannel(file)), option, strictFlushing);
+        this(ChannelProxyFactory.forWriting(file), option, strictFlushing);
     }
 
     /**

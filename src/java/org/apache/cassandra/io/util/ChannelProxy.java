@@ -23,9 +23,12 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.cassandra.io.FSReadError;
 import org.apache.cassandra.utils.NativeLibrary;
+import org.apache.cassandra.utils.SyncUtil;
 import org.apache.cassandra.utils.concurrent.RefCounted;
 import org.apache.cassandra.utils.concurrent.SharedCloseableImpl;
 
@@ -46,9 +49,14 @@ public final class ChannelProxy extends SharedCloseableImpl
 
     public static FileChannel openChannel(File file)
     {
+        return openChannel(file, StandardOpenOption.READ);
+    }
+
+    public static FileChannel openChannel(File file, StandardOpenOption... option)
+    {
         try
         {
-            return FileChannel.open(file.toPath(), StandardOpenOption.READ);
+            return FileChannel.open(file.toPath(), option);
         }
         catch (IOException e)
         {

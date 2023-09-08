@@ -37,8 +37,6 @@ import org.apache.cassandra.io.sstable.format.SSTableFormat;
 import org.apache.cassandra.io.sstable.format.Version;
 import org.apache.cassandra.io.sstable.metadata.IMetadataSerializer;
 import org.apache.cassandra.io.sstable.metadata.MetadataSerializer;
-import org.apache.cassandra.io.util.ChannelProxy;
-import org.apache.cassandra.io.util.ChannelProxyFactory;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.utils.Pair;
 
@@ -177,10 +175,6 @@ public class Descriptor
     public File fileFor(Component component)
     {
         return new File(directory.toPath().resolve(filenameFor(component)));
-    }
-
-    public ChannelProxy proxyFor(Component component, ChannelProxyFactory factory) {
-        return factory.create(ksname, cfname, filenameFor(component));
     }
 
     public File baseFile()
