@@ -18,6 +18,8 @@
 
 package org.apache.cassandra.io.util;
 
+import java.io.IOException;
+import java.util.Map;
 import java.util.function.Function;
 
 public class RelocatingChannelProxyFactory  extends ChannelProxyFactory {
@@ -68,6 +70,13 @@ public class RelocatingChannelProxyFactory  extends ChannelProxyFactory {
      * @param dest The destination directory
      */
     protected RelocatingChannelProxyFactory(String source, String dest) {
-        super(new ReaderFactory(source, dest), new WriterFactory(source,dest));
+        super(new ReaderFactory(source, dest), new WriterFactory(source, dest));
     }
+
+    // for ParameterizedClass use
+    public RelocatingChannelProxyFactory(Map<String,String> args) throws IOException
+    {
+        this(args.get("source"), args.get("dest"));
+    }
+
 }
