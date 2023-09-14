@@ -29,8 +29,6 @@ import org.apache.cassandra.io.util.*;
 import org.apache.cassandra.schema.CompressionParams;
 import org.apache.cassandra.schema.TableMetadata;
 
-import java.util.function.Function;
-
 public class DataComponent
 {
 
