@@ -22,8 +22,6 @@ import com.google.common.io.Files;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.ParameterizedClass;
 import org.apache.cassandra.io.compress.BufferType;
-import org.apache.cassandra.io.sstable.Descriptor;
-import org.apache.cassandra.io.sstable.SequenceBasedSSTableId;
 import org.apache.cassandra.utils.concurrent.AbstractTransactionalTest;
 import org.junit.*;
 

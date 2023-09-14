@@ -18,19 +18,10 @@
 */
 package org.apache.cassandra.io.util;
 
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.config.ParameterizedClass;
-import org.junit.After;
+
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class ChecksummedSequentialWriterProxyFactoryTest extends SequentialWriterProxyFactoryTest
 {
