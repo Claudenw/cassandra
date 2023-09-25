@@ -21,26 +21,34 @@ package org.apache.cassandra.io.util;
 import java.io.IOException;
 import java.util.Map;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RelocatingChannelProxyFactory  extends ChannelProxyFactory {
+    private static final Logger logger = LoggerFactory.getLogger(RelocatingChannelProxyFactory.class);
 
     private static class ReaderFactory implements Function<File, ChannelProxy> {
         private final String source;
         private final String dest;
         ReaderFactory(String source, String dest) {
+            logger.warn("Constructing ReaderFactory from {} to {}", source, dest);
             this.source = source;
             this.dest = dest;
         }
 
         @Override
         public ChannelProxy apply(File file) {
+            logger.warn("ReaderFactory processing {}", file);
             File working = file;
             if (file.path().startsWith(source))
             {
-
                 working=new File(dest, file.path().substring(source.length()));
             }
-            return new ChannelProxy(working);
+            if (! working.equals(file))
+            {
+                logger.warn("Created reader proxy from {} to {}", file, working);
+            }
+            return new ChannelProxy(file, ChannelProxy.openChannel(working));
         }
     }
 
@@ -48,19 +56,27 @@ public class RelocatingChannelProxyFactory  extends ChannelProxyFactory {
         private final String source;
         private final String dest;
         WriterFactory(String source, String dest) {
+            logger.warn("Constructing WriterFactory from {} to {}", source, dest);
             this.source = source;
             this.dest = dest;
         }
 
         @Override
         public ChannelProxy apply(File file) {
+            logger.warn("WriterFactory processing {} checking for prefix {}", file, source);
             File working = file;
             if (file.path().startsWith(source))
             {
-
+                logger.warn("WriterFactory processing {}", file);
                 working=new File(dest, file.path().substring(source.length()));
+                logger.warn("WriterFactory created new file {}", working);
+                working.parent().createDirectoriesIfNotExists();
             }
-            return new ChannelProxy(working, openChannelForWrite(working));
+            if (! working.equals(file))
+            {
+                logger.warn("Created writer proxy from {} to {}", file, working);
+            }
+            return new ChannelProxy(file, openChannelForWrite(working));
         }
     }
     /**

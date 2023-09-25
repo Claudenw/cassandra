@@ -23,12 +23,17 @@ import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.ParameterizedClass;
 import org.apache.cassandra.utils.SyncUtil;
 
 public class ChannelProxyFactory {
+
+    private static final Logger logger = LoggerFactory.getLogger(ChannelProxyFactory.class);
 
     private static ChannelProxyFactory INSTANCE;
 
@@ -85,6 +90,7 @@ public class ChannelProxyFactory {
         ChannelProxyFactory result = INSTANCE;
         if (result == null) {
             INSTANCE = result = createDefault();
+            logger.warn( "Created ChannelProxyFactory of class: {}", result.getClass().getName());
         }
         return result;
     }
