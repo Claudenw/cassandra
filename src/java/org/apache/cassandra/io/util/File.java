@@ -28,7 +28,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths; // checkstyle: permit this import
 import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -66,12 +65,15 @@ public class File implements Comparable<File>
 
     @Nullable final Path path; // nullable to support concept of empty path, that resolves to the working directory if converted to an absolute path
 
+    private static Path getFSPath(String path) {
+        return FileSystemMapper.instance().getPath(path);
+    }
     /**
      * Construct a File representing the child {@code child} of {@code parent}
      */
     public File(String parent, String child)
     {
-        this(parent.isEmpty() ? null : filesystem.getPath(parent), child);
+        this(parent.isEmpty() ? null : getFSPath(parent), child);
     }
 
     /**
@@ -90,7 +92,7 @@ public class File implements Comparable<File>
         // if "empty abstract path" (a la java.io.File) is provided, we should behave as though resolving relative path
         if (child.startsWith(pathSeparator()))
             child = child.substring(pathSeparator().length());
-        this.path = parent == null ? filesystem.getPath(child) : parent.resolve(child);
+        this.path = parent == null ? getFSPath(child) : parent.resolve(child);
     }
 
     /**
@@ -98,7 +100,15 @@ public class File implements Comparable<File>
      */
     public File(String path)
     {
-        this(path.isEmpty() ? null : filesystem.getPath(path));
+        this(path.isEmpty() ? null : getFSPath(path));
+    }
+
+    /**
+     * Called by ChannelProxyFactory
+     * @param path
+     */
+    File(String path, FileSystem fileSystem) {
+        this(fileSystem.getPath(path));
     }
 
     /**
@@ -106,7 +116,7 @@ public class File implements Comparable<File>
      */
     public File(java.io.File file)
     {
-        this(file.getPath().isEmpty() ? null : file.toPath());
+        this(file.getPath().isEmpty() ? null : getFSPath(file.getPath()));
     }
 
     /**
@@ -118,11 +128,11 @@ public class File implements Comparable<File>
     }
 
     /**
-     * Convenience constructor equivalent to {@code new File(Paths.get(path))}
+     * Convenience constructor equivalent to {@code new File(getFSPath(path.getPath())}
      */
     public File(URI path)
     {
-        this(Paths.get(path)); //TODO unsafe if uri is file:// as it uses default file system and not File.filesystem
+        this(getFSPath(path.getPath())); //TODO unsafe if uri is file:// as it uses default file system and not File.filesystem
         if (!path.isAbsolute() || path.isOpaque()) throw new IllegalArgumentException();
     }
 
@@ -143,15 +153,19 @@ public class File implements Comparable<File>
      */
     public File(Path path)
     {
-        if (path != null && path.getFileSystem() != filesystem)
-            throw new IllegalArgumentException("Incompatible file system; path FileSystem (" + path.getFileSystem() + ") is not the same reference (" + filesystem + ")");
+        if (path != null)
+        {
+            Path expected = FileSystemMapper.instance().getPath(path.toString());
 
+            if (path.getFileSystem() != expected.getFileSystem())
+                throw new IllegalArgumentException("Incompatible file system; path FileSystem (" + path.getFileSystem() + ") is not the same reference (" + expected.getFileSystem() + ")");
+        }
         this.path = path;
     }
 
     public static Path getPath(String first, String... more)
     {
-        return filesystem.getPath(first, more);
+        return getFSPath(filesystem.getPath(first, more).toString());
     }
 
     /**
