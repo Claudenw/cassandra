@@ -18,11 +18,17 @@
 
 package org.apache.cassandra.io.util;
 
+
 import java.nio.file.Path;
+import java.util.Collection;
+
+import org.apache.cassandra.db.Directories;
 
 public interface FileSystemMapperHandler
 {
    // boolean handles(String path);
   //  FileChannel getChannel(String path, StandardOpenOption... options);
-    Path getPath(String first, String... more);
+    void extractDirectories(Collection<Directories.DataDirectory> collection);
+
+    Path getPath(String keyspace, String tableName);
 }

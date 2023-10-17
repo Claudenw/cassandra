@@ -21,43 +21,52 @@ package org.apache.cassandra.io.util;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.apache.cassandra.db.Directories;
 
 public class RelocatingFileSystemMapper implements FileSystemMapperHandler
 {
 
     private static final Logger logger = LoggerFactory.getLogger(RelocatingFileSystemMapper.class);
 
-    private final String source;
-    private final String dest;
-    /**
-     * Creates the ChannelProxyFactory.
-     *
-     * @param source The source directory
-     * @param dest The destination directory
-     */
-    protected RelocatingFileSystemMapper(String source, String dest) {
-        this.source = source;
-        this.dest = dest;
+    private final Path basePath;
+    private final String keyspace;
+    private final String tableName;
+
+    public RelocatingFileSystemMapper(String basePath, String keySpace, String tableName) {
+        Objects.requireNonNull("basePath", "basePath may not be null");
+        Objects.requireNonNull("keyspace", "Keyspace may not be null");
+        this.basePath = FileSystems.getDefault().getPath(basePath);
+        this.keyspace = keySpace;
+        this.tableName = tableName;
     }
 
     // for ParameterizedClass use
     public RelocatingFileSystemMapper(Map<String,String> args) throws IOException
     {
-        this(args.get("source"), args.get("dest"));
+        this(args.get("basePath"), args.get("keyspace"), args.get("tableName"));
     }
-
 
     @Override
-    public Path getPath(String first, String ... more)
+    public void extractDirectories(Collection<Directories.DataDirectory> collection)
     {
-        String pathStr = FileSystems.getDefault().getPath(first, more).toString();
-        return pathStr.startsWith(source) ?
-            FileSystems.getDefault().getPath(dest, pathStr.substring(source.length())) :
-               null;
+        collection.add(new Directories.DataDirectory(basePath));
     }
 
+    @Override
+    public Path getPath(String keyspace, String tableName)
+    {
+        if (this.keyspace.equals(keyspace) && (StringUtils.isBlank(this.tableName) || this.tableName.equals(tableName)))
+        {
+            return basePath;
+        }
+        return null;
+    }
 }

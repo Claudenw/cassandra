@@ -68,6 +68,7 @@ import org.apache.cassandra.io.sstable.SSTableId;
 import org.apache.cassandra.io.sstable.SSTableIdFactory;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileStoreUtils;
+import org.apache.cassandra.io.util.FileSystemMapper;
 import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.io.util.PathUtils;
 import org.apache.cassandra.schema.SchemaConstants;
@@ -798,8 +799,15 @@ public class Directories
          */
         public DataDirectory[] getDataDirectoriesFor(TableMetadata table)
         {
-            return isStoredInLocalSystemKeyspacesDataLocation(table.keyspace, table.name) ? localSystemKeyspaceDataDirectories
-                                                                                          : nonLocalSystemKeyspacesDirectories;
+            if (isStoredInLocalSystemKeyspacesDataLocation(table.keyspace, table.name))
+            {
+                return localSystemKeyspaceDataDirectories;
+            }
+            Path p = FileSystemMapper.instance().getPath(table.keyspace, table.name);
+            if (p != null) {
+                return new DataDirectory[] { new DataDirectory( p ) };
+            }
+            return nonLocalSystemKeyspacesDirectories;
         }
 
         @Override
@@ -811,6 +819,7 @@ public class Directories
         public Set<DataDirectory> getAllDirectories()
         {
             Set<DataDirectory> directories = new LinkedHashSet<>(nonLocalSystemKeyspacesDirectories.length + localSystemKeyspaceDataDirectories.length);
+            FileSystemMapper.instance().extractDirectories(directories);
             Collections.addAll(directories, nonLocalSystemKeyspacesDirectories);
             Collections.addAll(directories, localSystemKeyspaceDataDirectories);
             return directories;

@@ -22,17 +22,24 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.AbstractSequentialList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Queue;
+import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
+
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.ParameterizedClass;
+import org.apache.cassandra.db.Directories;
 
 public final class FileSystemMapper
 {
@@ -43,20 +50,6 @@ public final class FileSystemMapper
 
     private final AbstractSequentialList<FileSystemMapperHandler> factories;
 
-
-    /**
-     * Creates a ProxyFactory that matches the defaults for read and write for version 4.x
-     * @return The default ChannelProxyFactory.
-     */
-    private static FileSystemMapper createDefault() {
-        Config conf = DatabaseDescriptor.getRawConfig();
-        FileSystemMapper factory = new FileSystemMapper();
-        if (conf.file_system_mapper_handler != null) {
-            factory.factories.add(ParameterizedClass.newInstance(conf.file_system_mapper_handler, Collections.emptyList()));
-        }
-        return factory;
-    }
-
     /**
      * Returns the registered ChannelProxyFactory.  Will create the default if no instance has been set.
      * @return The registered ChannelProxyFactory.
@@ -64,10 +57,25 @@ public final class FileSystemMapper
     public static FileSystemMapper instance() {
         FileSystemMapper result = INSTANCE;
         if (result == null) {
-            INSTANCE = result = createDefault();
-            if (logger.isDebugEnabled())
+            result = new FileSystemMapper();
+            Config conf = DatabaseDescriptor.getRawConfig();
+            if (conf != null && conf.file_system_mapper_handler != null) {
+                result.factories.add(ParameterizedClass.newInstance(conf.file_system_mapper_handler, Collections.emptyList()));
+
+                if (logger.isDebugEnabled())
+                {
+                    StringBuilder sb = new StringBuilder("Created FileSystemMapper with mapper handlers of:\n");
+                    result.factories.stream().forEach( x -> sb.append( x.getClass().getName()).append("\n"));
+                    sb.append( "--- END OF LIST ---");
+                    logger.debug(sb.toString());
+                }
+            }
+            if (conf == null && logger.isDebugEnabled())
             {
-                logger.debug("Created ChannelProxyFactory of class: {}", result.getClass().getName());
+                logger.debug("Created Temporary FileSystemMapper");
+            }  else
+            {
+                INSTANCE = result;
             }
         }
         return result;
@@ -81,38 +89,94 @@ public final class FileSystemMapper
         INSTANCE = instance;
     }
 
-    public static void addHandler(FileSystemMapperHandler handler) {
-        AbstractSequentialList fList = instance().factories;
-        if (fList.size() == 0)
-        {
-            fList.add(handler);
-        } else
-        {
-            fList.add(fList.size() - 1, handler);
-        }
+    public static void addHandler(FileSystemMapperHandler handler)
+    {
+        instance().factories.add(handler);
     }
 
 
-    public FileSystemMapper(FileSystemMapperHandler... factories) {
+    public FileSystemMapper(FileSystemMapperHandler... factories)
+    {
         this.factories = new LinkedList<>(Arrays.asList(factories));
     }
 
-    private Path findPath(String first, String ... more) {
-        Optional<Path> path = factories.stream().map(h ->h.getPath(first,more)).filter(Objects::nonNull).findFirst();
-        if (logger.isDebugEnabled() && path.isPresent()) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(first).append(" ");
-            if (more != null)
-            {
-                Arrays.stream(more).forEach(s -> sb.append(s).append(" "));
-            }
-            logger.debug("Selected %s selected file system %s", sb, path.get());
-        }
-        return path.isPresent() ? path.get() : FileSystems.getDefault().getPath(first, more);
+    private void extract(Collection<Directories.DataDirectory> collection)
+    {
+        factories.stream().forEach( x -> x.extractDirectories(collection));
     }
 
-    public static Path getPath(String first, String... more)
+    private Path findPath(String keySpace, String tableName)
     {
-        return instance().findPath(first, more);
+        Optional<Path> result = factories.stream().map( x -> x.getPath(keySpace, tableName)).filter(Objects::nonNull).findFirst();
+        return result.isPresent() ? result.get() : null;
+    }
+
+    public static void extractDirectories(Collection<Directories.DataDirectory> collection)
+    {
+        instance().extract(collection);
+    }
+
+    public static Path getPath(String keyspace, String tableName) {
+        return instance().findPath(keyspace, tableName);
+    }
+
+    /**
+     * Parses Path and String  combinations into a collections of strings and then uses thoem to create
+     * paths within filesystems.
+     */
+    public static class PathParser
+    {
+        private final static String separator = FileSystems.getDefault().getSeparator();
+        private final String first;
+        @Nullable
+        private final String[]  rest;
+
+        private static String[] makeRelative(String path)
+        {
+            if (path == null) {
+                return null;
+            }
+            String relative = path.startsWith(separator) ? path.substring(separator.length()) : path;
+            return path.split(Pattern.quote(separator));
+        }
+
+        private PathParser(boolean startAtRoot, String[] part1, String[] part2) {
+
+            Queue<String> args = new LinkedList<>();
+            if (part1 != null) {
+                args.addAll(Arrays.asList(part1));
+            }
+            if (part2 != null) {
+                args.addAll(Arrays.asList(part2));
+            }
+            this.first = (startAtRoot ? FileSystems.getDefault().getSeparator() : "") + args.poll();
+            this.rest = args.size()==0 ? null : args.toArray(new String[0]);
+        }
+
+        PathParser(Path path, String rest) {
+            // use path based separator for the path parsing.
+            this(path==null ? false : path.startsWith(path.getFileSystem().getSeparator()), path == null ? null : path.toString().split(Pattern.quote(path.getFileSystem().getSeparator())), makeRelative(rest));
+        }
+
+        PathParser(String first, String rest) {
+            this(first == null ? false : first.startsWith(separator), first == null ? null : first.split(Pattern.quote(separator)), makeRelative(rest));
+        }
+
+        PathParser(String first, String[] rest) {
+            this(first == null ? false : first.startsWith(separator), first == null ? null : first.split(Pattern.quote(separator)), rest);
+        }
+
+        public String first() {
+            return first;
+        }
+
+        public String[] rest() {
+            return rest;
+        }
+
+        @Override
+        public String toString() {
+            return rest == null ? first : String.format("%s %s", first , StringUtils.join(rest, ' '));
+        }
     }
 }
