@@ -63,10 +63,16 @@ public class RelocatingFileSystemMapper implements FileSystemMapperHandler
     @Override
     public Path getPath(String keyspace, String tableName)
     {
-        if (this.keyspace.equals(keyspace) && (StringUtils.isBlank(this.tableName) || this.tableName.equals(tableName)))
+        if (this.keyspace.equals(keyspace) && (StringUtils.isBlank(this.tableName) || this.tableName.equalsIgnoreCase(tableName)))
         {
             return basePath;
         }
         return null;
+    }
+
+    @Override
+    public String toString()
+    {
+        return String.format( "%s( %s, %s, %s )", this.getClass().getName(), this.basePath, this.keyspace, this.tableName);
     }
 }

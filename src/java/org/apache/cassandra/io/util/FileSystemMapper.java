@@ -65,7 +65,7 @@ public final class FileSystemMapper
                 if (logger.isDebugEnabled())
                 {
                     StringBuilder sb = new StringBuilder("Created FileSystemMapper with mapper handlers of:\n");
-                    result.factories.stream().forEach( x -> sb.append( x.getClass().getName()).append("\n"));
+                    result.factories.stream().forEach( x -> sb.append(x.toString()).append("\n"));
                     sb.append( "--- END OF LIST ---");
                     logger.debug(sb.toString());
                 }

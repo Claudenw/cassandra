@@ -60,6 +60,7 @@ public class FileSystemMapperTest extends CQLTester
     @Before
     public void setup() throws IOException {
         FileSystemMapper.setInstance(null);
+        execute( "drop keyspace if exists "+ksname);
         directory = Files.createTempDirectory("proxyTest");
         File f = new File("build/test/cassandra/data/"+ksname);
         if (f.exists()) {f.deleteRecursive();}
@@ -68,6 +69,7 @@ public class FileSystemMapperTest extends CQLTester
     @After
     public void tearDown() throws IOException {
         FileSystemMapper.setInstance(null);
+        execute( "drop keyspace if exists "+ksname);
         new File(directory.toFile()).deleteRecursive();
         DatabaseDescriptor.getRawConfig().file_system_mapper_handler = null;
         File f = new File("build/test/cassandra/data/"+ksname);
@@ -106,8 +108,6 @@ public class FileSystemMapperTest extends CQLTester
 
     private void executeDirectoriesTest(String expectedDir, int expectedDirectoryCount)
     {
-
-        //String keyspace = createKeyspace("CREATE KEYSPACE %s with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 } and durable_writes = false");
         TableMetadata metadata = TableMetadata.builder(ksname, cfname)
                                               .addPartitionKeyColumn("column1", UTF8Type.instance)
                                               .build();
@@ -132,7 +132,7 @@ public class FileSystemMapperTest extends CQLTester
         args.put("keyspace", ksname);
         DatabaseDescriptor.getRawConfig().file_system_mapper_handler = new ParameterizedClass(RelocatingFileSystemMapper.class.getName(), args);
 
-        createKeyspace("create keyspace %s with replication = {'class' : 'SimpleStrategy', 'replication_factor' : 1}");
+        createKeyspace("create keyspace if not exists %s with replication = {'class' : 'SimpleStrategy', 'replication_factor' : 1}");
         createTable(ksname, "create table %s ( name text, comment text, PRIMARY KEY (name))", cfname);
         execute("insert into demo.myTable (name,comment) VALUES ('Claude', 'Presenting Demo' )");
         UntypedResultSet rs = execute("select * from demo.myTable");
@@ -144,6 +144,48 @@ public class FileSystemMapperTest extends CQLTester
         File ks = new File(directory, ksname );
         File tbl = ks.tryList( File::isDirectory)[0];
         List<String> names = new ArrayList<>();
+        names.addAll(Arrays.asList(tbl.toJavaIOFile().list((f,s) -> new File(f,s).isFile())));
+        assertEquals( expected.length, names.size());
+        names.removeAll( Arrays.asList(expected));
+        assertEquals(0, names.size());
+    }
+
+    @Test
+    public void testCQLCreationSplitKeyspace() throws IOException
+    {
+        Map<String, String> args = new HashMap<>();
+        args.put("basePath", directory.toString());
+        args.put("keyspace", ksname);
+        args.put("tableName", cfname);
+        DatabaseDescriptor.getRawConfig().file_system_mapper_handler = new ParameterizedClass(RelocatingFileSystemMapper.class.getName(), args);
+
+        createKeyspace("create keyspace if not exists %s with replication = {'class' : 'SimpleStrategy', 'replication_factor' : 1}");
+        String tableName1 = createTable(ksname, "create table %s ( name text, comment text, PRIMARY KEY (name))", cfname);
+        execute(String.format("insert into demo.%s (name,comment) VALUES ('Claude', 'Presenting Demo' )", tableName1));
+        UntypedResultSet rs = execute(String.format("select * from demo.%s",tableName1));
+        assertEquals(1, rs.size());
+
+        String tableName2 = createTable(ksname, "create table %s ( name text, comment text, PRIMARY KEY (name))", "myOtherTable");
+        execute(String.format("insert into demo.%s (name,comment) VALUES ('Warren', 'Testing Demo' )",tableName2));
+        rs = execute(String.format("select * from demo.%s", tableName2));
+        assertEquals(1, rs.size());
+
+        Util.flushKeyspace(ksname);
+
+        String[] expected = {"nc-1-big-Data.db","nc-1-big-Filter.db","nc-1-big-Statistics.db","nc-1-big-TOC.txt","nc-1-big-CompressionInfo.db","nc-1-big-Digest.crc32","nc-1-big-Index.db","nc-1-big-Summary.db"};
+
+        File ks = new File(directory, ksname );
+        File tbl = ks.tryList( File::isDirectory)[0];
+        assertTrue( tbl.path().substring( tbl.parentPath().length()+1).startsWith(tableName1.toLowerCase()));
+        List<String> names = new ArrayList<>();
+        names.addAll(Arrays.asList(tbl.toJavaIOFile().list((f,s) -> new File(f,s).isFile())));
+        assertEquals( expected.length, names.size());
+        names.removeAll( Arrays.asList(expected));
+        assertEquals(0, names.size());
+
+        ks = new File("build/test/cassandra/data/demo");
+        tbl = ks.tryList( File::isDirectory)[0];
+        assertTrue( tbl.path().substring( tbl.parentPath().length()+1).startsWith(tableName2.toLowerCase()));
         names.addAll(Arrays.asList(tbl.toJavaIOFile().list((f,s) -> new File(f,s).isFile())));
         assertEquals( expected.length, names.size());
         names.removeAll( Arrays.asList(expected));
