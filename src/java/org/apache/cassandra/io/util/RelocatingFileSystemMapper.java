@@ -40,12 +40,16 @@ public class RelocatingFileSystemMapper implements FileSystemMapperHandler
     private final String keyspace;
     private final String tableName;
 
-    public RelocatingFileSystemMapper(String basePath, String keySpace, String tableName) {
+    public RelocatingFileSystemMapper(Path basePath, String keySpace, String tableName)
+    {
         Objects.requireNonNull("basePath", "basePath may not be null");
         Objects.requireNonNull("keyspace", "Keyspace may not be null");
-        this.basePath = FileSystems.getDefault().getPath(basePath);
+        this.basePath = basePath;
         this.keyspace = keySpace;
         this.tableName = tableName;
+    }
+    public RelocatingFileSystemMapper(String basePath, String keySpace, String tableName) {
+        this(FileSystems.getDefault().getPath(basePath), keySpace, tableName);
     }
 
     // for ParameterizedClass use

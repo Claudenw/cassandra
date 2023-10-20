@@ -26,8 +26,7 @@ import org.apache.cassandra.db.Directories;
 
 public interface FileSystemMapperHandler
 {
-   // boolean handles(String path);
-  //  FileChannel getChannel(String path, StandardOpenOption... options);
+
     void extractDirectories(Collection<Directories.DataDirectory> collection);
 
     Path getPath(String keyspace, String tableName);
