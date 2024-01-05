@@ -65,6 +65,14 @@ public class SettingsRate implements Serializable
         isFixed = false;
     }
 
+    private static final String AUTO = "-rate-auto";
+    private static final String MIN_THREADS = "-rate-min-threads";
+    private static final String MAX_THREADS = "-rate-max-threads";
+    private static final String MAX_CLIENTS = "-rate-max-clients";
+    private static final String MAX_OPS = "-rate-max-ops";
+
+    private static final String FIXED = "-rate-fixed";
+
 
     // Option Declarations
 

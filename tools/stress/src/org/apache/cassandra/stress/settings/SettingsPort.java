@@ -22,37 +22,71 @@ package org.apache.cassandra.stress.settings;
 
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.ParseException;
+
 import org.apache.cassandra.stress.util.ResultLogger;
 
-public class SettingsPort implements Serializable
+public class SettingsPort implements Serializable, AbstractSettings
 {
 
     public final int nativePort;
     public final int jmxPort;
 
-    public SettingsPort(PortOptions options)
+    private static final String NATIVE = "port-native";
+    private static final String JMX = "port-jmx";
+
+
+//    public SettingsPort(PortOptions options)
+//    {
+//        nativePort = Integer.parseInt(options.nativePort.value());
+//        jmxPort = Integer.parseInt(options.jmxPort.value());
+//    }
+
+    public SettingsPort(CommandLine cmdLine)
     {
-        nativePort = Integer.parseInt(options.nativePort.value());
-        jmxPort = Integer.parseInt(options.jmxPort.value());
-    }
-
-    // Option Declarations
-
-    private static final class PortOptions extends GroupedOptions
-    {
-        final OptionSimple nativePort = new OptionSimple("native=", "[0-9]+", "9042", "Use this port for the Cassandra native protocol", false);
-        final OptionSimple jmxPort = new OptionSimple("jmx=", "[0-9]+", "7199", "Use this port for retrieving statistics over jmx", false);
-
-        @Override
-        public List<? extends Option> options()
-        {
-            return Arrays.asList(nativePort, jmxPort);
+        try {
+            nativePort = cmdLine.getParsedOptionValue(NATIVE, 9042);
+            jmxPort = cmdLine.getParsedOptionValue(JMX, 7199);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
         }
     }
+
+    public static Options getOptions() {
+        Options result = new Options();
+        result.addOption( Option.builder(NATIVE).hasArg(true).desc("Use this port for the Cassandra native protocol").type(Integer.class).build());
+        result.addOption( Option.builder(JMX).hasArg(true).desc("Use this port for retrieving statistics over jmx" ).type(Integer.class).build());
+        return result;
+    }
+
+    public static SettingsPort get(CommandLine cmdLine) {
+        return new SettingsPort(cmdLine);
+    }
+
+
+
+//    // Option Declarations
+//
+//    private static final class PortOptions extends GroupedOptions
+//    {
+//        final OptionSimple nativePort = new OptionSimple("native=", "[0-9]+", "9042", "Use this port for the Cassandra native protocol", false);
+//        final OptionSimple jmxPort = new OptionSimple("jmx=", "[0-9]+", "7199", "Use this port for retrieving statistics over jmx", false);
+//
+//        @Override
+//        public List<? extends Option> options()
+//        {
+//            return Arrays.asList(nativePort, jmxPort);
+//        }
+//    }
 
     // CLI Utility Methods
     public void printSettings(ResultLogger out)
@@ -62,38 +96,27 @@ public class SettingsPort implements Serializable
     }
 
 
-    public static SettingsPort get(Map<String, String[]> clArgs)
-    {
-        String[] params = clArgs.remove("-port");
-        if (params == null)
-        {
-            return new SettingsPort(new PortOptions());
-        }
-        PortOptions options = GroupedOptions.select(params, new PortOptions());
-        if (options == null)
-        {
-            printHelp();
-            System.out.println("Invalid -port options provided, see output for valid options");
-            System.exit(1);
-        }
-        return new SettingsPort(options);
-    }
+//    public static SettingsPort get(Map<String, String[]> clArgs)
+//    {
+//        String[] params = clArgs.remove("-port");
+//        if (params == null)
+//        {
+//            return new SettingsPort(new PortOptions());
+//        }
+//        PortOptions options = GroupedOptions.select(params, new PortOptions());
+//        if (options == null)
+//        {
+//            printHelp();
+//            System.out.println("Invalid -port options provided, see output for valid options");
+//            System.exit(1);
+//        }
+//        return new SettingsPort(options);
+//    }
 
-    public static void printHelp()
-    {
-        GroupedOptions.printOptions(System.out, "-port", new PortOptions());
-    }
-
-    public static Runnable helpPrinter()
-    {
-        return new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                printHelp();
-            }
-        };
-    }
+//    public static void printHelp()
+//    {
+//        GroupedOptions.printOptions(System.out, "-port", new PortOptions());
+//    }
+//    }
 }
 

@@ -25,6 +25,7 @@ import java.io.Serializable;
 import java.util.*;
 
 import org.apache.cassandra.config.EncryptionOptions;
+import org.apache.cassandra.stress.generate.DistributionFactory;
 import org.apache.cassandra.stress.util.JavaDriverClient;
 import org.apache.cassandra.stress.util.ResultLogger;
 import org.apache.cassandra.transport.SimpleClient;
@@ -48,6 +49,7 @@ public class StressSettings implements Serializable
     public final SettingsGraph graph;
     public final SettingsTokenRange tokenRange;
     public final SettingsReporting reporting;
+
 
     public StressSettings(SettingsCommand command,
                           SettingsRate rate,
