@@ -26,17 +26,18 @@ import java.util.Map;
 
 public enum CliOption
 {
-    POP("Population distribution and intra-partition visit order", SettingsPopulation.helpPrinter()),
-    INSERT("Insert specific options relating to various methods for batching and splitting partition updates", SettingsInsert.helpPrinter()),
-    COL("Column details such as size and count distribution, data generator, names, comparator and if super columns should be used", SettingsColumn.helpPrinter()),
-    RATE("Thread count, rate limit or automatic mode (default is auto)", SettingsRate.helpPrinter()),
+    // TODO FIXME
+//    POP("Population distribution and intra-partition visit order", SettingsPopulation.helpPrinter()),
+//    INSERT("Insert specific options relating to various methods for batching and splitting partition updates", SettingsInsert.helpPrinter()),
+//    COL("Column details such as size and count distribution, data generator, names, comparator and if super columns should be used", SettingsColumn.helpPrinter()),
+//    RATE("Thread count, rate limit or automatic mode (default is auto)", SettingsRate.helpPrinter()),
     MODE("CQL mode options", SettingsMode.helpPrinter()),
     ERRORS("How to handle errors when encountered during stress", SettingsErrors.helpPrinter()),
     SCHEMA("Replication settings, compression, compaction, etc.", SettingsSchema.helpPrinter()),
     NODE("Nodes to connect to", SettingsNode.helpPrinter()),
     LOG("Where to log progress to, and the interval at which to do it", SettingsLog.helpPrinter()),
-    TRANSPORT("Custom transport factories", SettingsTransport.helpPrinter()),
-    PORT("The port to connect to cassandra nodes on", SettingsPort.helpPrinter()),
+//    TRANSPORT("Custom transport factories", SettingsTransport.helpPrinter()),
+//    PORT("The port to connect to cassandra nodes on", SettingsPort.helpPrinter()),
     JMX("JMX credentials", SettingsJMX.helpPrinter()),
     GRAPH("-graph", "Graph recorded metrics", SettingsGraph.helpPrinter()),
     TOKENRANGE("Token range settings", SettingsTokenRange.helpPrinter()),

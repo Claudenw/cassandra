@@ -35,7 +35,7 @@ import org.apache.commons.cli.ParseException;
 
 import org.apache.cassandra.stress.util.ResultLogger;
 
-public class SettingsPort implements Serializable, AbstractSettings
+public class SettingsPort extends AbstractSettings implements Serializable
 {
 
     public final int nativePort;

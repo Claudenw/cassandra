@@ -195,12 +195,13 @@ public class StressSettings implements Serializable
         SettingsCommand command = SettingsCommand.get(clArgs);
         if (command == null)
             throw new IllegalArgumentException("No command specified");
-        SettingsPort port = SettingsPort.get(clArgs);
-        SettingsRate rate = SettingsRate.get(clArgs, command);
-        SettingsPopulation generate = SettingsPopulation.get(clArgs, command);
+        // TODO Revert these
+        //SettingsPort port = SettingsPort.get(clArgs);
+        //SettingsRate rate = SettingsRate.get(clArgs, command);
+        //SettingsPopulation generate = SettingsPopulation.get(clArgs, command);
         SettingsTokenRange tokenRange = SettingsTokenRange.get(clArgs);
         SettingsInsert insert = SettingsInsert.get(clArgs);
-        SettingsColumn columns = SettingsColumn.get(clArgs);
+        //SettingsColumn columns = SettingsColumn.get(clArgs);
         SettingsErrors errors = SettingsErrors.get(clArgs);
         SettingsLog log = SettingsLog.get(clArgs);
         SettingsCredentials credentials = SettingsCredentials.get(clArgs);
@@ -228,7 +229,9 @@ public class StressSettings implements Serializable
             System.exit(1);
         }
 
-        return new StressSettings(command, rate, generate, insert, columns, errors, log, credentials, mode, node, schema, transport, port, jmx, graph, tokenRange, reporting);
+        // FIXME
+        return null;
+        //return new StressSettings(command, rate, generate, insert, columns, errors, log, credentials, mode, node, schema, transport, port, jmx, graph, tokenRange, reporting);
     }
 
     private static Map<String, String[]> parseMap(String[] args)

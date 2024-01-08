@@ -37,7 +37,7 @@ import org.apache.commons.cli.converters.Converter;
 import org.apache.commons.cli.converters.Verifier;
 
 
-public class SettingsPopulation implements Serializable, AbstractSettings
+public class SettingsPopulation extends AbstractSettings implements Serializable
 {
 
     public final DistributionFactory distribution;
@@ -52,31 +52,6 @@ public class SettingsPopulation implements Serializable, AbstractSettings
     private static final String NO_WRAP="population-no-wrap";
     private static final String SEQ="population-seq";
 
-    private static final Converter<long[]> DIST_CONVERTER = s -> {
-        String[] bounds = s.split("\\.\\.+");
-        return new long[]{ OptionDistribution.parseLong(bounds[0]), OptionDistribution.parseLong(bounds[1])};
-        };
-
-    public static final Verifier ORDER_VERIFIER = s -> {
-        try {
-            if (s != null){
-                PartitionGenerator.Order.valueOf(s);
-            }
-            return true;
-        } catch (NoSuchElementException e) {
-            return false;
-        }
-    };
-
-    public static final Converter<PartitionGenerator.Order> ORDER_CONVERTER = s -> s==null?PartitionGenerator.Order.ARBITRARY: PartitionGenerator.Order.valueOf(s);
-
-    static {
-        init();
-    }
-    static void init() {
-        TypeHandler.register(DistributionFactory.class, s->OptionDistribution.get(s), null);
-        TypeHandler.register(PartitionGenerator.Order.class, ORDER_CONVERTER, ORDER_VERIFIER);
-    }
 
     private static final OptionGroup DIST_GROUP;
     private static final Options OPTIONS;
@@ -186,15 +161,13 @@ public class SettingsPopulation implements Serializable, AbstractSettings
             }
         }
         if (cmdLine.hasOption(DIST)) {
-            return new SettingsPopulation(order, OptionDistribution.get( cmdLine.getOptionValue(DIST));
+            return new SettingsPopulation(order, OptionDistribution.get( cmdLine.getOptionValue(DIST)));
         } else {
             return new SettingsPopulation(order, cmdLine.getParsedOptionValue(SEQ, DIST_CONVERTER.apply("1.." + defaultLimit)),
                     cmdLine.getParsedOptionValue(READ), !cmdLine.hasOption(NO_WRAP));
         }
-        } catch (RuntimeException ex) {
-            throw ex;
         } catch (Exception ex) {
-            throw new RuntimeException(ex);
+            throw asRuntimeException(ex);
         }
     }
 
@@ -327,6 +300,5 @@ public class SettingsPopulation implements Serializable, AbstractSettings
 //        };
 //    }
 
-    class OptionDistributionConverter.get( cmdLine.getOptionValue(DIST)
 }
 
