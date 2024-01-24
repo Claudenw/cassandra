@@ -31,6 +31,9 @@ import org.apache.cassandra.stress.operations.SampledOpDistributionFactory;
 import org.apache.cassandra.stress.operations.predefined.PredefinedOperation;
 import org.apache.cassandra.stress.report.Timer;
 import org.apache.cassandra.stress.util.ResultLogger;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+
 
 // Settings unique to the mixed command type
 public class SettingsCommandPreDefinedMixed extends SettingsCommandPreDefined
@@ -39,17 +42,29 @@ public class SettingsCommandPreDefinedMixed extends SettingsCommandPreDefined
     // Ratios for selecting commands - index for each Command, NaN indicates the command is not requested
     private final Map<Command, Double> ratios;
     private final DistributionFactory clustering;
-    private final Options options;
 
-    public SettingsCommandPreDefinedMixed(Options options)
+    private final CommandLine commandLine;
+
+
+    public SettingsCommandPreDefinedMixed(CommandLine commandLine)
     {
-        super(Command.MIXED, options);
+        super(Command.MIXED, commandLine);
 
-        clustering = options.clustering.get();
-        ratios = options.probabilities.ratios();
-        this.options = options;
-        if (ratios.size() == 0)
-            throw new IllegalArgumentException("Must specify at least one command with a non-zero ratio");
+        try {
+            clustering = commandLine.getParsedOptionValue(StressOption.COMMAND_CLUSTERING.option(), StressOption.COMMAND_CLUSTERING.dfltSupplier());
+            if (commandLine.hasOption(StressOption.COMMAND_RATIO.option())) {
+                ratios = ratios(s->Command.valueOf(s.toUpperCase()), commandLine.getOptionValues(StressOption.COMMAND_RATIO.option()));
+                if (ratios.size() == 0)
+                    throw new IllegalArgumentException("Must specify at least one command with a non-zero ratio");
+            } else {
+                ratios = new HashMap<>();
+                ratios.put(Command.WRITE, 1.0);
+                ratios.put(Command.READ, 1.0);
+            }
+            this.commandLine = commandLine;
+        } catch (Exception e) {
+            throw asRuntimeException(e);
+        }
     }
 
     public OpDistributionFactory getFactory(final StressSettings settings)
@@ -65,88 +80,94 @@ public class SettingsCommandPreDefinedMixed extends SettingsCommandPreDefined
     }
 
     // Option Declarations
-
-    static class Options extends SettingsCommandPreDefined.Options
+    public static Options getOptions()
     {
-        static List<OptionEnumProbabilities.Opt<Command>> probabilityOptions = new ArrayList<>();
-        static
-        {
-            for (Command command : Command.values())
-            {
-                if (command.category == null)
-                    continue;
-                String defaultValue;
-                switch (command)
-                {
-                    case MIXED:
-                        continue;
-                    case READ:
-                    case WRITE:
-                        defaultValue = "1";
-                        break;
-                    default:
-                        defaultValue = null;
-                }
-                probabilityOptions.add(new OptionEnumProbabilities.Opt<>(command, defaultValue));
-            }
-        }
-
-        protected Options(SettingsCommand.Options parent)
-        {
-            super(parent);
-        }
-        final OptionDistribution clustering = new OptionDistribution("clustering=", "GAUSSIAN(1..10)", "Distribution clustering runs of operations of the same kind");
-        final OptionEnumProbabilities probabilities = new OptionEnumProbabilities<>(probabilityOptions, "ratio", "Specify the ratios for operations to perform; e.g. (read=2,write=1) will perform 2 reads for each write");
-
-        @Override
-        public List<? extends Option> options()
-        {
-            return merge(Arrays.asList(clustering, probabilities), super.options());
-        }
-
+        return new Options()
+                .addOption(StressOption.COMMAND_CLUSTERING.option())
+                .addOption(StressOption.COMMAND_RATIO.option());
     }
+
+//    static class Options extends SettingsCommandPreDefined.Options
+//    {
+//        static List<OptionEnumProbabilities.Opt<Command>> probabilityOptions = new ArrayList<>();
+//        static
+//        {
+//            for (Command command : Command.values())
+//            {
+//                if (command.category == null)
+//                    continue;
+//                String defaultValue;
+//                switch (command)
+//                {
+//                    case MIXED:
+//                        continue;
+//                    case READ:
+//                    case WRITE:
+//                        defaultValue = "1";
+//                        break;
+//                    default:
+//                        defaultValue = null;
+//                }
+//                probabilityOptions.add(new OptionEnumProbabilities.                    <>(command, defaultValue));
+//            }
+//        }
+//
+//        protected Options(SettingsCommand.Options parent)
+//        {
+//            super(parent);
+//        }
+//        final OptionDistribution clustering = new OptionDistribution("clustering=", "GAUSSIAN(1..10)", "Distribution clustering runs of operations of the same kind");
+//        final OptionEnumProbabilities probabilities = new OptionEnumProbabilities<>(probabilityOptions, "ratio", "Specify the ratios for operations to perform; e.g. (read=2,write=1) will perform 2 reads for each write");
+//
+//        @Override
+//        public List<? extends Option> options()
+//        {
+//            return merge(Arrays.asList(clustering, probabilities), super.options());
+//        }
+
+
 
     public void printSettings(ResultLogger out)
     {
         super.printSettings(out);
         out.printf("  Command Ratios: %s%n", ratios);
-        out.printf("  Command Clustering Distribution: %s%n", options.clustering.getOptionAsString());
+        out.printf("  Command Clustering Distribution: %s%n", commandLine.getOptionValue(StressOption.COMMAND_CLUSTERING.option()));
     }
 
     // CLI utility methods
 
-    public static SettingsCommandPreDefinedMixed build(String[] params)
-    {
-        GroupedOptions options = GroupedOptions.select(params,
-                new Options(new SettingsCommand.Uncertainty()),
-                new Options(new SettingsCommand.Count()),
-                new Options(new SettingsCommand.Duration()));
-        if (options == null)
-        {
-            printHelp();
-            System.out.println("Invalid MIXED options provided, see output for valid options");
-            System.exit(1);
-        }
-        return new SettingsCommandPreDefinedMixed((Options) options);
-    }
+//    public static SettingsCommandPreDefinedMixed build(String[] params)
+//    {
+//        GroupedOptions options = GroupedOptions.select(params,
+//                new Options(new SettingsCommand.Uncertainty()),
+//                new Options(new SettingsCommand.Count()),
+//                new Options(new SettingsCommand.Duration()));
+//        if (options == null)
+//        {
+//            printHelp();
+//            System.out.println("Invalid MIXED options provided, see output for valid options");
+//            System.exit(1);
+//        }
+//        return new SettingsCommandPreDefinedMixed((Options) options);
+//    }
 
-    public static void printHelp()
-    {
-        GroupedOptions.printOptions(System.out, "mixed",
-                                    new Options(new SettingsCommand.Uncertainty()),
-                                    new Options(new SettingsCommand.Count()),
-                                    new Options(new SettingsCommand.Duration()));
-    }
+//    public static void printHelp()
+//    {
+//        GroupedOptions.printOptions(System.out, "mixed",
+//                                    new Options(new SettingsCommand.Uncertainty()),
+//                                    new Options(new SettingsCommand.Count()),
+//                                    new Options(new SettingsCommand.Duration()));
+//    }
 
-    public static Runnable helpPrinter()
-    {
-        return new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                printHelp();
-            }
-        };
-    }
+//    public static Runnable helpPrinter()
+//    {
+//        return new Runnable()
+//        {
+//            @Override
+//            public void run()
+//            {
+//                printHelp();
+//            }
+//        };
+//    }
 }

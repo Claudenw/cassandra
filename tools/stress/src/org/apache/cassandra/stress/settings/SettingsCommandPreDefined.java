@@ -22,7 +22,6 @@ package org.apache.cassandra.stress.settings;
 
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,6 +39,10 @@ import org.apache.cassandra.stress.operations.OpDistributionFactory;
 import org.apache.cassandra.stress.operations.predefined.PredefinedOperation;
 import org.apache.cassandra.stress.report.Timer;
 import org.apache.cassandra.stress.util.ResultLogger;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
 
 // Settings unique to the mixed command type
 public class SettingsCommandPreDefined extends SettingsCommand
@@ -47,7 +50,9 @@ public class SettingsCommandPreDefined extends SettingsCommand
 
     public final DistributionFactory add;
     public final int keySize;
-    public final Options options;
+
+    private final CommandLine commandLine;
+
 
     public OpDistributionFactory getFactory(final StressSettings settings)
     {
@@ -87,32 +92,51 @@ public class SettingsCommandPreDefined extends SettingsCommand
         return new PartitionGenerator(partitionKey, Collections.<Generator>emptyList(), columns, PartitionGenerator.Order.ARBITRARY);
     }
 
-    public SettingsCommandPreDefined(Command type, Options options)
+    public SettingsCommandPreDefined(Command type, CommandLine commandLine)
     {
-        super(type, options.parent);
-        this.options = options;
-        add = options.add.get();
-        keySize = Integer.parseInt(options.keysize.value());
+        super(type, commandLine);
+        try {
+            add = commandLine.getParsedOptionValue(StressOption.COMMAND_ADD.option(), StressOption.COMMAND_ADD.dfltSupplier());
+            keySize = commandLine.getParsedOptionValue(StressOption.COMMAND_KEYSIZE.option(), StressOption.COMMAND_KEYSIZE.dfltSupplier());
+        } catch (ParseException e) {
+           throw asRuntimeException(e);
+        }
+        this.commandLine = commandLine;
     }
 
     // Option Declarations
 
-    static class Options extends GroupedOptions
-    {
-        final SettingsCommand.Options parent;
-        protected Options(SettingsCommand.Options parent)
-        {
-            this.parent = parent;
-        }
-        final OptionDistribution add = new OptionDistribution("add=", "fixed(1)", "Distribution of value of counter increments");
-        final OptionSimple keysize = new OptionSimple("keysize=", "[0-9]+", "10", "Key size in bytes", false);
+//    static class Options extends GroupedOptions
+//    {
+//        final SettingsCommand.Options parent;
+//        protected Options(SettingsCommand.Options parent)
+//        {
+//            this.parent = parent;
+//        }
+//        final OptionDistribution add = new OptionDistribution("add=", "fixed(1)", "Distribution of value of counter increments");
+//        final OptionSimple keysize = new OptionSimple("keysize=", "[0-9]+", "10", "Key size in bytes", false);
+//
+//        @Override
+//        public List<? extends Option> options()
+//        {
+//            return merge(parent.options(), Arrays.asList(add, keysize));
+//        }
+//
+//    }
+//
+//    private static final String  COMMAND_ADD = "command-add";
+//    private static final String  COMMAND_ADD_DEFAULT_STR = "FIXED(1)";
+//
+//    private static final String COMMAND_KEYSIZE = "command-keysize";
+//
+//    private static final int COMMAND_KEYSIZE_DEFAULT = 10;
+//
 
-        @Override
-        public List<? extends Option> options()
-        {
-            return merge(parent.options(), Arrays.asList(add, keysize));
-        }
-
+    public static Options getOptions() {
+        return new Options()
+                .addOption(StressOption.COMMAND_ADD.option())
+                .addOption(StressOption.COMMAND_KEYSIZE.option())
+                ;
     }
 
     public void truncateTables(StressSettings settings)
@@ -126,43 +150,25 @@ public class SettingsCommandPreDefined extends SettingsCommand
     {
         super.printSettings(out);
         out.printf("  Key Size (bytes): %d%n", keySize);
-        out.printf("  Counter Increment Distibution: %s%n", options.add.getOptionAsString());
+        out.printf("  Counter Increment Distibution: %s%n", commandLine.getOptionValue(StressOption.COMMAND_ADD.option()));
     }
 
-    public static SettingsCommandPreDefined build(Command type, String[] params)
-    {
-        GroupedOptions options = GroupedOptions.select(params,
-                new Options(new Uncertainty()),
-                new Options(new Count()),
-                new Options(new Duration()));
-        if (options == null)
-        {
-            printHelp(type);
-            System.out.println("Invalid " + type + " options provided, see output for valid options");
-            System.exit(1);
-        }
-        return new SettingsCommandPreDefined(type, (Options) options);
-    }
+//    public static SettingsCommandPreDefined build(Command type, String[] params)
+//    {
+//        GroupedOptions options = GroupedOptions.select(params,
+//                new Options(new Uncertainty()),
+//                new Options(new Count()),
+//                new Options(new Duration()));
+//        if (options == null)
+//        {
+//            printHelp(type);
+//            System.out.println("Invalid " + type + " options provided, see output for valid options");
+//            System.exit(1);
+//        }
+//        return new SettingsCommandPreDefined(type, (Options) options);
+//    }
 
-    static void printHelp(Command type)
-    {
-        printHelp(type.toString().toLowerCase());
-    }
-
-    static void printHelp(String type)
-    {
-        GroupedOptions.printOptions(System.out, type.toLowerCase(), new Uncertainty(), new Count(), new Duration());
-    }
-
-    static Runnable helpPrinter(final Command type)
-    {
-        return new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                printHelp(type);
-            }
-        };
+    public static SettingsCommandPreDefined build(Command type, CommandLine commandLine) {
+        return new SettingsCommandPreDefined(type, commandLine);
     }
 }

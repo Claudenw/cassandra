@@ -21,9 +21,8 @@ package org.apache.cassandra.stress.settings;
  */
 
 
-import java.io.Serializable;
+
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -33,15 +32,16 @@ import org.apache.cassandra.stress.operations.OpDistributionFactory;
 import org.apache.cassandra.stress.util.JavaDriverClient;
 import org.apache.cassandra.stress.util.ResultLogger;
 import org.apache.cassandra.db.ConsistencyLevel;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+
+import static java.lang.String.format;
+
 
 // Generic command settings - common to read/write/etc
-public abstract class SettingsCommand implements Serializable
+public abstract class SettingsCommand extends AbstractSettings
 {
-
-    public static enum TruncateWhen
-    {
-        NEVER, ONCE, ALWAYS
-    }
 
     public final Command type;
     public final long count;
@@ -56,107 +56,167 @@ public abstract class SettingsCommand implements Serializable
 
     public abstract OpDistributionFactory getFactory(StressSettings settings);
 
-    public SettingsCommand(Command type, GroupedOptions options)
-    {
-        this(type, (Options) options,
-                options instanceof Count ? (Count) options : null,
-                options instanceof Duration ? (Duration) options : null,
-                options instanceof Uncertainty ? (Uncertainty) options : null
-        );
-    }
+    public SettingsCommand(Command type, CommandLine commandLine) {
+        try {
+            this.type = type;
+            this.consistencyLevel = commandLine.getParsedOptionValue(StressOption.CONSISTENCY.option(), StressOption.CONSISTENCY.dfltSupplier());
+            this.noWarmup = commandLine.hasOption(StressOption.NO_WARMUP.option());
+            this.truncate = commandLine.getParsedOptionValue(StressOption.TRUNCATE.option(), StressOption.CONSISTENCY.dfltSupplier());
 
-    public SettingsCommand(Command type, Options options, Count count, Duration duration, Uncertainty uncertainty)
-    {
-        this.type = type;
-        this.consistencyLevel = ConsistencyLevel.valueOf(options.consistencyLevel.value().toUpperCase());
-        this.noWarmup = options.noWarmup.setByUser();
-        this.truncate = TruncateWhen.valueOf(options.truncate.value().toUpperCase());
-
-        if (count != null)
-        {
-            this.count = OptionDistribution.parseLong(count.count.value());
-            this.duration = 0;
-            this.durationUnits = null;
-            this.targetUncertainty = -1;
-            this.minimumUncertaintyMeasurements = -1;
-            this.maximumUncertaintyMeasurements = -1;
-        }
-        else if (duration != null)
-        {
-            this.count = -1;
-            this.duration = Long.parseLong(duration.duration.value().substring(0, duration.duration.value().length() - 1));
-            switch (duration.duration.value().toLowerCase().charAt(duration.duration.value().length() - 1))
-            {
-                case 's':
-                    this.durationUnits = TimeUnit.SECONDS;
-                    break;
-                case 'm':
-                    this.durationUnits = TimeUnit.MINUTES;
-                    break;
-                case 'h':
-                    this.durationUnits = TimeUnit.HOURS;
-                    break;
-                case 'd':
-                    this.durationUnits = TimeUnit.DAYS;
-                    break;
-                default:
-                    throw new IllegalStateException();
+            if (commandLine.hasOption(StressOption.COUNT.option())) {
+                this.count = commandLine.getParsedOptionValue(StressOption.COUNT.option());
+                this.duration = 0;
+                this.durationUnits = null;
+                this.targetUncertainty = -1;
+                this.minimumUncertaintyMeasurements = -1;
+                this.maximumUncertaintyMeasurements = -1;
+            } else if (commandLine.hasOption(StressOption.DURATION.option())) {
+                this.count = -1;
+                String duration = commandLine.getOptionValue(StressOption.DURATION.option());
+                this.duration = Long.parseLong(duration.substring(0, duration.length() - 1));
+                switch (duration.toLowerCase().charAt(duration.length() - 1)) {
+                    case 's':
+                        this.durationUnits = TimeUnit.SECONDS;
+                        break;
+                    case 'm':
+                        this.durationUnits = TimeUnit.MINUTES;
+                        break;
+                    case 'h':
+                        this.durationUnits = TimeUnit.HOURS;
+                        break;
+                    case 'd':
+                        this.durationUnits = TimeUnit.DAYS;
+                        break;
+                    default:
+                        throw new IllegalStateException();
+                }
+                this.targetUncertainty = -1;
+                this.minimumUncertaintyMeasurements = -1;
+                this.maximumUncertaintyMeasurements = -1;
+            } else {
+                this.count = -1;
+                this.duration = 0;
+                this.durationUnits = null;
+                this.targetUncertainty = commandLine.getParsedOptionValue(StressOption.UNCERT_ERR.key(), StressOption.UNCERT_ERR.dfltSupplier());
+                this.minimumUncertaintyMeasurements = commandLine.getParsedOptionValue(StressOption.UNCERT_MIN.option(), StressOption.UNCERT_MIN.dfltSupplier());
+                this.maximumUncertaintyMeasurements = commandLine.getParsedOptionValue(StressOption.UNCERT_MAX.option(), StressOption.UNCERT_MAX.dfltSupplier());
             }
-            this.targetUncertainty = -1;
-            this.minimumUncertaintyMeasurements = -1;
-            this.maximumUncertaintyMeasurements = -1;
+        } catch (Exception e) {
+            throw asRuntimeException(e);
         }
-        else
-        {
-            this.count = -1;
-            this.duration = 0;
-            this.durationUnits = null;
-            this.targetUncertainty = Double.parseDouble(uncertainty.uncertainty.value());
-            this.minimumUncertaintyMeasurements = Integer.parseInt(uncertainty.minMeasurements.value());
-            this.maximumUncertaintyMeasurements = Integer.parseInt(uncertainty.maxMeasurements.value());
-        }
+
     }
+//    public SettingsCommand(Command type, Options options, Count count, Duration duration, Uncertainty uncertainty)
+//    {
+//        this.type = type;
+//        this.consistencyLevel = ConsistencyLevel.valueOf(options.consistencyLevel.value().toUpperCase());
+//        this.noWarmup = options.noWarmup.setByUser();
+//        this.truncate = TruncateWhen.valueOf(options.truncate.value().toUpperCase());
+//
+//        if (count != null)
+//        {
+//            this.count = OptionDistribution.parseLong(count.count.value());
+//            this.duration = 0;
+//            this.durationUnits = null;
+//            this.targetUncertainty = -1;
+//            this.minimumUncertaintyMeasurements = -1;
+//            this.maximumUncertaintyMeasurements = -1;
+//        }
+//        else if (duration != null)
+//        {
+//            this.count = -1;
+//            this.duration = Long.parseLong(duration.duration.value().substring(0, duration.duration.value().length() - 1));
+//            switch (duration.duration.value().toLowerCase().charAt(duration.duration.value().length() - 1))
+//            {
+//                case 's':
+//                    this.durationUnits = TimeUnit.SECONDS;
+//                    break;
+//                case 'm':
+//                    this.durationUnits = TimeUnit.MINUTES;
+//                    break;
+//                case 'h':
+//                    this.durationUnits = TimeUnit.HOURS;
+//                    break;
+//                case 'd':
+//                    this.durationUnits = TimeUnit.DAYS;
+//                    break;
+//                default:
+//                    throw new IllegalStateException();
+//            }
+//            this.targetUncertainty = -1;
+//            this.minimumUncertaintyMeasurements = -1;
+//            this.maximumUncertaintyMeasurements = -1;
+//        }
+//        else
+//        {
+//            this.count = -1;
+//            this.duration = 0;
+//            this.durationUnits = null;
+//            this.targetUncertainty = Double.parseDouble(uncertainty.uncertainty.value());
+//            this.minimumUncertaintyMeasurements = Integer.parseInt(uncertainty.minMeasurements.value());
+//            this.maximumUncertaintyMeasurements = Integer.parseInt(uncertainty.maxMeasurements.value());
+//        }
+//    }
 
     // Option Declarations
 
-    static abstract class Options extends GroupedOptions
-    {
-        final OptionSimple noWarmup = new OptionSimple("no-warmup", "", null, "Do not warmup the process", false);
-        final OptionSimple truncate = new OptionSimple("truncate=", "never|once|always", "never", "Truncate the table: never, before performing any work, or before each iteration", false);
-        final OptionSimple consistencyLevel = new OptionSimple("cl=", "ONE|QUORUM|LOCAL_QUORUM|EACH_QUORUM|ALL|ANY|TWO|THREE|LOCAL_ONE|SERIAL|LOCAL_SERIAL", "LOCAL_ONE", "Consistency level to use", false);
-    }
 
-    static class Count extends Options
-    {
-        final OptionSimple count = new OptionSimple("n=", "[0-9]+[bmk]?", null, "Number of operations to perform", true);
-        @Override
-        public List<? extends Option> options()
-        {
-            return Arrays.asList(count, noWarmup, truncate, consistencyLevel);
-        }
-    }
 
-    static class Duration extends Options
-    {
-        final OptionSimple duration = new OptionSimple("duration=", "[0-9]+[smhd]", null, "Time to run in (in seconds, minutes, hours or days)", true);
-        @Override
-        public List<? extends Option> options()
-        {
-            return Arrays.asList(duration, noWarmup, truncate, consistencyLevel);
-        }
-    }
+    //final OptionSimple noWarmup = new OptionSimple("no-warmup", "", null, "Do not warmup the process", false);
+    //        final OptionSimple truncate = new OptionSimple("truncate=", "never|once|always", "never", "Truncate the table: never, before performing any work, or before each iteration", false);
+//        final OptionSimple consistencyLevel = new OptionSimple("cl=", "ONE|QUORUM|LOCAL_QUORUM|EACH_QUORUM|ALL|ANY|TWO|THREE|LOCAL_ONE|SERIAL|LOCAL_SERIAL", "LOCAL_ONE", "Consistency level to use", false);
+    public static Options getOptions() {
 
-    static class Uncertainty extends Options
-    {
-        final OptionSimple uncertainty = new OptionSimple("err<", "0\\.[0-9]+", "0.02", "Run until the standard error of the mean is below this fraction", false);
-        final OptionSimple minMeasurements = new OptionSimple("n>", "[0-9]+", "30", "Run at least this many iterations before accepting uncertainty convergence", false);
-        final OptionSimple maxMeasurements = new OptionSimple("n<", "[0-9]+", "200", "Run at most this many iterations before accepting uncertainty convergence", false);
-        @Override
-        public List<? extends Option> options()
-        {
-            return Arrays.asList(uncertainty, minMeasurements, maxMeasurements, noWarmup, truncate, consistencyLevel);
-        }
+        return new Options()
+                .addOption(StressOption.NO_WARMUP.option())
+                .addOption(StressOption.TRUNCATE.option())
+                .addOption(StressOption.CONSISTENCY.option())
+                .addOptionGroup(new OptionGroup()
+                        .addOption(StressOption.COUNT.option())
+                        .addOption(StressOption.DURATION.option())
+                        .addOption(StressOption.UNCERT_ERR.option()))
+                .addOption(StressOption.UNCERT_MIN.option())
+                .addOption(StressOption.UNCERT_MAX.option())
+                ;
     }
+//    static abstract class Options extends GroupedOptions
+//    {
+//        final OptionSimple noWarmup = new OptionSimple("no-warmup", "", null, "Do not warmup the process", false);
+//        final OptionSimple truncate = new OptionSimple("truncate=", "never|once|always", "never", "Truncate the table: never, before performing any work, or before each iteration", false);
+//        final OptionSimple consistencyLevel = new OptionSimple("cl=", "ONE|QUORUM|LOCAL_QUORUM|EACH_QUORUM|ALL|ANY|TWO|THREE|LOCAL_ONE|SERIAL|LOCAL_SERIAL", "LOCAL_ONE", "Consistency level to use", false);
+//    }
+//
+//    static class Count extends Options
+//    {
+//        final OptionSimple count = new OptionSimple("n=", "[0-9]+[bmk]?", null, "Number of operations to perform", true);
+//        @Override
+//        public List<? extends Option> options()
+//        {
+//            return Arrays.asList(count, noWarmup, truncate, consistencyLevel);
+//        }
+//    }
+//
+//    static class Duration extends Options
+//    {
+//        final OptionSimple duration = new OptionSimple("duration=", "[0-9]+[smhd]", null, "Time to run in (in seconds, minutes, hours or days)", true);
+//        @Override
+//        public List<? extends Option> options()
+//        {
+//            return Arrays.asList(duration, noWarmup, truncate, consistencyLevel);
+//        }
+//    }
+//
+//    static class Uncertainty extends Options
+//    {
+//        final OptionSimple uncertainty = new OptionSimple("err<", "0\\.[0-9]+", "0.02", "Run until the standard error of the mean is below this fraction", false);
+//        final OptionSimple minMeasurements = new OptionSimple("n>", "[0-9]+", "30", "Run at least this many iterations before accepting uncertainty convergence", false);
+//        final OptionSimple maxMeasurements = new OptionSimple("n<", "[0-9]+", "200", "Run at most this many iterations before accepting uncertainty convergence", false);
+//        @Override
+//        public List<? extends Option> options()
+//        {
+//            return Arrays.asList(uncertainty, minMeasurements, maxMeasurements, noWarmup, truncate, consistencyLevel);
+//        }
+//    }
 
     public abstract void truncateTables(StressSettings settings);
 
@@ -166,10 +226,10 @@ public abstract class SettingsCommand implements Serializable
         assert settings.command.truncate != SettingsCommand.TruncateWhen.NEVER;
         for (String table : tables)
         {
-            String cql = String.format("TRUNCATE %s.%s", ks, table);
+            String cql = format("TRUNCATE %s.%s", ks, table);
             client.execute(cql, org.apache.cassandra.db.ConsistencyLevel.ONE);
         }
-        System.out.println(String.format("Truncated %s.%s. Sleeping %ss for propagation.",
+        System.out.println(format("Truncated %s.%s. Sleeping %ss for propagation.",
                                          ks, Arrays.toString(tables), settings.node.nodes.size()));
         Uninterruptibles.sleepUninterruptibly(settings.node.nodes.size(), TimeUnit.SECONDS);
     }
@@ -197,33 +257,33 @@ public abstract class SettingsCommand implements Serializable
     }
 
 
-    static SettingsCommand get(Map<String, String[]> clArgs)
-    {
-        for (Command cmd : Command.values())
-        {
-            if (cmd.category == null)
-                continue;
-
-            for (String name : cmd.names)
-            {
-                final String[] params = clArgs.remove(name);
-                if (params == null)
-                    continue;
-
-                switch (cmd.category)
-                {
-                    case BASIC:
-                        return SettingsCommandPreDefined.build(cmd, params);
-                    case MIXED:
-                        return SettingsCommandPreDefinedMixed.build(params);
-                    case USER:
-                        return SettingsCommandUser.build(params);
-                }
-            }
-        }
-        return null;
-    }
-
+//    static SettingsCommand get(Map<String, String[]> clArgs)
+//    {
+//        for (Command cmd : Command.values())
+//        {
+//            if (cmd.category == null)
+//                continue;
+//
+//            for (String name : cmd.names)
+//            {
+//                final String[] params = clArgs.remove(name);
+//                if (params == null)
+//                    continue;
+//
+//                switch (cmd.category)
+//                {
+//                    case BASIC:
+//                        return SettingsCommandPreDefined.build(cmd, params);
+//                    case MIXED:
+//                        return SettingsCommandPreDefinedMixed.build(params);
+//                    case USER:
+//                        return SettingsCommandUser.build(params);
+//                }
+//            }
+//        }
+//        return null;
+//    }
+/*
     static void printHelp(Command type)
     {
         printHelp(type.toString().toLowerCase());
@@ -232,5 +292,5 @@ public abstract class SettingsCommand implements Serializable
     static void printHelp(String type)
     {
         GroupedOptions.printOptions(System.out, type.toLowerCase(), new Uncertainty(), new Count(), new Duration());
-    }
+    }*/
 }

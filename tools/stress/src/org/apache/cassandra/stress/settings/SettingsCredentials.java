@@ -27,8 +27,10 @@ import java.util.Properties;
 
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.stress.util.ResultLogger;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.ParseException;
 
-public class SettingsCredentials implements Serializable
+public class SettingsCredentials extends AbstractSettings
 {
     public static final String CQL_USERNAME_PROPERTY_KEY = "cql.username";
     public static final String CQL_PASSWORD_PROPERTY_KEY = "cql.password";
@@ -46,38 +48,29 @@ public class SettingsCredentials implements Serializable
     public final String transportTruststorePassword;
     public final String transportKeystorePassword;
 
-    public SettingsCredentials(String file)
+    public SettingsCredentials(CommandLine commandLine)
     {
-        this.file = file;
-        if (file == null)
-        {
-            cqlUsername = null;
-            cqlPassword = null;
-            jmxUsername = null;
-            jmxPassword = null;
-            transportTruststorePassword = null;
-            transportKeystorePassword = null;
-            return;
-        }
-
-        try
-        {
+        this.file = commandLine.getOptionValue(AbstractSettings.StressOption.CREDENTIAL_FILE.option());
+        if (commandLine.hasOption(StressOption.CREDENTIAL_FILE.option())) {
             Properties properties = new Properties();
-            try (InputStream is = new FileInputStream(new File(file).toJavaIOFile()))
-            {
-                properties.load(is);
-
-                cqlUsername = properties.getProperty(CQL_USERNAME_PROPERTY_KEY);
-                cqlPassword = properties.getProperty(CQL_PASSWORD_PROPERTY_KEY);
-                jmxUsername = properties.getProperty(JMX_USERNAME_PROPERTY_KEY);
-                jmxPassword = properties.getProperty(JMX_PASSWORD_PROPERTY_KEY);
-                transportTruststorePassword = properties.getProperty(TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY);
-                transportKeystorePassword = properties.getProperty(TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY);
+            try (InputStream is = new FileInputStream(new org.apache.cassandra.io.util.File(file).toJavaIOFile())) {
+                    properties.load(is);
+                    cqlUsername = properties.getProperty(CQL_USERNAME_PROPERTY_KEY);
+                    cqlPassword = properties.getProperty(CQL_PASSWORD_PROPERTY_KEY);
+                    jmxUsername = properties.getProperty(JMX_USERNAME_PROPERTY_KEY);
+                    jmxPassword = properties.getProperty(JMX_PASSWORD_PROPERTY_KEY);
+                    transportTruststorePassword = properties.getProperty(TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY);
+                    transportKeystorePassword = properties.getProperty(TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY);
+            } catch (Exception e) {
+                throw asRuntimeException(e);
             }
-        }
-        catch (IOException ioe)
-        {
-            throw new RuntimeException(ioe);
+        } else {
+                cqlUsername = null;
+                cqlPassword = null;
+                jmxUsername = null;
+                jmxPassword = null;
+                transportTruststorePassword = null;
+                transportKeystorePassword = null;
         }
     }
 
@@ -93,37 +86,37 @@ public class SettingsCredentials implements Serializable
         out.printf("  Transport keystore password: %s%n", transportKeystorePassword == null ? "*not set*" : "*suppressed*");
     }
 
-    public static SettingsCredentials get(Map<String, String[]> clArgs)
-    {
-        String[] params = clArgs.remove("-credentials-file");
-        if (params == null)
-            return new SettingsCredentials(null);
-
-        if (params.length != 1)
-        {
-            printHelp();
-            System.out.println("Invalid -credentials-file option provided, see output for valid options");
-            System.exit(1);
-        }
-
-        return new SettingsCredentials(params[0]);
-    }
-
-    public static void printHelp()
-    {
-        System.out.println("Usage: -credentials-file <file> ");
-        System.out.printf("File is supposed to be a standard property file with '%s', '%s', '%s', '%s', '%s', and '%s' as keys. " +
-                          "The values for these keys will be overriden by their command-line counterparts when specified.%n",
-                          CQL_USERNAME_PROPERTY_KEY,
-                          CQL_PASSWORD_PROPERTY_KEY,
-                          JMX_USERNAME_PROPERTY_KEY,
-                          JMX_PASSWORD_PROPERTY_KEY,
-                          TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY,
-                          TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY);
-    }
-
-    public static Runnable helpPrinter()
-    {
-        return SettingsCredentials::printHelp;
-    }
+//    public static SettingsCredentials get(Map<String, String[]> clArgs)
+//    {
+//        String[] params = clArgs.remove("-credentials-file");
+//        if (params == null)
+//            return new SettingsCredentials(null);
+//
+//        if (params.length != 1)
+//        {
+//            printHelp();
+//            System.out.println("Invalid -credentials-file option provided, see output for valid options");
+//            System.exit(1);
+//        }
+//
+//        return new SettingsCredentials(params[0]);
+//    }
+//
+//    public static void printHelp()
+//    {
+//        System.out.println("Usage: -credentials-file <file> ");
+//        System.out.printf("File is supposed to be a standard property file with '%s', '%s', '%s', '%s', '%s', and '%s' as keys. " +
+//                          "The values for these keys will be overriden by their command-line counterparts when specified.%n",
+//                          CQL_USERNAME_PROPERTY_KEY,
+//                          CQL_PASSWORD_PROPERTY_KEY,
+//                          JMX_USERNAME_PROPERTY_KEY,
+//                          JMX_PASSWORD_PROPERTY_KEY,
+//                          TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY,
+//                          TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY);
+//    }
+//
+//    public static Runnable helpPrinter()
+//    {
+//        return SettingsCredentials::printHelp;
+//    }
 }

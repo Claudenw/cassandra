@@ -190,7 +190,7 @@ public class StressSettings implements Serializable
                  .split(" +");
     }
 
-    public static StressSettings get(Map<String, String[]> clArgs)
+   /* public static StressSettings get(Map<String, String[]> clArgs)
     {
         SettingsCommand command = SettingsCommand.get(clArgs);
         if (command == null)
@@ -232,7 +232,7 @@ public class StressSettings implements Serializable
         // FIXME
         return null;
         //return new StressSettings(command, rate, generate, insert, columns, errors, log, credentials, mode, node, schema, transport, port, jmx, graph, tokenRange, reporting);
-    }
+    }*/
 
     private static Map<String, String[]> parseMap(String[] args)
     {

@@ -23,11 +23,7 @@ package org.apache.cassandra.stress.settings;
 
 import java.io.File;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,6 +38,9 @@ import org.apache.cassandra.stress.operations.OpDistributionFactory;
 import org.apache.cassandra.stress.operations.SampledOpDistributionFactory;
 import org.apache.cassandra.stress.report.Timer;
 import org.apache.cassandra.stress.util.ResultLogger;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Converter;
+import org.apache.commons.cli.Options;
 
 // Settings unique to the mixed command type
 public class SettingsCommandUser extends SettingsCommand
@@ -51,51 +50,65 @@ public class SettingsCommandUser extends SettingsCommand
     private final Map<String, Double> ratios;
     private final DistributionFactory clustering;
     public final Map<String,  StressProfile> profiles;
-    private final Options options;
+    private final CommandLine commandLine;
     private String default_profile_name;
     private static final Pattern EXTRACT_SPEC_CMD = Pattern.compile("(.+)\\.(.+)");
 
 
-    public SettingsCommandUser(Options options)
+    public SettingsCommandUser(CommandLine commandLine)
     {
-        super(Command.USER, options.parent);
+        super(Command.USER, commandLine);
 
-        this.options = options;
-        clustering = options.clustering.get();
-        ratios = options.ops.ratios();
-        default_profile_name=null;
+        this.commandLine = commandLine;
+        try {
+            clustering = commandLine.getParsedOptionValue(StressOption.COMMAND_CLUSTERING.option(), StressOption.COMMAND_CLUSTERING.dfltSupplier());
+        /*
+           .addOption(StressOption.COMMAND_CLUSTERING.option())
+                .addOption(StressOption.COMMAND_PROFILE.option())
+                .addOption(StressOption.COMMAND_RATIO.option());
+         */
+            //ratios = commandLine.get
 
-
-        String yamlPath = options.profile.value();
-        profiles = new LinkedHashMap<>();
-
-        String[] yamlPaths = yamlPath.split(",");
-        for (String curYamlPath : yamlPaths)
-        {
-            File yamlFile = new File(curYamlPath);
-            URI yamlURI;
-            if (yamlFile.exists()) {
-            	yamlURI = yamlFile.toURI();
+            if (commandLine.hasOption(StressOption.COMMAND_RATIO.option())) {
+                ratios = ratios(s->s, commandLine.getOptionValues(StressOption.COMMAND_RATIO.option()));
+                if (ratios.size() == 0)
+                    throw new IllegalArgumentException("Must specify at least one command with a non-zero ratio");
             } else {
-            	yamlURI = URI.create(curYamlPath);
-            	String uriScheme = yamlURI.getScheme();
-            	if (uriScheme == null || "file".equals(uriScheme)) {
-                    throw new IllegalArgumentException("File '" + yamlURI.getPath() + "' doesn't exist!");
-            	}
+                ratios = Collections.emptyMap();
             }
-            StressProfile profile = StressProfile.load(yamlURI);
-            String specName = profile.specName;
-            if (default_profile_name == null) {default_profile_name=specName;} //first file is default
-            if (profiles.containsKey(specName))
-            {
-                throw new IllegalArgumentException("Must only specify a singe YAML file per table (including keyspace qualifier).");
+
+            default_profile_name = null;
+
+
+            profiles = new LinkedHashMap<>();
+
+            for (String yamlPath : commandLine.getOptionValues(StressOption.COMMAND_PROFILE.option())) {
+
+                File yamlFile = new File(yamlPath);
+                URI yamlURI;
+                if (yamlFile.exists()) {
+                    yamlURI = yamlFile.toURI();
+                } else {
+                    yamlURI = URI.create(yamlPath);
+                    String uriScheme = yamlURI.getScheme();
+                    if (uriScheme == null || "file".equals(uriScheme)) {
+                        throw new IllegalArgumentException("File '" + yamlURI.getPath() + "' doesn't exist!");
+                    }
+                }
+                StressProfile profile = StressProfile.load(yamlURI);
+                String specName = profile.specName;
+                if (default_profile_name == null) {
+                    default_profile_name = specName;
+                } //first file is default
+                if (profiles.containsKey(specName)) {
+                    throw new IllegalArgumentException("Must only specify a singe YAML file per table (including keyspace qualifier).");
+                }
+                profiles.put(specName, profile);
             }
-            profiles.put(specName, profile);
+
+        } catch (Exception e) {
+            throw asRuntimeException(e);
         }
-
-
-        if (ratios.size() == 0)
-            throw new IllegalArgumentException("Must specify at least one command with a non-zero ratio");
     }
 
     public boolean hasInsertOnly()
@@ -156,67 +169,74 @@ public class SettingsCommandUser extends SettingsCommand
         profiles.forEach((k,v)-> v.truncateTable(settings));
     }
 
-    static final class Options extends GroupedOptions
-    {
-        final SettingsCommand.Options parent;
-        protected Options(SettingsCommand.Options parent)
-        {
-            this.parent = parent;
-        }
-        final OptionDistribution clustering = new OptionDistribution("clustering=", "gaussian(1..10)", "Distribution clustering runs of operations of the same kind");
-        final OptionSimple profile = new OptionSimple("profile=", ".*", null, "Specify the path to a yaml cql3 profile. Multiple comma separated files can be added.", true);
-        final OptionAnyProbabilities ops = new OptionAnyProbabilities("ops", "Specify the ratios for inserts/queries to perform; e.g. ops(insert=2,<query1>=1) will perform 2 inserts for each query1. When using multiple files, specify as keyspace.table.op.");
-
-        @Override
-        public List<? extends Option> options()
-        {
-            return merge(Arrays.asList(ops, profile, clustering), parent.options());
-        }
-    }
+//    static final class Options extends GroupedOptions
+//    {
+//        final SettingsCommand.Options parent;
+//        protected Options(SettingsCommand.Options parent)
+//        {
+//            this.parent = parent;
+//        }
+//        final OptionDistribution clustering = new OptionDistribution("clustering=", "gaussian(1..10)", "Distribution clustering runs of operations of the same kind");
+//        final OptionSimple profile = new OptionSimple("profile=", ".*", null, "Specify the path to a yaml cql3 profile. Multiple comma separated files can be added.", true);
+//        final OptionAnyProbabilities ops = new OptionAnyProbabilities("ops", "Specify the ratios for inserts/queries to perform; e.g. ops(insert=2,<query1>=1) will perform 2 inserts for each query1. When using multiple files, specify as keyspace.table.op.");
+//
+//        @Override
+//        public List<? extends Option> options()
+//        {
+//            return merge(Arrays.asList(ops, profile, clustering), parent.options());
+//        }
+//
 
     // CLI utility methods
+
+    public static Options getOptions() {
+        return new Options()
+                .addOption(StressOption.COMMAND_CLUSTERING.option())
+                .addOption(StressOption.COMMAND_PROFILE.option())
+                .addOption(StressOption.COMMAND_RATIO.option());
+    }
 
     public void printSettings(ResultLogger out)
     {
         super.printSettings(out);
         out.printf("  Command Ratios: %s%n", ratios);
-        out.printf("  Command Clustering Distribution: %s%n", options.clustering.getOptionAsString());
-        out.printf("  Profile File(s): %s%n", options.profile.value());
+        out.printf("  Command Clustering Distribution: %s%n", commandLine.getOptionValue(StressOption.COMMAND_CLUSTERING.option()));
+        out.printf("  Profile File(s): %s%n", String.join(", ", commandLine.getOptionValues(StressOption.COMMAND_PROFILE.option())));
     }
 
 
-    public static SettingsCommandUser build(String[] params)
-    {
-        GroupedOptions options = GroupedOptions.select(params,
-                new Options(new Uncertainty()),
-                new Options(new Duration()),
-                new Options(new Count()));
-        if (options == null)
-        {
-            printHelp();
-            System.out.println("Invalid USER options provided, see output for valid options");
-            System.exit(1);
-        }
-        return new SettingsCommandUser((Options) options);
-    }
-
-    public static void printHelp()
-    {
-        GroupedOptions.printOptions(System.out, "user",
-                                    new Options(new Uncertainty()),
-                                    new Options(new Count()),
-                                    new Options(new Duration()));
-    }
-
-    public static Runnable helpPrinter()
-    {
-        return new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                printHelp();
-            }
-        };
-    }
+//    public static SettingsCommandUser build(String[] params)
+//    {
+//        GroupedOptions options = GroupedOptions.select(params,
+//                new Options(new Uncertainty()),
+//                new Options(new Duration()),
+//                new Options(new Count()));
+//        if (options == null)
+//        {
+//            printHelp();
+//            System.out.println("Invalid USER options provided, see output for valid options");
+//            System.exit(1);
+//        }
+//        return new SettingsCommandUser((Options) options);
+//    }
+//
+//    public static void printHelp()
+//    {
+//        GroupedOptions.printOptions(System.out, "user",
+//                                    new Options(new Uncertainty()),
+//                                    new Options(new Count()),
+//                                    new Options(new Duration()));
+//    }
+//
+//    public static Runnable helpPrinter()
+//    {
+//        return new Runnable()
+//        {
+//            @Override
+//            public void run()
+//            {
+//                printHelp();
+//            }
+//        };
+//    }
 }

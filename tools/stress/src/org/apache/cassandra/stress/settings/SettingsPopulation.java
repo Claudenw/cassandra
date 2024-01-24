@@ -24,7 +24,6 @@ package org.apache.cassandra.stress.settings;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 
@@ -33,8 +32,6 @@ import org.apache.commons.cli.*;
 import org.apache.cassandra.stress.generate.DistributionFactory;
 import org.apache.cassandra.stress.generate.PartitionGenerator;
 import org.apache.cassandra.stress.util.ResultLogger;
-import org.apache.commons.cli.converters.Converter;
-import org.apache.commons.cli.converters.Verifier;
 
 
 public class SettingsPopulation extends AbstractSettings implements Serializable
@@ -61,7 +58,7 @@ public class SettingsPopulation extends AbstractSettings implements Serializable
 
         OPTIONS.addOption(org.apache.commons.cli.Option.builder(ORDER).hasArg().desc( "Defines the (intra-)partition order; if not specified, will be consistent but arbitrary order.  Valid values are: "+
                         String.join(", ", (List<String>)Arrays.stream(PartitionGenerator.Order.values()).map(Enum::name).collect(Collectors.toList())))
-                .type(PartitionGenerator.Order.class).build());
+                .type(PartitionGenerator.Order.class).verifier(ORDER_VERIFIER).build());
         DIST_GROUP = new OptionGroup();
         DIST_GROUP.addOption(org.apache.commons.cli.Option.builder(DIST).hasArg().desc("Seeds are selected from this distribution").type(DistributionFactory.class).build());
         DIST_GROUP.addOption(org.apache.commons.cli.Option.builder(SEQ).hasArg().desc("Generate all seeds in sequence").type(long[].class).converter(DIST_CONVERTER).build());

@@ -28,7 +28,6 @@ import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.apache.cassandra.db.marshal.*;
 import org.apache.cassandra.stress.generate.Distribution;
@@ -38,10 +37,10 @@ import org.apache.cassandra.stress.util.ResultLogger;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.converters.Verifier;
+
+import static java.lang.String.format;
 
 /**
  * For parsing column options
@@ -71,10 +70,10 @@ public class SettingsColumn extends AbstractSettings implements Serializable
     {
         try
         {
-            sizeDistribution = cmdLine.getParsedOptionValue(SIZE, SIZE_DEFAULT);
+            sizeDistribution = cmdLine.getParsedOptionValue(StressOption.COL_COUNT.option(), StressOption.COL_COUNT.dfltSupplier());
             {
-                timestamp = cmdLine.getOptionValue(TIMESTAMP);
-                comparator = cmdLine.getOptionValue(COMPARATOR, COMPARATOR_DEFAULT);
+                timestamp = cmdLine.getOptionValue(StressOption.COL_TIMESTAMP.option());
+                comparator = cmdLine.getOptionValue(StressOption.COL_COMPARATOR.option(), (String)StressOption.COL_COMPARATOR.dfltSupplier().get());
 //            -- THE following is replaced by the verifier
 //            AbstractType parsed = null;
 //
@@ -94,7 +93,7 @@ public class SettingsColumn extends AbstractSettings implements Serializable
 //                System.exit(1);
 //            }1
             }
-            if (cmdLine.hasOption(NAMES))
+            if (cmdLine.hasOption(StressOption.COL_NAMES.option()))
             {
                 AbstractType comparator;
                 try
@@ -107,7 +106,7 @@ public class SettingsColumn extends AbstractSettings implements Serializable
                     throw new IllegalArgumentException(this.comparator + " is not a valid type");
                 }
 
-                final String[] names = cmdLine.getOptionValue(NAMES).split(",");
+                final String[] names = cmdLine.getOptionValue(StressOption.COL_NAMES.option()).split(",");
                 this.names = new ArrayList<>(names.length);
 
                 for (String columnName : names)
@@ -129,13 +128,13 @@ public class SettingsColumn extends AbstractSettings implements Serializable
                     @Override
                     public String getConfigAsString()
                     {
-                        return String.format("Count:  fixed=%d", nameCount);
+                        return format("Count:  fixed=%d", nameCount);
                     }
                 };
             }
             else
             {
-                this.countDistribution = cmdLine.getParsedOptionValue(COUNT, COUNT_DEFAULT);
+                this.countDistribution = cmdLine.getParsedOptionValue(StressOption.COL_COUNT.option(), StressOption.COL_COUNT.dfltSupplier());
                 ByteBuffer[] names = new ByteBuffer[(int) countDistribution.get().maxValue()];
                 String[] namestrs = new String[(int) countDistribution.get().maxValue()];
                 for (int i = 0; i < names.length; i++)
@@ -155,7 +154,7 @@ public class SettingsColumn extends AbstractSettings implements Serializable
             }
             maxColumnsPerKey = (int) countDistribution.get().maxValue();
             variableColumnCount = countDistribution.get().minValue() < maxColumnsPerKey;
-            slice = cmdLine.hasOption(SLICE);
+            slice = cmdLine.hasOption(StressOption.COL_SLICE.option());
         } catch (Exception e) {
             throw asRuntimeException(e);
         }
@@ -164,41 +163,20 @@ public class SettingsColumn extends AbstractSettings implements Serializable
     // Option Declarations
 
 
-   private static final String SUPER_COLUMNS="-col-super";
-    private static final int SUPER_COLUMN_DEFAULT=0;
-    private static final String COMPARATOR="-col-comparator";
-    private static final String COMPARATOR_DEFAULT = "AsciiType";
 
-    private enum AcceptableComparators {TimeUUIDType, AsciiType, UTF8Type };
-    private static final Verifier COMPARATOR_VERIFIER = new EnumVerifier(AcceptableComparators.AsciiType);
-    private static final String SLICE="-col-slice";
-    private static final String TIMESTAMP="-col-timestamp";
-    private static final String SIZE="-col-size";
-    private static final DistributionFactory SIZE_DEFAULT = OptionDistribution.get("FIXED(34)");
-
-    private static final String NAMES="-col-names";
-
-    private static final String COUNT="-col-count";
-    private static final DistributionFactory COUNT_DEFAULT = OptionDistribution.get("FIXED(5)");
-
-    private static OptionGroup COUNT_OR_NAMES;
     public static Options getOptions() {
-     String validComparatorStr = String.join(", ", Arrays.stream(AcceptableComparators.values()).map(AcceptableComparators::name).collect(Collectors.toList()));
 
-     Options result = new Options()
-        .addOption( org.apache.commons.cli.Option.builder(SUPER_COLUMNS).hasArg().type(Integer.class).desc("Number of super columns to use (no super columns used if not specified)").build())
-        .addOption( org.apache.commons.cli.Option.builder(COMPARATOR).hasArg().verifier(COMPARATOR_VERIFIER)
-                          .desc("Column Comparator to use. Valid values are: "+validComparatorStr).build())
-        .addOption( new org.apache.commons.cli.Option(SLICE, "If set, range slices will be used for reads, otherwise a names query will be"))
-        .addOption( org.apache.commons.cli.Option.builder(TIMESTAMP).hasArg().verifier(Verifier.INTEGER).desc("If set, all columns will be written with the given timestamp").build())
-        .addOption( org.apache.commons.cli.Option.builder(SIZE).hasArg().type(DistributionFactory.class).desc("Cell size distribution").build());
-
+        Options result = new Options()
+                .addOption(StressOption.COL_SUPER.option())
+                .addOption(StressOption.COL_COMPARATOR.option())
+                .addOption(StressOption.COL_SLICE.option())
+                .addOption(StressOption.COL_TIMESTAMP.option())
+                .addOption(StressOption.COL_SIZE.option());
         OptionGroup COUNT_OR_NAMES = new OptionGroup()
-     .addOption(  new org.apache.commons.cli.Option(NAMES, true, "Column names"))
+                .addOption(StressOption.COL_NAMES.option())
+                .addOption(StressOption.COL_COUNT.option());
 
-     .addOption(org.apache.commons.cli.Option.builder(COUNT).hasArg().type(DistributionFactory.class).desc("Cell count distribution, per operation").build());
-     result.addOptionGroup(COUNT_OR_NAMES);
-
+        result.addOptionGroup(COUNT_OR_NAMES);
         return result;
     }
 
@@ -308,9 +286,4 @@ public class SettingsColumn extends AbstractSettings implements Serializable
         this.names = new ArrayList<>(namesBuffer);
     }
 
-    public static void main(String[] args) {
-        Options options = getOptions();
-        HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp("myapp", "HEADER", options, "FOOTER", true);
-    }
 }

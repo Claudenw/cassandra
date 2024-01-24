@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -34,6 +35,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
 
 import org.apache.cassandra.stress.util.ResultLogger;
+
+import static java.lang.String.format;
 
 public class SettingsPort extends AbstractSettings implements Serializable
 {
@@ -43,6 +46,9 @@ public class SettingsPort extends AbstractSettings implements Serializable
 
     private static final String NATIVE = "port-native";
     private static final String JMX = "port-jmx";
+
+    private static final int DEFAULT_NATIVE = 9042;
+    private static final int DEFAULT_JMX = 7199;
 
 
 //    public SettingsPort(PortOptions options)
@@ -54,17 +60,18 @@ public class SettingsPort extends AbstractSettings implements Serializable
     public SettingsPort(CommandLine cmdLine)
     {
         try {
-            nativePort = cmdLine.getParsedOptionValue(NATIVE, 9042);
-            jmxPort = cmdLine.getParsedOptionValue(JMX, 7199);
+            nativePort = cmdLine.getParsedOptionValue(NATIVE, DEFAULT_NATIVE);
+            jmxPort = cmdLine.getParsedOptionValue(JMX, DEFAULT_JMX);
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
     }
 
     public static Options getOptions() {
+        Predicate<String> boundsChecker = rangeVerifier(0, Range.inclusive, 65535, Range.inclusive);
         Options result = new Options();
-        result.addOption( Option.builder(NATIVE).hasArg(true).desc("Use this port for the Cassandra native protocol").type(Integer.class).build());
-        result.addOption( Option.builder(JMX).hasArg(true).desc("Use this port for retrieving statistics over jmx" ).type(Integer.class).build());
+        result.addOption( Option.builder(NATIVE).hasArg(true).desc(format("Use this port for the Cassandra native protocol. (Default %s)", DEFAULT_NATIVE)).type(Integer.class).verifier(boundsChecker).build());
+        result.addOption( Option.builder(JMX).hasArg(true).desc(format("Use this port for retrieving statistics over jmx. (Default %s)", DEFAULT_JMX) ).type(Integer.class).verifier(boundsChecker).build());
         return result;
     }
 

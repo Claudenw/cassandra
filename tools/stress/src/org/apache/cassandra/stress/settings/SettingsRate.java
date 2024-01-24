@@ -27,6 +27,8 @@ import org.apache.cassandra.stress.util.ResultLogger;
 import org.apache.commons.cli.*;
 import org.apache.commons.cli.Option;
 
+import static java.lang.String.format;
+
 public class SettingsRate extends AbstractSettings implements Serializable
 {
 
@@ -104,16 +106,16 @@ public class SettingsRate extends AbstractSettings implements Serializable
 
     private static final int IGNORE = -1;
 
-    private static final String AUTO = "-rate-auto";
-    private static final String MIN_CLIENTS = "-rate-min-clients";
+    private static final String AUTO = "rate-auto";
+    private static final String MIN_CLIENTS = "rate-min-clients";
     private static final int MIN_CLIENTS_DEFAULT = 4;
-    private static final String MAX_CLIENTS = "-rate-max-clients";
+    private static final String MAX_CLIENTS = "rate-max-clients";
     private static final int MAX_CLIENTS_DEFAULT = 1000;
-    private static final String FIXED = "-rate-fixed";
-    private static final String THROTTLE = "-rate-throttle";
+    private static final String FIXED = "rate-fixed";
+    private static final String THROTTLE = "rate-throttle";
     private static final int THROTTLE_DEFAULT = 0;
 
-    private static final String CLIENTS = "-rate-clients";
+    private static final String CLIENTS = "rate-clients";
 
     private static OptionGroup AUTO_OR_THREADS;
 
@@ -149,13 +151,13 @@ public class SettingsRate extends AbstractSettings implements Serializable
     public static Options getOptions() {
         Options result = new Options();
         AUTO_OR_THREADS = new OptionGroup()
-                .addOption(new Option(AUTO, "stop increasing threads once throughput saturates"))
-                .addOption(Option.builder(FIXED).hasArg(true).desc("run this many clients concurrently" ).type(Integer.class).build())
-                .addOption(Option.builder(THROTTLE).hasArg(true).desc("throttle operations per second across all clients to a maximum rate (or less) with no implied schedule.").type(Integer.class).build());
+                .addOption(new Option(AUTO, "Stop increasing threads once throughput saturates."))
+                .addOption(Option.builder(FIXED).hasArg(true).desc("Run this many clients concurrently." ).type(Integer.class).verifier(POSITIVE_VERIFIER).build())
+                .addOption(Option.builder(THROTTLE).hasArg(true).desc("Throttle operations per second across all clients to a maximum rate (or less) with no implied schedule.").type(Integer.class).verifier(POSITIVE_VERIFIER).build());
         result.addOptionGroup(AUTO_OR_THREADS);
-        result.addOption(Option.builder(MIN_CLIENTS).hasArg(true).desc("run at least this many clients concurrently.  (Only valid with "+AUTO+")").type(Integer.class).build());
-        result.addOption(Option.builder(MAX_CLIENTS).hasArg(true).desc("run at most this many clients concurrently.  (Only valid with "+AUTO+")").type(Integer.class).build());
-        result.addOption(Option.builder(CLIENTS).hasArg(true).desc("run this many clients concurrently.  (Only valid with "+FIXED+" or "+THROTTLE+")").type(Integer.class).build());
+        result.addOption(Option.builder(MIN_CLIENTS).hasArg(true).desc(format("Run at least this many clients concurrently.  (Only valid with --%s) (Default %s)", AUTO, MIN_CLIENTS_DEFAULT)).type(Integer.class).verifier(POSITIVE_VERIFIER).build());
+        result.addOption(Option.builder(MAX_CLIENTS).hasArg(true).desc(format("Run at most this many clients concurrently.  (Only valid with --%s) (Default %s)", AUTO, MAX_CLIENTS_DEFAULT)).type(Integer.class).verifier(POSITIVE_VERIFIER).build());
+        result.addOption(Option.builder(CLIENTS).hasArg(true).desc(format("Run this many clients concurrently.  (Only valid with --%s or --%s", FIXED, THROTTLE)).type(Integer.class).verifier(POSITIVE_VERIFIER).build());
         return result;
     }
 

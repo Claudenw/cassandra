@@ -27,34 +27,40 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.stress.util.ResultLogger;
+import org.apache.commons.cli.CommandLine;
 
-public class SettingsErrors implements Serializable
+public class SettingsErrors extends AbstractSettings
 {
 
     public final boolean ignore;
     public final int tries;
     public final boolean skipReadValidation;
 
-    public SettingsErrors(Options options)
+    public SettingsErrors(CommandLine commandLine)
     {
-        ignore = options.ignore.setByUser();
-        this.tries = Math.max(1, Integer.parseInt(options.retries.value()) + 1);
-        skipReadValidation = options.skipReadValidation.setByUser();
+        try {
+            ignore = commandLine.hasOption(StressOption.ERROR_IGNORE.option());
+            int retries = commandLine.getParsedOptionValue(StressOption.ERROR_RETRIES.option(), StressOption.ERROR_RETRIES.dfltSupplier());
+            this.tries = retries + 1;
+            skipReadValidation = commandLine.hasOption(StressOption.SKIP_READ_VALIDATION.option());
+        } catch (Exception e) {
+            throw asRuntimeException(e);
+        }
     }
 
     // Option Declarations
 
-    public static final class Options extends GroupedOptions
-    {
-        final OptionSimple retries = new OptionSimple("retries=", "[0-9]+", "9", "Number of tries to perform for each operation before failing", false);
-        final OptionSimple ignore = new OptionSimple("ignore", "", null, "Do not fail on errors", false);
-        final OptionSimple skipReadValidation = new OptionSimple("skip-read-validation", "", null, "Skip read validation and message output", false);
-        @Override
-        public List<? extends Option> options()
-        {
-            return Arrays.asList(retries, ignore, skipReadValidation);
-        }
-    }
+//    public static final class Options extends GroupedOptions
+//    {
+//        final OptionSimple retries = new OptionSimple("retries=", "[0-9]+", "9", "Number of tries to perform for each operation before failing", false);
+//        final OptionSimple ignore = new OptionSimple("ignore", "", null, "Do not fail on errors", false);
+//        final OptionSimple skipReadValidation = new OptionSimple("skip-read-validation", "", null, "Skip read validation and message output", false);
+//        @Override
+//        public List<? extends Option> options()
+//        {
+//            return Arrays.asList(retries, ignore, skipReadValidation);
+//        }
+//    }
 
     // CLI Utility Methods
     public void printSettings(ResultLogger out)
@@ -64,36 +70,36 @@ public class SettingsErrors implements Serializable
     }
 
 
-    public static SettingsErrors get(Map<String, String[]> clArgs)
-    {
-        String[] params = clArgs.remove("-errors");
-        if (params == null)
-            return new SettingsErrors(new Options());
-
-        GroupedOptions options = GroupedOptions.select(params, new Options());
-        if (options == null)
-        {
-            printHelp();
-            System.out.println("Invalid -errors options provided, see output for valid options");
-            System.exit(1);
-        }
-        return new SettingsErrors((Options) options);
-    }
-
-    public static void printHelp()
-    {
-        GroupedOptions.printOptions(System.out, "-errors", new Options());
-    }
-
-    public static Runnable helpPrinter()
-    {
-        return new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                printHelp();
-            }
-        };
-    }
+//    public static SettingsErrors get(Map<String, String[]> clArgs)
+//    {
+//        String[] params = clArgs.remove("-errors");
+//        if (params == null)
+//            return new SettingsErrors(new Options());
+//
+//        GroupedOptions options = GroupedOptions.select(params, new Options());
+//        if (options == null)
+//        {
+//            printHelp();
+//            System.out.println("Invalid -errors options provided, see output for valid options");
+//            System.exit(1);
+//        }
+//        return new SettingsErrors((Options) options);
+//    }
+//
+//    public static void printHelp()
+//    {
+//        GroupedOptions.printOptions(System.out, "-errors", new Options());
+//    }
+//
+//    public static Runnable helpPrinter()
+//    {
+//        return new Runnable()
+//        {
+//            @Override
+//            public void run()
+//            {
+//                printHelp();
+//            }
+//        };
+//    }
 }
