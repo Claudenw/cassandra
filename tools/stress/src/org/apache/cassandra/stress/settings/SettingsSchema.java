@@ -24,6 +24,7 @@ import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Converter;
@@ -46,9 +47,24 @@ public class SettingsSchema extends AbstractSettings implements Serializable
                                                                                                                             Option.builder("schema-replication-strategy")
                                                                                                                                   .desc( "The replication strategy to use followed by optional arguments.  Must be followed by another option or '--'., defaults to SimpleStrategy.")
                                                                                                                                   .converter(Converter.CLASS).argName("class").hasArgs().build());
+
+    public static final StressOption<Map<String,String>> SCHEMA_REP_ARGS = new StressOption<>(() -> Collections.emptyMap(),
+                                                                                                                            Option.builder("schema-replication-arguments")
+                                                                                                                                  .hasArgs()
+                                                                                                                                  .valueSeparator()
+                                                                                                                                  .desc( "The optional arguments for the replication strategy.  Must be followed by another option or '--'.")
+                                                                                                                                  .hasArgs().build());
     public static final StressOption<Class<? extends AbstractCompactionStrategy>> SCHEMA_COMPACTION_STRATEGY = new StressOption<>(Option.builder("schema-compaction").desc("The compaction strategy with optional arguments in the form X=Y. " +
                                                                                                                                                                            "Must be followed by another option or '--'")
                                                                                                                                         .converter(CompactionParams::classFromName).hasArg().argName("class or short name").build());
+
+    public static final StressOption<Map<String,String>> SCHEMA_COMPACTION_ARGS = new StressOption<>(() -> Collections.emptyMap(),
+                                                                                              Option.builder("schema-compaction-arguments")
+                                                                                                    .hasArgs()
+                                                                                                    .valueSeparator()
+                                                                                                    .desc( "The optional arguments for the compaction strategy.  Must be followed by another option or '--'.")
+                                                                                                    .hasArgs().build());
+
     public static final StressOption<String> SCHEMA_KEYSPACE = new StressOption<>(()->"keyspace1", new Option("schema-keyspace", true, "The keyspace name to use. (Default: keyspace1)"));
     public static final StressOption<String> SCHEMA_COMPRESSION = new StressOption<>(new Option("schema-compression", true, "Specify the compression to use for sstable. (Default: no-compression)"));
 
@@ -58,6 +74,7 @@ public class SettingsSchema extends AbstractSettings implements Serializable
     private final String compression;
     private final Class<? extends AbstractCompactionStrategy> compactionStrategy;
     private final Map<String, String> compactionStrategyOptions;
+
     public final String keyspace;
 
     public SettingsSchema(CommandLine commandLine, SettingsCommand command)
@@ -68,10 +85,14 @@ public class SettingsSchema extends AbstractSettings implements Serializable
             keyspace = SCHEMA_KEYSPACE.extract(commandLine);
 
         replicationStrategy = SCHEMA_REP_STRATEGY.extract(commandLine);
-        replicationStrategyOptions = SCHEMA_REP_STRATEGY.extractMap(commandLine);
+        replicationStrategyOptions = SCHEMA_REP_ARGS.extractMap(commandLine);
+        if (replicationStrategyOptions.get("replication_factor") == null)
+        {
+            replicationStrategyOptions.put("replication_factor", "1");
+        }
         compression = SCHEMA_COMPRESSION.extract(commandLine);
         compactionStrategy = SCHEMA_COMPACTION_STRATEGY.extract(commandLine);
-        compactionStrategyOptions = SCHEMA_COMPACTION_STRATEGY.extractMap(commandLine);
+        compactionStrategyOptions = SCHEMA_COMPACTION_ARGS.extractMap(commandLine);
     }
 
     /**
@@ -115,23 +136,9 @@ public class SettingsSchema extends AbstractSettings implements Serializable
          .append(keyspace)
          .append("\" WITH replication = {'class': '")
          .append(replicationStrategy.getName())
-         .append("'");
-
-        if (replicationStrategyOptions.isEmpty())
-        {
-            b.append(", 'replication_factor': '1'}");
-        }
-        else
-        {
-            for(Map.Entry<String, String> entry : replicationStrategyOptions.entrySet())
-            {
-                b.append(", '").append(entry.getKey()).append("' : '").append(entry.getValue()).append("'");
-            }
-
-            b.append("}");
-        }
-
-        b.append(" AND durable_writes = true;\n");
+         .append("', ")
+         .append(optionsAsString(replicationStrategyOptions))
+         .append("}  AND durable_writes = true;\n");
 
         return b.toString();
     }
@@ -168,12 +175,9 @@ public class SettingsSchema extends AbstractSettings implements Serializable
         //Compaction
         if (compactionStrategy != null)
         {
-            b.append(" AND compaction = { 'class' : '").append(compactionStrategy.getName()).append("'");
-
-            for (Map.Entry<String, String> entry : compactionStrategyOptions.entrySet())
-                b.append(", '").append(entry.getKey()).append("' : '").append(entry.getValue()).append("'");
-
-            b.append("}");
+            b.append(" AND compaction = { 'class' : '").append(compactionStrategy.getName()).append("', ")
+            .append(optionsAsString(compactionStrategyOptions))
+            .append("}");
         }
 
         b.append(";\n");
@@ -207,7 +211,9 @@ public class SettingsSchema extends AbstractSettings implements Serializable
     public static Options getOptions() {
         return new Options()
                .addOption(SCHEMA_COMPACTION_STRATEGY.option())
+               .addOption(SCHEMA_COMPACTION_ARGS.option())
                .addOption(SCHEMA_REP_STRATEGY.option())
+               .addOption(SCHEMA_REP_ARGS.option())
                .addOption(SCHEMA_COMPRESSION.option())
                .addOption(SCHEMA_KEYSPACE.option());
     }
@@ -226,16 +232,20 @@ public class SettingsSchema extends AbstractSettings implements Serializable
 //        }
 //    }
 
+    private String optionsAsString(Map<String,String> options) {
+        return String.join(", ", options.entrySet().stream().map( e -> String.format("'%s' : '%s'", e.getKey(), e.getValue())).collect(Collectors.toSet()));
+    }
+
     // CLI Utility Methods
     public void printSettings(ResultLogger out)
     {
         out.println("  Keyspace: " + keyspace);
         out.println("  Replication Strategy: " + replicationStrategy);
-        out.println("  Replication Strategy Options: " + replicationStrategyOptions);
+        out.println("  Replication Strategy Options: " + optionsAsString(replicationStrategyOptions));
 
         out.println("  Table Compression: " + compression);
         out.println("  Table Compaction Strategy: " + compactionStrategy);
-        out.println("  Table Compaction Strategy Options: " + compactionStrategyOptions);
+        out.println("  Table Compaction Strategy Options: " + optionsAsString(compactionStrategyOptions));
     }
 
 //

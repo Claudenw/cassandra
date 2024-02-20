@@ -218,15 +218,17 @@ abstract class AbstractSettings {
         public Map<String,String> extractMap(CommandLine commandLine)
         {
             Map<String,String> result = new HashMap<>();
-            for (String s : extractOptions(commandLine))
-            {
-                String[] parts = s.split("=");
-                if (parts.length == 2 && parts[1].length() > 0 && parts[0].length() > 0)
-                {
-                    if (result.put(parts[0], parts[1]) != null)
-                        throw new IllegalArgumentException(parts[0] + " set twice");
-                }
-            }
+            Properties p = commandLine.getOptionProperties(option);
+            p.forEach( (k,v) -> result.put(k.toString(),v.toString()));
+//            for (String s : extractOptions(commandLine))
+//            {
+//                String[] parts = s.split("=");
+//                if (parts.length == 2 && parts[1].length() > 0 && parts[0].length() > 0)
+//                {
+//                    if (result.put(parts[0], parts[1]) != null)
+//                        throw new IllegalArgumentException(parts[0] + " set twice");
+//                }
+//            }
             return result;
         }
     }
