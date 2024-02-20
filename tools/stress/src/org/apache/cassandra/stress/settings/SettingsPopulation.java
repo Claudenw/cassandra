@@ -22,51 +22,50 @@ package org.apache.cassandra.stress.settings;
 
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
-
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
 
 import org.apache.cassandra.stress.generate.DistributionFactory;
 import org.apache.cassandra.stress.generate.PartitionGenerator;
 import org.apache.cassandra.stress.util.ResultLogger;
 
+import static java.lang.String.format;
 
 public class SettingsPopulation extends AbstractSettings implements Serializable
 {
 
+    public static final StressOption<PartitionGenerator.Order> POPULATION_ORDER = new StressOption<>(Option.builder("population-order").hasArg()
+                                                                                                           .desc("Defines the (intra-)partition order; if not specified, will be consistent but arbitrary order.  ")
+                                                                                                           .type(PartitionGenerator.Order.class).build());
     public final DistributionFactory distribution;
     public final DistributionFactory readlookback;
     public final PartitionGenerator.Order order;
     public final boolean wrap;
     public final long[] sequence;
 
-    private static final String ORDER="population-order";
-    private static final String DIST="population-dist";
-    private static final String READ="population-read-lookback";
-    private static final String NO_WRAP="population-no-wrap";
-    private static final String SEQ="population-seq";
 
+    public static final StressOption<long[]> POPULATION_SEQ = new StressOption<>(Option.builder("population-seq").hasArg()
+                                                                                 .argName("start,end")
+                                                                                       .desc("Generate all seeds in sequence")
+                                                                                       .type(Long[].class)
+                                                                                       .converter(DIST_CONVERTER)
+                                                                                       .build());
+    public static final StressOption<DistributionFactory> POPULATION_READ = new StressOption<>(Option.builder("population-read-lookback").hasArg()
+                                                                                                     .desc(format("Select read seeds from the recently visited write seeds. Only applies if %s is specified.", POPULATION_SEQ.key()))
+                                                                                                     .type(DistributionFactory.class).build());
+    public static final StressOption<String> POPULATION_NO_WRAP = new StressOption<>(Option.builder("population-no-wrap")
+                                                                                           .desc(format("Terminate the stress test once all seeds in the range have been visited. Only applies if %s is specified.", POPULATION_SEQ.key()))
+                                                                                           .build());
+    public static final StressOption<DistributionFactory> POPULATION_DIST = new StressOption<>(Option.builder("population-dist").hasArg()
+                                                                                                     .desc("Seeds are selected from this distribution.")
+                                                                                                     .type(DistributionFactory.class).build());
+    private static final OptionGroup DIST_GROUP = new OptionGroup()
+    .addOption(POPULATION_DIST.option())
+    .addOption(POPULATION_SEQ.option());
 
-    private static final OptionGroup DIST_GROUP;
-    private static final Options OPTIONS;
-
-    static {
-        OPTIONS = new Options();
-
-        OPTIONS.addOption(org.apache.commons.cli.Option.builder(ORDER).hasArg().desc( "Defines the (intra-)partition order; if not specified, will be consistent but arbitrary order.  Valid values are: "+
-                        String.join(", ", (List<String>)Arrays.stream(PartitionGenerator.Order.values()).map(Enum::name).collect(Collectors.toList())))
-                .type(PartitionGenerator.Order.class).verifier(ORDER_VERIFIER).build());
-        DIST_GROUP = new OptionGroup();
-        DIST_GROUP.addOption(org.apache.commons.cli.Option.builder(DIST).hasArg().desc("Seeds are selected from this distribution").type(DistributionFactory.class).build());
-        DIST_GROUP.addOption(org.apache.commons.cli.Option.builder(SEQ).hasArg().desc("Generate all seeds in sequence").type(long[].class).converter(DIST_CONVERTER).build());
-        OPTIONS.addOptionGroup(DIST_GROUP);
-        OPTIONS.addOption(org.apache.commons.cli.Option.builder(READ).desc("Select read seeds from the recently visited write seeds.  Only applies if "+SEQ+" is specified")
-                .hasArg().type(DistributionFactory.class).build());
-        OPTIONS.addOption(new org.apache.commons.cli.Option(NO_WRAP, "Terminate the stress test once all seeds in the range have been visited.  Only applies if "+SEQ+" is specified"));
-    }
 
 //    private SettingsPopulation(GenerateOptions options, DistributionOptions dist, SequentialOptions pop)
 //    {
@@ -115,36 +114,36 @@ public class SettingsPopulation extends AbstractSettings implements Serializable
     this.wrap = wrap;
     }
 
-//    private SettingsPopulation(CommandLine cmdLine) throws ParseException {
-//        this.order = cmdLine.getParsedOptionValue(ORDER);
-//        if (cmdLine.hasOption(DIST)) {
-//            this.distribution =  cmdLine.getParsedOptionValue(DIST);
+//    private SettingsPopulation(CommandLine cmdLine, SettingsCommand settingsCommand)  {
+//        this.order = POPULATION_ORDER.extract(cmdLine);
+//        if (cmdLine.hasOption(POPULATION_DIST.option())) {
+//            this.distribution =  POPULATION_DIST.extract(cmdLine);
 //            this.sequence = null;
 //            this.readlookback = null;
 //            this.wrap = false;
 //        } else
 //        {
 //            this.distribution = null;
-//            this.sequence = cmdLine.getParsedOptionValue(SEQ);
-//            this.readlookback = cmdLine.getParsedOptionValue(READ);
-//            this.wrap = !cmdLine.hasOption(NO_WRAP);
+//            this.sequence = POPULATION_SEQ.extract(cmdLine);
+//            this.readlookback = POPULATION_READ.extract(cmdLine);
+//            this.wrap = !cmdLine.hasOption(POPULATION_NO_WRAP.option());
 //        }
 //    }
 
 
-    public static SettingsPopulation get(CommandLine cmdLine, SettingsCommand command) {
+    public static SettingsPopulation get(CommandLine commandLine, SettingsCommand command) {
         // set default size to number of commands requested, unless set to err convergence, then use 1M
         long defaultLimit = command.count <= 0 ? 1000000 : command.count;
         try {
-        PartitionGenerator.Order order = cmdLine.getParsedOptionValue(ORDER);
+        PartitionGenerator.Order order = POPULATION_ORDER.extract(commandLine);
 
         if (DIST_GROUP.getSelected() == null)
         {
             if (command instanceof SettingsCommandUser && ((SettingsCommandUser)command).hasInsertOnly())
             {
                 return new SettingsPopulation(order, new long[] {1, defaultLimit},
-                                              cmdLine.hasOption(READ) ? OptionDistribution.get(cmdLine.getOptionValue(READ)) : null,
-                                              !cmdLine.hasOption(NO_WRAP));
+                                              POPULATION_READ.extract(commandLine),
+                                              !commandLine.hasOption(POPULATION_NO_WRAP.option()));
             }
 
             // return defaults:
@@ -152,16 +151,16 @@ public class SettingsPopulation extends AbstractSettings implements Serializable
             {
                 case WRITE:
                 case COUNTER_WRITE:
-                    return new SettingsPopulation(order, new long[] {1, defaultLimit}, cmdLine.getParsedOptionValue(READ), !cmdLine.hasOption(NO_WRAP));
+                    return new SettingsPopulation(order, new long[] {1, defaultLimit}, POPULATION_READ.extract(commandLine), !commandLine.hasOption(POPULATION_NO_WRAP.option()));
                 default:
                     return new SettingsPopulation(order, OptionDistribution.get( String.format("gaussian(1..%s)", defaultLimit)));
             }
         }
-        if (cmdLine.hasOption(DIST)) {
-            return new SettingsPopulation(order, OptionDistribution.get( cmdLine.getOptionValue(DIST)));
+        if (commandLine.hasOption(POPULATION_DIST.option())) {
+            return new SettingsPopulation(order, POPULATION_DIST.extract(commandLine));
         } else {
-            return new SettingsPopulation(order, cmdLine.getParsedOptionValue(SEQ, DIST_CONVERTER.apply("1.." + defaultLimit)),
-                    cmdLine.getParsedOptionValue(READ), !cmdLine.hasOption(NO_WRAP));
+            return new SettingsPopulation(order, commandLine.getParsedOptionValue(POPULATION_SEQ.option(), DIST_CONVERTER.apply("1.." + defaultLimit)),
+                    POPULATION_READ.extract(commandLine), !commandLine.hasOption(POPULATION_NO_WRAP.option()));
         }
         } catch (Exception ex) {
             throw asRuntimeException(ex);
@@ -171,7 +170,11 @@ public class SettingsPopulation extends AbstractSettings implements Serializable
 
     public static Options getOptions()
     {
-        return OPTIONS;
+        return new Options()
+        .addOptionGroup(DIST_GROUP)
+        .addOption(POPULATION_READ.option())
+        .addOption(POPULATION_NO_WRAP.option())
+        .addOption(POPULATION_ORDER.option());
     }
 
     // Option Declarations

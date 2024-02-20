@@ -19,16 +19,15 @@
 package org.apache.cassandra.stress.settings;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
-import java.util.Map;
 import java.util.Properties;
 
-import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.stress.util.ResultLogger;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+
+import static java.lang.String.format;
 
 public class SettingsCredentials extends AbstractSettings
 {
@@ -38,6 +37,14 @@ public class SettingsCredentials extends AbstractSettings
     public static final String JMX_PASSWORD_PROPERTY_KEY = "jmx.password";
     public static final String TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY = "transport.truststore.password";
     public static final String TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY = "transport.keystore.password";
+    public static final StressOption<String> CREDENTIAL_FILE = new StressOption<>(Option.builder("credential-file").hasArg().argName("file").desc(format("File is supposed to be a standard property file with '%s', '%s', '%s', '%s', '%s', and '%s' as keys. " +
+                                                                                                                                                         "The values for these keys will be overriden by their command-line counterparts when specified.%n",
+                                                                                                                                                         SettingsCredentials.CQL_USERNAME_PROPERTY_KEY,
+                                                                                                                                                         SettingsCredentials.CQL_PASSWORD_PROPERTY_KEY,
+                                                                                                                                                         SettingsCredentials.JMX_USERNAME_PROPERTY_KEY,
+                                                                                                                                                         SettingsCredentials.JMX_PASSWORD_PROPERTY_KEY,
+                                                                                                                                                         SettingsCredentials.TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY,
+                                                                                                                                                         SettingsCredentials.TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY)).build());
 
     private final String file;
 
@@ -50,8 +57,8 @@ public class SettingsCredentials extends AbstractSettings
 
     public SettingsCredentials(CommandLine commandLine)
     {
-        this.file = commandLine.getOptionValue(AbstractSettings.StressOption.CREDENTIAL_FILE.option());
-        if (commandLine.hasOption(StressOption.CREDENTIAL_FILE.option())) {
+        this.file = commandLine.getOptionValue(CREDENTIAL_FILE.option());
+        if (commandLine.hasOption(CREDENTIAL_FILE.option())) {
             Properties properties = new Properties();
             try (InputStream is = new FileInputStream(new org.apache.cassandra.io.util.File(file).toJavaIOFile())) {
                     properties.load(is);
@@ -72,6 +79,12 @@ public class SettingsCredentials extends AbstractSettings
                 transportTruststorePassword = null;
                 transportKeystorePassword = null;
         }
+    }
+
+    public static Options getOptions()
+    {
+        return new Options()
+               .addOption(CREDENTIAL_FILE.option());
     }
 
     // CLI Utility Methods

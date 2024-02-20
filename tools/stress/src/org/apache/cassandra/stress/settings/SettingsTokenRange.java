@@ -19,70 +19,80 @@
 package org.apache.cassandra.stress.settings;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 
 import org.apache.cassandra.stress.util.ResultLogger;
 
-public class SettingsTokenRange implements Serializable
+public class SettingsTokenRange extends AbstractSettings implements Serializable
 {
+    public static final StressOption<String> TOKEN_RANGE_WRAP = new StressOption<>(new Option("token-range-wrap", "Re-use token ranges in order to terminate stress iterations"));
+    public static final StressOption<Integer> TOKEN_RANGE_SPLIT_FACTORY = new StressOption<>(()->1, Option.builder("token-range-split").hasArg().desc("Split every token range by this factor")
+                                                                                                          .converter(s -> Ints.checkedCast(OptionDistribution.parseLong(s))).build());
     public final boolean wrap;
     public final int splitFactor;
-    private final TokenRangeOptions options;
+    //private final CommandLine options;
 
-    private SettingsTokenRange(TokenRangeOptions options)
+    public SettingsTokenRange(CommandLine commandLine)
     {
-        this.options = options;
-        this.wrap = options.wrap.setByUser();
-        this.splitFactor = Ints.checkedCast(OptionDistribution.parseLong(options.splitFactor.value()));
+       // this.options = commandLine;
+        this.wrap = commandLine.hasOption(TOKEN_RANGE_WRAP.option());
+        this.splitFactor = TOKEN_RANGE_SPLIT_FACTORY.extract(commandLine);
     }
 
-    private static final class TokenRangeOptions extends GroupedOptions
+    public static Options getOptions()
     {
-        final OptionSimple wrap = new OptionSimple("wrap", "", null, "Re-use token ranges in order to terminate stress iterations", false);
-        final OptionSimple splitFactor = new OptionSimple("split-factor=", "[0-9]+[bmk]?", "1", "Split every token range by this factor", false);
-
-
-        @Override
-        public List<? extends Option> options()
-        {
-            return ImmutableList.<Option>builder().add(wrap, splitFactor).build();
-        }
+        return new Options()
+               .addOption(TOKEN_RANGE_SPLIT_FACTORY.option())
+               .addOption(TOKEN_RANGE_WRAP.option());
     }
 
-    public static SettingsTokenRange get(Map<String, String[]> clArgs)
-    {
-        String[] params = clArgs.remove("-tokenrange");
-        if (params == null)
-        {
-            return new SettingsTokenRange(new TokenRangeOptions());
-        }
-        TokenRangeOptions options = GroupedOptions.select(params, new TokenRangeOptions());
-        if (options == null)
-        {
-            printHelp();
-            System.out.println("Invalid -tokenrange options provided, see output for valid options");
-            System.exit(1);
-        }
-        return new SettingsTokenRange(options);
-    }
+//    private static final class TokenRangeOptions extends GroupedOptions
+//    {
+//        final OptionSimple wrap = new OptionSimple("wrap", "", null, "Re-use token ranges in order to terminate stress iterations", false);
+//        final OptionSimple splitFactor = new OptionSimple("split-factor=", "[0-9]+[bmk]?", "1", "Split every token range by this factor", false);
+//
+//
+//        @Override
+//        public List<? extends Option> options()
+//        {
+//            return ImmutableList.<Option>builder().add(wrap, splitFactor).build();
+//        }
+//    }
+
+//    public static SettingsTokenRange get(Map<String, String[]> clArgs)
+//    {
+//        String[] params = clArgs.remove("-tokenrange");
+//        if (params == null)
+//        {
+//            return new SettingsTokenRange(new TokenRangeOptions());
+//        }
+//        TokenRangeOptions options = GroupedOptions.select(params, new TokenRangeOptions());
+//        if (options == null)
+//        {
+//            printHelp();
+//            System.out.println("Invalid -tokenrange options provided, see output for valid options");
+//            System.exit(1);
+//        }
+//        return new SettingsTokenRange(options);
+//    }
 
     public void printSettings(ResultLogger out)
     {
         out.printf("  Wrap: %b%n", wrap);
         out.printf("  Split Factor: %d%n", splitFactor);
     }
-
-    public static void printHelp()
-    {
-        GroupedOptions.printOptions(System.out, "-tokenrange", new TokenRangeOptions());
-    }
-
-    public static Runnable helpPrinter()
-    {
-        return SettingsTokenRange::printHelp;
-    }
+//
+//    public static void printHelp()
+//    {
+//        GroupedOptions.printOptions(System.out, "-tokenrange", new TokenRangeOptions());
+//    }
+//
+//    public static Runnable helpPrinter()
+//    {
+//        return SettingsTokenRange::printHelp;
+//    }
 }

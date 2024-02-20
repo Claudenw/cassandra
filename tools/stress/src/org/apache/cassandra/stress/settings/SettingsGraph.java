@@ -22,17 +22,13 @@ package org.apache.cassandra.stress.settings;
 
 
 import java.io.File;
-import java.io.Serializable;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 import org.apache.cassandra.io.util.FileUtils;
-import org.apache.cassandra.stress.Stress;
 import org.apache.cassandra.stress.util.ResultLogger;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
 public class SettingsGraph extends AbstractSettings
@@ -43,12 +39,17 @@ public class SettingsGraph extends AbstractSettings
     public final String operation;
     public final File temporaryLogFile;
 
+    public static final StressOption<String> GRAPH_FILE = new StressOption<>(org.apache.commons.cli.Option.builder("graph-file").required().hasArg().argName("file").desc("HTML file to create or append to.").build());
+    public static final StressOption<String> GRAPH_REVISION = new StressOption<>(new org.apache.commons.cli.Option("graph-revision", true, "Unique name to assign to the current configuration being stressed."));
+    public static final StressOption<String> GRAPH_TITLE = new StressOption<>(new org.apache.commons.cli.Option("graph-title", true, "Title for chart. (Default: current date)"));
+    public static final StressOption<String> GRAPH_NAME = new StressOption<>(new Option("graph-name", true, "Alternative name for current operation (Default: stress op name)"));
+
     public SettingsGraph(CommandLine commandLine, SettingsCommand stressCommand)
     {
-        file = commandLine.getOptionValue(StressOption.GRAPH_FILE.option());
-        revision = commandLine.getOptionValue(StressOption.GRAPH_REVISION.option());
-        title = commandLine.getOptionValue(StressOption.GRAPH_TITLE.option(), ()->"cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format(new Date()));
-        operation = commandLine.getOptionValue(StressOption.GRAPH_NAME.option(), ()->stressCommand.type.name());
+        file = commandLine.getOptionValue(GRAPH_FILE.option());
+        revision = commandLine.getOptionValue(GRAPH_REVISION.option());
+        title = commandLine.getOptionValue(GRAPH_TITLE.option(), ()-> "cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format(new Date()));
+        operation = commandLine.getOptionValue(GRAPH_NAME.option(), stressCommand.type::name);
 
         if (inGraphMode())
         {
@@ -84,10 +85,10 @@ public class SettingsGraph extends AbstractSettings
 
     public static Options getOptions() {
         return new Options()
-                .addOption(StressOption.GRAPH_FILE.option())
-                .addOption(StressOption.GRAPH_REVISION.option())
-                .addOption(StressOption.GRAPH_TITLE.option())
-                .addOption(StressOption.GRAPH_NAME.option());
+                .addOption(GRAPH_FILE.option())
+                .addOption(GRAPH_REVISION.option())
+                .addOption(GRAPH_TITLE.option())
+                .addOption(GRAPH_NAME.option());
     }
     public void printSettings(ResultLogger out)
     {

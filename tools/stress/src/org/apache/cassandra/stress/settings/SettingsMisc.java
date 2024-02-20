@@ -23,58 +23,66 @@ package org.apache.cassandra.stress.settings;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 
+import org.apache.cassandra.stress.generate.DistributionFactory;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
 import org.apache.cassandra.stress.generate.Distribution;
+import org.apache.commons.cli.Options;
 
-class SettingsMisc implements Serializable
+class SettingsMisc extends AbstractSettings implements Serializable
 {
+    public static final StressOption<Command> MISC_HELP = new StressOption<>(Option.builder("h").longOpt("help").hasArg().desc("Help for entire system or for each set of commands")
+            .converter(s -> Command.valueOf(s.toUpperCase())).build());
+    public static final StressOption<DistributionFactory> MISC_DISTRIBUTION = new StressOption<>(Option.builder("print-dist").hasArg().desc("A mathematical distribution").converter(DIST_CONVERTER).build());
+    public static final StressOption<String> MISC_VERSION = new StressOption<>(Option.builder("version").desc("Pirnts the version").build());
 
-    static boolean maybeDoSpecial(Map<String, String[]> clArgs)
+
+    public static Options getOptions()
     {
-        if (maybePrintHelp(clArgs))
-            return true;
-        if (maybePrintDistribution(clArgs))
-            return true;
-        if (maybePrintVersion(clArgs))
-            return true;
-        return false;
+        return new Options()
+                .addOption(MISC_HELP.option())
+                .addOption(MISC_DISTRIBUTION.option())
+                .addOption(MISC_VERSION.option());
     }
 
-    private static final class PrintDistribution extends GroupedOptions
+    static boolean maybeDoSpecial(CommandLine commandLine)
     {
-        final OptionDistribution dist = new OptionDistribution("dist=", null, "A mathematical distribution");
-
-        @Override
-        public List<? extends Option> options()
-        {
-            return Arrays.asList(dist);
-        }
+        return maybePrintHelp(commandLine) || maybePrintDistribution(commandLine) ||
+                maybePrintVersion(commandLine);
     }
 
+//    private static final class PrintDistribution extends GroupedOptions
+//    {
+//        final OptionDistribution dist = new OptionDistribution("dist=", null, "A mathematical distribution");
+//
+//        @Override
+//        public List<? extends Option> options()
+//        {
+//            return Arrays.asList(dist);
+//        }
+//    }
 
-    private static boolean maybePrintDistribution(Map<String, String[]> clArgs)
+
+    private static boolean maybePrintDistribution(CommandLine commandLine)
     {
-        final String[] args = clArgs.get("print");
-        if (args == null)
-            return false;
-        final PrintDistribution dist = new PrintDistribution();
-        if (null == GroupedOptions.select(args, dist))
+        if (commandLine.hasOption(MISC_DISTRIBUTION.option()))
         {
-            printHelpPrinter().run();
+            printHelp();
             System.out.println("Invalid print options provided, see output for valid options");
             System.exit(1);
         }
-        printDistribution(dist.dist.get().get());
+        printDistribution(MISC_DISTRIBUTION.extract(commandLine).get());
         return true;
     }
 
@@ -93,44 +101,24 @@ class SettingsMisc implements Serializable
         }
     }
 
-    private static boolean maybePrintHelp(Map<String, String[]> clArgs)
+    private static boolean maybePrintHelp(CommandLine commandLine)
     {
-        if (!clArgs.containsKey("-?") && !clArgs.containsKey("help"))
-            return false;
-        String[] params = clArgs.remove("-?");
-        if (params == null)
-            params = clArgs.remove("help");
-        if (params.length == 0)
+        if (commandLine.hasOption(MISC_HELP.option()))
         {
-            if (!clArgs.isEmpty())
-            {
-                if (clArgs.size() == 1)
-                {
-                    String p = clArgs.keySet().iterator().next();
-                    if (clArgs.get(p).length == 0)
-                        params = new String[]{ p };
-                }
+            Command command = MISC_HELP.extract(commandLine);
+            if (command != null) {
+                command.printHelp();
             }
-            else
-            {
-                printHelp();
-                return true;
-            }
+            printHelp(commandLine);
         }
-        if (params.length == 1)
-        {
-            printHelp(params[0]);
-            return true;
-        }
-        throw new IllegalArgumentException("Invalid command/option provided to help");
+        return false;
     }
 
-    private static boolean maybePrintVersion(Map<String, String[]> clArgs)
+    private static boolean maybePrintVersion(CommandLine commandLine)
     {
-        if (clArgs.containsKey("version"))
+        if (commandLine.hasOption(MISC_VERSION.option()))
         {
-            try
-            {
+            try   {
                 URL url = Resources.getResource("org/apache/cassandra/config/version.properties");
                 System.out.println(parseVersionFile(Resources.toString(url, Charsets.UTF_8)));
             }
@@ -156,64 +144,90 @@ class SettingsMisc implements Serializable
         }
     }
 
+    protected static String createPadding(int len) {
+        char[] padding = new char[len];
+        Arrays.fill(padding, ' ');
+        return new String(padding);
+    }
+
     public static void printHelp()
     {
-        System.out.println("Usage:      cassandra-stress <command> [options]");
-        System.out.println("Help usage: cassandra-stress help <command>");
-        System.out.println();
-        System.out.println("---Commands---");
-        for (Command cmd : Command.values())
+        try (PrintWriter pw =  new PrintWriter(System.out))
         {
-            System.out.println(String.format("%-20s : %s", cmd.toString().toLowerCase(), cmd.description));
-        }
-        System.out.println();
-        System.out.println("---Options---");
-        for (CliOption cmd : CliOption.values())
-        {
-            System.out.println(String.format("-%-20s : %s", cmd.toString().toLowerCase(), cmd.description));
-        }
-    }
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.setWidth(130);
+            formatter.setLongOptPrefix("");
 
-    public static void printHelp(String command)
-    {
-        Command cmd = Command.get(command);
-        if (cmd != null)
-        {
-            cmd.printHelp();
-            return;
-        }
-        CliOption opt = CliOption.get(command);
-        if (opt != null)
-        {
-            opt.printHelp();
-            return;
-        }
-        printHelp();
-        throw new IllegalArgumentException("Invalid command or option provided to command help");
-    }
+            pw.println("Usage:      cassandra-stress <command> [options]");
+            pw.println("Help usage: cassandra-stress help <command>");
+            pw.println();
+            pw.println("---Commands---");
 
-    static Runnable helpHelpPrinter()
-    {
-        return () -> {
-            System.out.println("Usage: ./bin/cassandra-stress help <command|option>");
-            System.out.println("Commands:");
-            for (Command cmd : Command.values())
-                System.out.println("    " + cmd.names.toString().replaceAll("\\[|\\]", ""));
-            System.out.println("Options:");
-            for (CliOption op : CliOption.values())
-                System.out.println("    -" + op.toString().toLowerCase() + (op.extraName != null ? ", " + op.extraName : ""));
-        };
-    }
+            Options options = new Options();
+            Arrays.stream(Command.values()).map( c -> Option.builder(null).longOpt(c.name()).desc(c.description).build()).forEach(options::addOption);
+//            for (Command cmd : Command.values())
+//            {
+//                formatter.printWrapped(String.format("%-20s : %s", cmd.toString().toLowerCase(), cmd.description),);
+//            }
+            formatter.printOptions(pw, formatter.getWidth(), options, formatter.getLeftPadding(), formatter.getDescPadding());
 
-    static Runnable printHelpPrinter()
-    {
-        return () -> GroupedOptions.printOptions(System.out, "print", new GroupedOptions()
-        {
-            @Override
-            public List<? extends Option> options()
+
+            pw.println("\n---Options---");
+            formatter.printOptions(pw, formatter.getWidth(), StressSettings.getOptions(), formatter.getLeftPadding(), formatter.getDescPadding());
+
+            pw.println("\n---Argument Types---");
+            String argumentPadding = createPadding(formatter.getLeftPadding()+5);
+            for (StressArgument sa : AbstractSettings.argumentMap.values())
             {
-                return Arrays.asList(new OptionDistribution("dist=", null, "A mathematical distribution"));
+                if (!sa.notes.isEmpty() || !sa.options.getOptions().isEmpty())
+                {
+                    pw.format("\n<%s>\n", sa.name);
+                    if (!sa.options.getOptions().isEmpty())
+                        formatter.printOptions(pw, formatter.getWidth(), sa.options, formatter.getLeftPadding() + 5, formatter.getDescPadding() + 5);
+                    if (!sa.notes.isEmpty())
+                        sa.notes.stream().map(s -> argumentPadding + s).forEach(s -> formatter.printWrapped(pw, formatter.getWidth(), formatter.getLeftPadding() + 10, s.toString()));
+                }
             }
-        });
+
+        }
     }
+
+    public static void printHelp(CommandLine commandLine)
+    {
+        HelpFormatter formatter = new HelpFormatter();
+        Options options = null;
+        if (commandLine.getOptions().length > 0)
+        {
+            options = new Options();
+            Arrays.stream(commandLine.getOptions()).forEach(options::addOption);
+        } else {
+            options = StressSettings.getOptions();
+        }
+        formatter.printHelp("help", options);
+    }
+
+//    static Runnable helpHelpPrinter()
+//    {
+//        return () -> {
+//            System.out.println("Usage: ./bin/cassandra-stress help <command|option>");
+//            System.out.println("Commands:");
+//            for (Command cmd : Command.values())
+//                System.out.println("    " + cmd.names.toString().replaceAll("\\[|\\]", ""));
+//            System.out.println("Options:");
+//            for (CliOption op : CliOption.values())
+//                System.out.println("    -" + op.toString().toLowerCase() + (op.extraName != null ? ", " + op.extraName : ""));
+//        };
+//    }
+//
+//    static Runnable printHelpPrinter()
+//    {
+//        return () -> GroupedOptions.printOptions(System.out, "print", new GroupedOptions()
+//        {
+//            @Override
+//            public List<? extends Option> options()
+//            {
+//                return Arrays.asList(new OptionDistribution("dist=", null, "A mathematical distribution"));
+//            }
+//        });
+//    }
 }

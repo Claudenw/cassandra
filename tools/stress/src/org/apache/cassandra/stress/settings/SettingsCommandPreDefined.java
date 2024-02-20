@@ -41,8 +41,6 @@ import org.apache.cassandra.stress.report.Timer;
 import org.apache.cassandra.stress.util.ResultLogger;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-
 
 // Settings unique to the mixed command type
 public class SettingsCommandPreDefined extends SettingsCommand
@@ -95,12 +93,9 @@ public class SettingsCommandPreDefined extends SettingsCommand
     public SettingsCommandPreDefined(Command type, CommandLine commandLine)
     {
         super(type, commandLine);
-        try {
-            add = commandLine.getParsedOptionValue(StressOption.COMMAND_ADD.option(), StressOption.COMMAND_ADD.dfltSupplier());
-            keySize = commandLine.getParsedOptionValue(StressOption.COMMAND_KEYSIZE.option(), StressOption.COMMAND_KEYSIZE.dfltSupplier());
-        } catch (ParseException e) {
-           throw asRuntimeException(e);
-        }
+
+        add = COMMAND_ADD.extract(commandLine);
+        keySize = COMMAND_KEYSIZE.extract(commandLine);
         this.commandLine = commandLine;
     }
 
@@ -133,9 +128,9 @@ public class SettingsCommandPreDefined extends SettingsCommand
 //
 
     public static Options getOptions() {
-        return new Options()
-                .addOption(StressOption.COMMAND_ADD.option())
-                .addOption(StressOption.COMMAND_KEYSIZE.option())
+        return SettingsCommand.getOptions()
+                .addOption(COMMAND_ADD.option())
+                .addOption(COMMAND_KEYSIZE.option())
                 ;
     }
 
@@ -150,7 +145,7 @@ public class SettingsCommandPreDefined extends SettingsCommand
     {
         super.printSettings(out);
         out.printf("  Key Size (bytes): %d%n", keySize);
-        out.printf("  Counter Increment Distibution: %s%n", commandLine.getOptionValue(StressOption.COMMAND_ADD.option()));
+        out.printf("  Counter Increment Distibution: %s%n", commandLine.getOptionValue(COMMAND_ADD.option()));
     }
 
 //    public static SettingsCommandPreDefined build(Command type, String[] params)

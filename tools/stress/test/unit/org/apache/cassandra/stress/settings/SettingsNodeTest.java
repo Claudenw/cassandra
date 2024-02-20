@@ -18,6 +18,8 @@
 
 package org.apache.cassandra.stress.settings;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -27,16 +29,18 @@ public class SettingsNodeTest
     @Test
     public void testDefaults() throws Exception
     {
-        SettingsNode settingsNode = new SettingsNode(new SettingsNode.Options());
+        CommandLine commandLine = DefaultParser.builder().build().parse(StressSettings.getOptions(), new String[0]);
+        SettingsNode settingsNode = new SettingsNode(commandLine);
         assertEquals(null, settingsNode.datacenter);
     }
 
     @Test
     public void testOveridingDataCenter() throws Exception
     {
-        SettingsNode.Options options = new SettingsNode.Options();
-        options.accept("datacenter=dc1");
-        SettingsNode settingsNode = new SettingsNode(options);
+        CommandLine commandLine = DefaultParser.builder().build().parse(StressSettings.getOptions(), new String[]{
+        "-" + SettingsNode.NODE_DATACENTER.key(), "dc1"
+        });
+        SettingsNode settingsNode = new SettingsNode(commandLine);
         assertEquals("dc1", settingsNode.datacenter);
     }
 }

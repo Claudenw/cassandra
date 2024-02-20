@@ -37,9 +37,9 @@ public class StressSettingsTest
     @Test
     public void isSerializable() throws Exception
     {
-        Map<String, String[]> args = new HashMap<>();
-        args.put("write", new String[] {});
-        StressSettings settings = StressSettings.get(args);
+       // Map<String, String[]> args = new HashMap<>();
+       // args.put("write", new String[] {});
+        StressSettings settings = StressSettings.parse( new String[] {"write"});
         // Will throw if not all settings are Serializable
         new ObjectOutputStream(new ByteArrayOutputStream()).writeObject(settings);
     }

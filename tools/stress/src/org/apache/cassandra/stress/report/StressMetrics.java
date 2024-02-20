@@ -137,8 +137,8 @@ public class StressMetrics implements MeasurementSink
             reportingLoop(logIntervalMillis);
         });
         thread.setName("StressMetrics");
-        headerFrequencyInSeconds = settings.reporting.headerFrequency;
-        outputFrequencyInSeconds = settings.reporting.outputFrequency;
+        headerFrequencyInSeconds = settings.reporting.headerFrequency.toSeconds();
+        outputFrequencyInSeconds = settings.reporting.outputFrequency.toSeconds();
     }
     public void start()
     {

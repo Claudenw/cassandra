@@ -21,6 +21,7 @@ package org.apache.cassandra.stress.operations;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.cassandra.stress.Operation;
 import org.apache.cassandra.stress.WorkManager;
@@ -31,13 +32,13 @@ import org.apache.cassandra.stress.generate.RatioDistribution;
 import org.apache.cassandra.stress.generate.Seed;
 import org.apache.cassandra.stress.generate.SeedManager;
 import org.apache.cassandra.stress.report.Timer;
-import org.apache.cassandra.stress.settings.OptionRatioDistribution;
+//import org.apache.cassandra.stress.settings.OptionRatioDistribution;
 import org.apache.cassandra.stress.settings.StressSettings;
 
 public abstract class PartitionOperation extends Operation
 {
     protected final DataSpec spec;
-    private final static RatioDistribution defaultRowPopulationRatio = OptionRatioDistribution.BUILDER.apply("fixed(1)/1").get();
+    //private final static RatioDistribution defaultRowPopulationRatio = OptionRatioDistribution.BUILDER.apply("fixed(1)/1").get();
 
     private final List<PartitionIterator> partitionCache = new ArrayList<>();
     protected List<PartitionIterator> partitions;
@@ -61,11 +62,12 @@ public abstract class PartitionOperation extends Operation
         }
         private DataSpec(PartitionGenerator partitionGenerator, SeedManager seedManager, Distribution partitionCount, RatioDistribution useRatio, RatioDistribution rowPopulationRatio, Integer targetCount)
         {
+            Objects.requireNonNull(rowPopulationRatio, "rowPopulationRatio");
             this.partitionGenerator = partitionGenerator;
             this.seedManager = seedManager;
             this.partitionCount = partitionCount;
             this.useRatio = useRatio;
-            this.rowPopulationRatio = rowPopulationRatio == null ? defaultRowPopulationRatio : rowPopulationRatio;
+            this.rowPopulationRatio = /*rowPopulationRatio == null ? defaultRowPopulationRatio : */rowPopulationRatio;
             this.targetCount = targetCount;
         }
     }

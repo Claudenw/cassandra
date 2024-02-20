@@ -32,6 +32,30 @@ import static java.lang.String.format;
 public class SettingsRate extends AbstractSettings implements Serializable
 {
 
+    private static final int IGNORE = -1;
+
+    public static final StressOption<String> RATE_AUTO = new StressOption<>(new Option("rate-auto", "Stop increasing threads once throughput saturates."));
+
+    private static final int RATE_MIN_CLIENTS_DEFAULT = 4;
+    public static final StressOption<Integer> RATE_MIN_CLIENTS = new StressOption<>(()->RATE_MIN_CLIENTS_DEFAULT, POSITIVE_VERIFIER, Option.builder("rate-min-clients").hasArg(true).desc(format("Run at least this many clients concurrently.  (Only valid with %s) (Default %s)", RATE_AUTO.key(),
+                                                                                                                                                                                            RATE_MIN_CLIENTS_DEFAULT)).type(Integer.class).build());
+
+    private static final int RATE_MAX_CLIENTS_DEFAULT = 1000;
+    public static final StressOption<Integer> RATE_MAX_CLIENTS = new StressOption<>(()->RATE_MAX_CLIENTS_DEFAULT, POSITIVE_VERIFIER, Option.builder("rate-max-clients").hasArg(true)
+                                                                                                                                           .desc(format("Run at most this many clients concurrently.  (Only valid with %s) (Default %s)", RATE_AUTO.key(), RATE_MAX_CLIENTS_DEFAULT))
+                                                                                                                                           .type(Integer.class).build());
+    public static final StressOption<Integer> RATE_FIXED = new StressOption(POSITIVE_VERIFIER, Option.builder("rate-fixed").desc("Run this many clients concurrently." ).type(Integer.class).build());
+    public static final StressOption<Integer> RATE_THROTTLE = new StressOption<>(POSITIVE_VERIFIER, Option.builder("rate-throttle").desc("Throttle operations per second across all clients to a maximum rate (or less) with no implied schedule.").type(Integer.class).build());
+
+    private static final int RATE_THROTTLE_DEFAULT = 0;
+    public static final StressOption<Integer> RATE_CLIENTS = new StressOption<>(()->RATE_THROTTLE_DEFAULT, POSITIVE_VERIFIER, Option.builder("rate-clients").hasArg(true)
+                                                                                                                                    .desc(format("Run this many clients concurrently.  (Only valid with %s or %s) (Default: %s)", RATE_FIXED.key(), RATE_THROTTLE.key(), RATE_THROTTLE_DEFAULT))
+                                                                                                                              .hasArg().type(Integer.class).build());
+
+    private static OptionGroup AUTO_OR_THREADS = new OptionGroup()
+                                                 .addOption(RATE_AUTO.option())
+                                                 .addOption(RATE_FIXED.option())
+                                                 .addOption(RATE_THROTTLE.option());
     public final boolean auto;
     public final int minThreads;
     public final int maxThreads;
@@ -66,23 +90,23 @@ public class SettingsRate extends AbstractSettings implements Serializable
 //        isFixed = false;
 //    }
 
-    public SettingsRate(CommandLine cmdLine) {
-        this.auto = cmdLine.hasOption(AUTO);
-        this.isFixed = cmdLine.hasOption(FIXED);
-        try {
-            if (this.auto) {
-                this.minThreads = cmdLine.getParsedOptionValue(MIN_CLIENTS, MIN_CLIENTS_DEFAULT);
-                this.maxThreads = cmdLine.getParsedOptionValue(MAX_CLIENTS, MAX_CLIENTS_DEFAULT);
-                this.threadCount = IGNORE;
-                this.opsPerSecond = THROTTLE_DEFAULT;
-            } else {
-                this.threadCount = cmdLine.getParsedOptionValue(CLIENTS);
-                this.opsPerSecond = isFixed ? cmdLine.getParsedOptionValue(FIXED) : cmdLine.getParsedOptionValue(THROTTLE, THROTTLE_DEFAULT);
-                this.minThreads = IGNORE;
-                this.maxThreads = IGNORE;
-            }
-        } catch (ParseException e) {
-            throw new IllegalStateException(e);
+    public SettingsRate(CommandLine cmdLine)
+    {
+        this.auto = cmdLine.hasOption(RATE_AUTO.option());
+        this.isFixed = cmdLine.hasOption(RATE_FIXED.option());
+        if (this.auto)
+        {
+            this.minThreads = RATE_MIN_CLIENTS.extract(cmdLine);
+            this.maxThreads = RATE_CLIENTS.extract(cmdLine);
+            this.threadCount = IGNORE;
+            this.opsPerSecond = RATE_CLIENTS.dfltSupplier().get();
+        }
+        else
+        {
+            this.threadCount = RATE_CLIENTS.extract(cmdLine);
+            this.opsPerSecond = isFixed ? RATE_FIXED.extract(cmdLine) : RATE_THROTTLE.extract(cmdLine);
+            this.minThreads = IGNORE;
+            this.maxThreads = IGNORE;
         }
     }
 
@@ -90,7 +114,7 @@ public class SettingsRate extends AbstractSettings implements Serializable
         this.auto = false;
         this.isFixed = true;
                 this.threadCount = rate;
-                this.opsPerSecond = THROTTLE_DEFAULT;
+                this.opsPerSecond = RATE_CLIENTS.dfltSupplier().get();
                 this.minThreads = IGNORE;
                 this.maxThreads = IGNORE;
     }
@@ -99,26 +123,10 @@ public class SettingsRate extends AbstractSettings implements Serializable
         this.auto = true;
         this.isFixed = false;
         this.threadCount = IGNORE;
-        this.opsPerSecond = THROTTLE_DEFAULT;
-        this.minThreads = MIN_CLIENTS_DEFAULT;
-        this.maxThreads = MAX_CLIENTS_DEFAULT;
+        this.opsPerSecond = RATE_CLIENTS.dfltSupplier().get();
+        this.minThreads = RATE_MIN_CLIENTS.dfltSupplier().get();
+        this.maxThreads = RATE_MAX_CLIENTS.dfltSupplier().get();
     }
-
-    private static final int IGNORE = -1;
-
-    private static final String AUTO = "rate-auto";
-    private static final String MIN_CLIENTS = "rate-min-clients";
-    private static final int MIN_CLIENTS_DEFAULT = 4;
-    private static final String MAX_CLIENTS = "rate-max-clients";
-    private static final int MAX_CLIENTS_DEFAULT = 1000;
-    private static final String FIXED = "rate-fixed";
-    private static final String THROTTLE = "rate-throttle";
-    private static final int THROTTLE_DEFAULT = 0;
-
-    private static final String CLIENTS = "rate-clients";
-
-    private static OptionGroup AUTO_OR_THREADS;
-
 
     // Option Declarations
 
@@ -149,16 +157,11 @@ public class SettingsRate extends AbstractSettings implements Serializable
 //    }
 
     public static Options getOptions() {
-        Options result = new Options();
-        AUTO_OR_THREADS = new OptionGroup()
-                .addOption(new Option(AUTO, "Stop increasing threads once throughput saturates."))
-                .addOption(Option.builder(FIXED).hasArg(true).desc("Run this many clients concurrently." ).type(Integer.class).verifier(POSITIVE_VERIFIER).build())
-                .addOption(Option.builder(THROTTLE).hasArg(true).desc("Throttle operations per second across all clients to a maximum rate (or less) with no implied schedule.").type(Integer.class).verifier(POSITIVE_VERIFIER).build());
-        result.addOptionGroup(AUTO_OR_THREADS);
-        result.addOption(Option.builder(MIN_CLIENTS).hasArg(true).desc(format("Run at least this many clients concurrently.  (Only valid with --%s) (Default %s)", AUTO, MIN_CLIENTS_DEFAULT)).type(Integer.class).verifier(POSITIVE_VERIFIER).build());
-        result.addOption(Option.builder(MAX_CLIENTS).hasArg(true).desc(format("Run at most this many clients concurrently.  (Only valid with --%s) (Default %s)", AUTO, MAX_CLIENTS_DEFAULT)).type(Integer.class).verifier(POSITIVE_VERIFIER).build());
-        result.addOption(Option.builder(CLIENTS).hasArg(true).desc(format("Run this many clients concurrently.  (Only valid with --%s or --%s", FIXED, THROTTLE)).type(Integer.class).verifier(POSITIVE_VERIFIER).build());
-        return result;
+        return new Options()
+               .addOptionGroup(AUTO_OR_THREADS)
+               .addOption(RATE_MAX_CLIENTS.option())
+               .addOption(RATE_MIN_CLIENTS.option())
+               .addOption(RATE_CLIENTS.option());
     }
 
     // CLI Utility Methods

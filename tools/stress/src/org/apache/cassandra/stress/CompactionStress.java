@@ -36,6 +36,8 @@ import javax.inject.Inject;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Uninterruptibles;
 
+import org.apache.commons.cli.ParseException;
+
 import io.airlift.airline.Cli;
 import io.airlift.airline.Command;
 import io.airlift.airline.Help;
@@ -309,7 +311,15 @@ public abstract class CompactionStress implements Runnable
             ColumnFamilyStore cfs = initCf(stressProfile, false);
             Directories directories = cfs.getDirectories();
 
-            StressSettings settings = StressSettings.parse(new String[]{ "write", "-pop seq=1.." + partitions });
+            StressSettings settings = null;
+            try
+            {
+                settings = StressSettings.parse(new String[]{ "write", "-pop seq=1.." + partitions });
+            }
+            catch (ParseException e)
+            {
+                throw new RuntimeException(e);
+            }
             SeedManager seedManager = new SeedManager(settings);
             PartitionGenerator generator = stressProfile.getOfflineGenerator();
             WorkManager workManager = new WorkManager.FixedWorkManager(Long.MAX_VALUE);

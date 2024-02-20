@@ -21,17 +21,17 @@ package org.apache.cassandra.stress.settings;
  */
 
 
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.cassandra.stress.util.ResultLogger;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 
 public class SettingsErrors extends AbstractSettings
 {
 
+    public static final StressOption<String> ERROR_IGNORE = new StressOption<>(new Option("error-ignore", "Do not fail on errors."));
+    public static final StressOption<String> SKIP_READ_VALIDATION = new StressOption<>(new Option("skip-read-validation", "Skip read validation and message output."));
+    public static final StressOption<Integer> ERROR_RETRIES = new StressOption<>(()->9, POSITIVE_VERIFIER, Option.builder("retries").hasArg().type(Integer.class).desc("Number of tries to perform for each operation before failing.").build());
     public final boolean ignore;
     public final int tries;
     public final boolean skipReadValidation;
@@ -39,13 +39,21 @@ public class SettingsErrors extends AbstractSettings
     public SettingsErrors(CommandLine commandLine)
     {
         try {
-            ignore = commandLine.hasOption(StressOption.ERROR_IGNORE.option());
-            int retries = commandLine.getParsedOptionValue(StressOption.ERROR_RETRIES.option(), StressOption.ERROR_RETRIES.dfltSupplier());
+            ignore = commandLine.hasOption(ERROR_IGNORE.option());
+            int retries = ERROR_RETRIES.extract(commandLine);
             this.tries = retries + 1;
-            skipReadValidation = commandLine.hasOption(StressOption.SKIP_READ_VALIDATION.option());
+            skipReadValidation = commandLine.hasOption(SKIP_READ_VALIDATION.option());
         } catch (Exception e) {
             throw asRuntimeException(e);
         }
+    }
+
+    public static Options getOptions()
+    {
+        return new Options()
+               .addOption(ERROR_IGNORE.option())
+               .addOption(ERROR_RETRIES.option())
+               .addOption(SKIP_READ_VALIDATION.option());
     }
 
     // Option Declarations

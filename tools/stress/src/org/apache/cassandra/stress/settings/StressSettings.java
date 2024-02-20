@@ -23,12 +23,20 @@ package org.apache.cassandra.stress.settings;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.Supplier;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 import org.apache.cassandra.config.EncryptionOptions;
-import org.apache.cassandra.stress.generate.DistributionFactory;
 import org.apache.cassandra.stress.util.JavaDriverClient;
 import org.apache.cassandra.stress.util.ResultLogger;
 import org.apache.cassandra.transport.SimpleClient;
+
+import static java.lang.String.format;
 
 public class StressSettings implements Serializable
 {
@@ -163,32 +171,72 @@ public class StressSettings implements Serializable
             ((SettingsCommandUser) command).profiles.forEach((k,v) -> v.maybeCreateSchema(this));
     }
 
-    public static StressSettings parse(String[] args)
+    public static StressSettings get(Map<String, String[]> args) throws ParseException
     {
-        args = repairParams(args);
+        List<String> strings = new ArrayList<>();
+        args.entrySet().stream().forEach( e -> {strings.add(e.getKey());
+            strings.addAll(Arrays.asList(e.getValue()));
+        });
+        return parse(strings.toArray(new String[0]));
+    }
+    public static StressSettings parse(String[] args) throws ParseException
+    {
+        CommandLine commandLine = DefaultParser.builder().build().parse(getOptions(), args);
+        String[] cmds = commandLine.getArgs();
+        if (cmds.length==0)
+            throw new IllegalArgumentException("No command specified");
+        if (cmds.length>1)
+            throw new IllegalArgumentException(format("Too many commands specified: %s", String.join(",", cmds)));
+
+        Command cmd = Command.valueOf(cmds[0].toUpperCase());
+        SettingsCommand settingsCommand = SettingsCommand.get(cmd, commandLine);
+        SettingsCredentials credentials = new SettingsCredentials(commandLine);
+
+        StressSettings settings = new StressSettings(
+        settingsCommand,
+        new SettingsRate(commandLine),
+        SettingsPopulation.get(commandLine, settingsCommand),
+        new SettingsInsert(commandLine),
+        new SettingsColumn(commandLine),
+        new SettingsErrors(commandLine),
+        new SettingsLog(commandLine),
+        credentials,
+        new SettingsMode(commandLine, credentials),
+        new SettingsNode(commandLine),
+        new SettingsSchema(commandLine, settingsCommand),
+        new SettingsTransport(commandLine, credentials),
+        new SettingsPort(commandLine),
+        new SettingsJMX(commandLine, credentials),
+        new SettingsGraph(commandLine, settingsCommand),
+        new SettingsTokenRange(commandLine),
+        new SettingsReporting(commandLine));
+/*
+        //args = repairParams(args);
         final Map<String, String[]> clArgs = parseMap(args);
         if (SettingsMisc.maybeDoSpecial(clArgs))
             return null;
-        return get(clArgs);
-
+*/
+        return settings;
     }
 
-    private static String[] repairParams(String[] args)
-    {
-        StringBuilder sb = new StringBuilder();
-        boolean first = true;
-        for (String arg : args)
-        {
-            if (!first)
-                sb.append(" ");
-            sb.append(arg);
-            first = false;
-        }
-        return sb.toString()
-                 .replaceAll("\\s+([,=()])", "$1")
-                 .replaceAll("([,=(])\\s+", "$1")
-                 .split(" +");
-    }
+//    private static String[] repairParams(String[] args)
+//    {
+//        StringBuilder sb = new StringBuilder();
+//        boolean first = true;
+//        for (String arg : args)
+//        {
+//            if (!first)
+//                sb.append(" ");
+//            sb.append(arg);
+//            first = false;
+//        }
+//        return sb.toString()
+//                 .replaceAll("\\s+([,=()])", "$1")
+//                 .replaceAll("([,=(])\\s+", "$1")
+//                 .split(" +");
+//    }
+
+
 
    /* public static StressSettings get(Map<String, String[]> clArgs)
     {
@@ -234,44 +282,82 @@ public class StressSettings implements Serializable
         //return new StressSettings(command, rate, generate, insert, columns, errors, log, credentials, mode, node, schema, transport, port, jmx, graph, tokenRange, reporting);
     }*/
 
-    private static Map<String, String[]> parseMap(String[] args)
+//    private static Map<String, String[]> parseMap(String[] args)
+//    {
+//        // first is the main command/operation, so specified without a -
+//        if (args.length == 0)
+//        {
+//            System.out.println("No command provided");
+//            printHelp();
+//            System.exit(1);
+//        }
+//        final LinkedHashMap<String, String[]> r = new LinkedHashMap<>();
+//        String key = null;
+//        List<String> params = new ArrayList<>();
+//        for (int i = 0 ; i < args.length ; i++)
+//        {
+//            if (i == 0 || args[i].startsWith("-"))
+//            {
+//                if (i > 0)
+//                    putParam(key, params.toArray(new String[0]), r);
+//                key = args[i].toLowerCase();
+//                params.clear();
+//            }
+//            else
+//                params.add(args[i]);
+//        }
+//        putParam(key, params.toArray(new String[0]), r);
+//        return r;
+//    }
+//
+//    private static void putParam(String key, String[] args, Map<String, String[]> clArgs)
+//    {
+//        String[] prev = clArgs.put(key, args);
+//        if (prev != null)
+//            throw new IllegalArgumentException(key + " is defined multiple times. Each option/command can be specified at most once.");
+//    }
+
+    private static class OptionsBuilder
     {
-        // first is the main command/operation, so specified without a -
-        if (args.length == 0)
-        {
-            System.out.println("No command provided");
-            printHelp();
-            System.exit(1);
+        Options result = new Options();
+
+        OptionsBuilder add(Options options) {
+            options.getOptions().forEach(result::addOption);
+            options.getOptionGroups().forEach(result::addOptionGroup);
+            return this;
         }
-        final LinkedHashMap<String, String[]> r = new LinkedHashMap<>();
-        String key = null;
-        List<String> params = new ArrayList<>();
-        for (int i = 0 ; i < args.length ; i++)
-        {
-            if (i == 0 || args[i].startsWith("-"))
-            {
-                if (i > 0)
-                    putParam(key, params.toArray(new String[0]), r);
-                key = args[i].toLowerCase();
-                params.clear();
-            }
-            else
-                params.add(args[i]);
+
+        Options build() {
+            return result;
         }
-        putParam(key, params.toArray(new String[0]), r);
-        return r;
     }
 
-    private static void putParam(String key, String[] args, Map<String, String[]> clArgs)
-    {
-        String[] prev = clArgs.put(key, args);
-        if (prev != null)
-            throw new IllegalArgumentException(key + " is defined multiple times. Each option/command can be specified at most once.");
+    public static Options getOptions() {
+        return new OptionsBuilder()
+        .add(SettingsCommand.getOptions())
+        .add(SettingsRate.getOptions())
+        .add(SettingsPopulation.getOptions())
+        .add(SettingsInsert.getOptions())
+        .add(SettingsColumn.getOptions())
+        .add(SettingsErrors.getOptions())
+        .add(SettingsLog.getOptions())
+        .add(SettingsCredentials.getOptions())
+        .add(SettingsMode.getOptions())
+        .add(SettingsNode.getOptions())
+        .add(SettingsSchema.getOptions())
+        .add(SettingsTransport.getOptions())
+        .add(SettingsPort.getOptions())
+        .add(SettingsJMX.getOptions())
+        .add(SettingsGraph.getOptions())
+        .add(SettingsTokenRange.getOptions())
+        .add(SettingsReporting.getOptions())
+        .build();
     }
-
     public static void printHelp()
     {
-        SettingsMisc.printHelp();
+        HelpFormatter formatter = new HelpFormatter();
+
+        formatter.printHelp("myapp", "HEADER", getOptions(), "FOOTER", true);
     }
 
     public void printSettings(ResultLogger out)

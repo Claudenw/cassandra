@@ -39,7 +39,6 @@ import org.apache.cassandra.stress.operations.SampledOpDistributionFactory;
 import org.apache.cassandra.stress.report.Timer;
 import org.apache.cassandra.stress.util.ResultLogger;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Converter;
 import org.apache.commons.cli.Options;
 
 // Settings unique to the mixed command type
@@ -61,7 +60,7 @@ public class SettingsCommandUser extends SettingsCommand
 
         this.commandLine = commandLine;
         try {
-            clustering = commandLine.getParsedOptionValue(StressOption.COMMAND_CLUSTERING.option(), StressOption.COMMAND_CLUSTERING.dfltSupplier());
+            clustering = SettingsCommand.COMMAND_CLUSTERING.extract(commandLine);
         /*
            .addOption(StressOption.COMMAND_CLUSTERING.option())
                 .addOption(StressOption.COMMAND_PROFILE.option())
@@ -69,8 +68,8 @@ public class SettingsCommandUser extends SettingsCommand
          */
             //ratios = commandLine.get
 
-            if (commandLine.hasOption(StressOption.COMMAND_RATIO.option())) {
-                ratios = ratios(s->s, commandLine.getOptionValues(StressOption.COMMAND_RATIO.option()));
+            if (commandLine.hasOption(SettingsCommand.COMMAND_RATIO.option())) {
+                ratios = ratios(s->s, commandLine.getOptionValues(SettingsCommand.COMMAND_RATIO.option()));
                 if (ratios.size() == 0)
                     throw new IllegalArgumentException("Must specify at least one command with a non-zero ratio");
             } else {
@@ -82,7 +81,7 @@ public class SettingsCommandUser extends SettingsCommand
 
             profiles = new LinkedHashMap<>();
 
-            for (String yamlPath : commandLine.getOptionValues(StressOption.COMMAND_PROFILE.option())) {
+            for (String yamlPath : commandLine.getOptionValues(SettingsCommand.COMMAND_PROFILE.option())) {
 
                 File yamlFile = new File(yamlPath);
                 URI yamlURI;
@@ -190,18 +189,18 @@ public class SettingsCommandUser extends SettingsCommand
     // CLI utility methods
 
     public static Options getOptions() {
-        return new Options()
-                .addOption(StressOption.COMMAND_CLUSTERING.option())
-                .addOption(StressOption.COMMAND_PROFILE.option())
-                .addOption(StressOption.COMMAND_RATIO.option());
+        return SettingsCommand.getOptions()
+                .addOption(SettingsCommand.COMMAND_CLUSTERING.option())
+                .addOption(SettingsCommand.COMMAND_PROFILE.option())
+                .addOption(SettingsCommand.COMMAND_RATIO.option());
     }
 
     public void printSettings(ResultLogger out)
     {
         super.printSettings(out);
         out.printf("  Command Ratios: %s%n", ratios);
-        out.printf("  Command Clustering Distribution: %s%n", commandLine.getOptionValue(StressOption.COMMAND_CLUSTERING.option()));
-        out.printf("  Profile File(s): %s%n", String.join(", ", commandLine.getOptionValues(StressOption.COMMAND_PROFILE.option())));
+        out.printf("  Command Clustering Distribution: %s%n", commandLine.getOptionValue(SettingsCommand.COMMAND_CLUSTERING.option()));
+        out.printf("  Profile File(s): %s%n", String.join(", ", commandLine.getOptionValues(SettingsCommand.COMMAND_PROFILE.option())));
     }
 
 

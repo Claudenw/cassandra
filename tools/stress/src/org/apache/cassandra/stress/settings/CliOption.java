@@ -26,66 +26,66 @@ import java.util.Map;
 
 public enum CliOption
 {
-    // TODO FIXME
-//    POP("Population distribution and intra-partition visit order", SettingsPopulation.helpPrinter()),
-//    INSERT("Insert specific options relating to various methods for batching and splitting partition updates", SettingsInsert.helpPrinter()),
-//    COL("Column details such as size and count distribution, data generator, names, comparator and if super columns should be used", SettingsColumn.helpPrinter()),
-//    RATE("Thread count, rate limit or automatic mode (default is auto)", SettingsRate.helpPrinter()),
-    MODE("CQL mode options", SettingsMode.helpPrinter()),
-    ERRORS("How to handle errors when encountered during stress", SettingsErrors.helpPrinter()),
-    SCHEMA("Replication settings, compression, compaction, etc.", SettingsSchema.helpPrinter()),
-    NODE("Nodes to connect to", SettingsNode.helpPrinter()),
-    LOG("Where to log progress to, and the interval at which to do it", SettingsLog.helpPrinter()),
-//    TRANSPORT("Custom transport factories", SettingsTransport.helpPrinter()),
-//    PORT("The port to connect to cassandra nodes on", SettingsPort.helpPrinter()),
-    JMX("JMX credentials", SettingsJMX.helpPrinter()),
-    GRAPH("-graph", "Graph recorded metrics", SettingsGraph.helpPrinter()),
-    TOKENRANGE("Token range settings", SettingsTokenRange.helpPrinter()),
-    CREDENTIALS_FILE("Credentials file for CQL, JMX and transport", SettingsCredentials.helpPrinter()),
-    REPORTING("Frequency of printing statistics and header for stress output", SettingsReporting.helpPrinter());
-    ;
-
-    private static final Map<String, CliOption> LOOKUP;
-    static
-    {
-        final Map<String, CliOption> lookup = new HashMap<>();
-        for (CliOption cmd : values())
-        {
-            lookup.put("-" + cmd.toString().toLowerCase(), cmd);
-            if (cmd.extraName != null)
-                lookup.put(cmd.extraName, cmd);
-        }
-        LOOKUP = lookup;
-    }
-
-    public static CliOption get(String command)
-    {
-        return LOOKUP.get(command.toLowerCase());
-    }
-
-    public final String extraName;
-    public final String description;
-    private final Runnable helpPrinter;
-
-    CliOption(String description, Runnable helpPrinter)
-    {
-        this(null, description, helpPrinter);
-    }
-
-    CliOption(String extraName, String description, Runnable helpPrinter)
-    {
-        this.extraName = extraName;
-        this.description = description;
-        this.helpPrinter = helpPrinter;
-    }
-
-    public void printHelp()
-    {
-        helpPrinter.run();
-    }
-
-    public String toString()
-    {
-        return name().replaceAll("_", "-");
-    }
+//    // TODO FIXME
+////    POP("Population distribution and intra-partition visit order", SettingsPopulation.helpPrinter()),
+////    INSERT("Insert specific options relating to various methods for batching and splitting partition updates", SettingsInsert.helpPrinter()),
+////    COL("Column details such as size and count distribution, data generator, names, comparator and if super columns should be used", SettingsColumn.helpPrinter()),
+////    RATE("Thread count, rate limit or automatic mode (default is auto)", SettingsRate.helpPrinter()),
+//    MODE("CQL mode options", SettingsMode.helpPrinter()),
+//    ERRORS("How to handle errors when encountered during stress", SettingsErrors.helpPrinter()),
+//    SCHEMA("Replication settings, compression, compaction, etc.", SettingsSchema.helpPrinter()),
+//    NODE("Nodes to connect to", SettingsNode.helpPrinter()),
+//    LOG("Where to log progress to, and the interval at which to do it", SettingsLog.helpPrinter()),
+////    TRANSPORT("Custom transport factories", SettingsTransport.helpPrinter()),
+////    PORT("The port to connect to cassandra nodes on", SettingsPort.helpPrinter()),
+//    JMX("JMX credentials", SettingsJMX.helpPrinter()),
+//    GRAPH("-graph", "Graph recorded metrics", SettingsGraph.helpPrinter()),
+//    TOKENRANGE("Token range settings", SettingsTokenRange.helpPrinter()),
+//    CREDENTIALS_FILE("Credentials file for CQL, JMX and transport", SettingsCredentials.helpPrinter()),
+//    REPORTING("Frequency of printing statistics and header for stress output", SettingsReporting.helpPrinter());
+//    ;
+//
+//    private static final Map<String, CliOption> LOOKUP;
+//    static
+//    {
+//        final Map<String, CliOption> lookup = new HashMap<>();
+//        for (CliOption cmd : values())
+//        {
+//            lookup.put("-" + cmd.toString().toLowerCase(), cmd);
+//            if (cmd.extraName != null)
+//                lookup.put(cmd.extraName, cmd);
+//        }
+//        LOOKUP = lookup;
+//    }
+//
+//    public static CliOption get(String command)
+//    {
+//        return LOOKUP.get(command.toLowerCase());
+//    }
+//
+//    public final String extraName;
+//    public final String description;
+//    private final Runnable helpPrinter;
+//
+//    CliOption(String description, Runnable helpPrinter)
+//    {
+//        this(null, description, helpPrinter);
+//    }
+//
+//    CliOption(String extraName, String description, Runnable helpPrinter)
+//    {
+//        this.extraName = extraName;
+//        this.description = description;
+//        this.helpPrinter = helpPrinter;
+//    }
+//
+//    public void printHelp()
+//    {
+//        helpPrinter.run();
+//    }
+//
+//    public String toString()
+//    {
+//        return name().replaceAll("_", "-");
+//    }
 }

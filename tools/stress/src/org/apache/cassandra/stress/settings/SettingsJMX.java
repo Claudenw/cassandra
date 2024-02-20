@@ -18,10 +18,9 @@
 
 package org.apache.cassandra.stress.settings;
 
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 
 import org.apache.cassandra.stress.util.ResultLogger;
 
@@ -29,18 +28,29 @@ import static java.lang.String.format;
 import static org.apache.cassandra.stress.settings.SettingsCredentials.JMX_PASSWORD_PROPERTY_KEY;
 import static org.apache.cassandra.stress.settings.SettingsCredentials.JMX_USERNAME_PROPERTY_KEY;
 
-public class SettingsJMX implements Serializable
+
+public class SettingsJMX extends AbstractSettings
 {
+    public static final StressOption<String> JMX_USER = new StressOption<>(new Option("jmx-user", true, format("Username for JMX connection, when specified, it will override the value in credentials file for key '%s'.", JMX_USERNAME_PROPERTY_KEY)));
+    public static final StressOption<String> JMX_PASSWORD = new StressOption<>(new Option("jmx-password", true, format("Password for JMX connection, when specified, it will override the value in credentials file for key '%s'.", JMX_PASSWORD_PROPERTY_KEY)));
     public final String user;
     public final String password;
 
-    public SettingsJMX(Options options, SettingsCredentials credentials)
+    public SettingsJMX(CommandLine commandLine, SettingsCredentials credentials)
     {
-        this.user = options.user.setByUser() ? options.user.value() : credentials.jmxUsername;
-        this.password = options.password.setByUser() ? options.password.value() : credentials.jmxPassword;
+        this.user = commandLine.getOptionValue(JMX_USER.option(), credentials.jmxUsername);
+        this.password = commandLine.getOptionValue(JMX_PASSWORD.option(), credentials.jmxPassword);
     }
 
     // Option Declarations
+
+    public static Options getOptions() {
+        return new Options()
+               .addOption(JMX_USER.option())
+               .addOption(JMX_PASSWORD.option())
+        ;
+    }
+/*
 
     public static final class Options extends GroupedOptions
     {
@@ -62,37 +72,38 @@ public class SettingsJMX implements Serializable
             return Arrays.asList(user, password);
         }
     }
-
+*/
+//
     // CLI Utility Methods
     public void printSettings(ResultLogger out)
     {
         out.printf("  Username: %s%n", user);
         out.printf("  Password: %s%n", (password == null ? "*not set*" : "*suppressed*"));
     }
-
-    public static SettingsJMX get(Map<String, String[]> clArgs, SettingsCredentials credentials)
-    {
-        String[] params = clArgs.remove("-jmx");
-        if (params == null)
-            return new SettingsJMX(new SettingsJMX.Options(), credentials);
-
-        GroupedOptions options = GroupedOptions.select(params, new SettingsJMX.Options());
-        if (options == null)
-        {
-            printHelp();
-            System.out.println("Invalid -jmx options provided, see output for valid options");
-            System.exit(1);
-        }
-        return new SettingsJMX((SettingsJMX.Options) options, credentials);
-    }
-
-    public static void printHelp()
-    {
-        GroupedOptions.printOptions(System.out, "-jmx", new SettingsJMX.Options());
-    }
-
-    public static Runnable helpPrinter()
-    {
-        return SettingsJMX::printHelp;
-    }
+//
+//    public static SettingsJMX get(Map<String, String[]> clArgs, SettingsCredentials credentials)
+//    {
+//        String[] params = clArgs.remove("-jmx");
+//        if (params == null)
+//            return new SettingsJMX(new SettingsJMX.Options(), credentials);
+//
+//        GroupedOptions options = GroupedOptions.select(params, new SettingsJMX.Options());
+//        if (options == null)
+//        {
+//            printHelp();
+//            System.out.println("Invalid -jmx options provided, see output for valid options");
+//            System.exit(1);
+//        }
+//        return new SettingsJMX((SettingsJMX.Options) options, credentials);
+//    }
+//
+//    public static void printHelp()
+//    {
+//        GroupedOptions.printOptions(System.out, "-jmx", new SettingsJMX.Options());
+//    }
+//
+//    public static Runnable helpPrinter()
+//    {
+//        return SettingsJMX::printHelp;
+//    }
 }

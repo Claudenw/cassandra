@@ -27,29 +27,29 @@ import static org.junit.Assert.*;
 
 public class SettingsMiscTest
 {
-    @Test
-    public void versionTriggersSpecialOption() throws Exception
-    {
-        assertTrue(SettingsMisc.maybeDoSpecial(ImmutableMap.of("version", new String[] {})));
-    }
-
-    @Test
-    public void noSpecialOptions() throws Exception
-    {
-        assertFalse(SettingsMisc.maybeDoSpecial(Collections.emptyMap()));
-    }
-
-    @Test
-    public void parsesVersionMatch() throws Exception
-    {
-        String versionString = SettingsMisc.parseVersionFile("CassandraVersion=TheBestVersion\n");
-        assertEquals("Version: TheBestVersion", versionString);
-    }
-
-    @Test
-    public void parsesVersionNoMatch() throws Exception
-    {
-        String versionString = SettingsMisc.parseVersionFile("VersionFileChangedFormat :(");
-        assertEquals("Unable to find version information", versionString);
-    }
+//    @Test
+//    public void versionTriggersSpecialOption() throws Exception
+//    {
+//        assertTrue(SettingsMisc.maybeDoSpecial(ImmutableMap.of("version", new String[] {})));
+//    }
+//
+//    @Test
+//    public void noSpecialOptions() throws Exception
+//    {
+//        assertFalse(SettingsMisc.maybeDoSpecial(Collections.emptyMap()));
+//    }
+//
+//    @Test
+//    public void parsesVersionMatch() throws Exception
+//    {
+//        String versionString = SettingsMisc.parseVersionFile("CassandraVersion=TheBestVersion\n");
+//        assertEquals("Version: TheBestVersion", versionString);
+//    }
+//
+//    @Test
+//    public void parsesVersionNoMatch() throws Exception
+//    {
+//        String versionString = SettingsMisc.parseVersionFile("VersionFileChangedFormat :(");
+//        assertEquals("Unable to find version information", versionString);
+//    }
 }

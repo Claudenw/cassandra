@@ -37,6 +37,7 @@ import org.apache.cassandra.stress.util.ResultLogger;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 
@@ -47,6 +48,16 @@ import static java.lang.String.format;
  */
 public class SettingsColumn extends AbstractSettings implements Serializable
 {
+    public static final StressOption<Integer> COL_SUPER = new StressOption<>(()->0, Option.builder("col-super").hasArg().type(Integer.class).desc("Number of super columns to use. (Default 0)").build());
+    public static final StressOption<String> COL_COMPARATOR = new StressOption<>(AcceptableComparators.AsciiType::name, enumVerifier(AcceptableComparators.AsciiType), Option.builder("col-comparator").hasArg()
+                                                                                                                                                                             .desc(format("Column Comparator to use. Valid values are: %s (Default %s)",enumOptionString(AcceptableComparators.AsciiType), "AsciiType")).build());
+    public static final StressOption<String> COL_SLICE = new StressOption<>(new Option("col-slice", "If set, range slices will be used for reads, otherwise a names query will be."));
+    public static final StressOption<String> COL_TIMESTAMP = new StressOption<>(Option.builder("col_timestamp").hasArg().desc("If set, all columns will be written with the given timestamp").build());
+    public static final StressOption<String> COL_NAMES = new StressOption<>(new Option("col-names", true, "A comma separated list of column names."));
+    private static final String COL_SIZE_DEFAULT="FIXED(34)";
+    public static final StressOption<DistributionFactory> COL_SIZE = new StressOption<>(()->OptionDistribution.get(COL_SIZE_DEFAULT), Option.builder("col-size").hasArg().type(DistributionFactory.class).desc(format("Cell size distribution. (Default %s)", COL_SIZE_DEFAULT)).build());
+    private static final String COL_COUNT_DEFAULT = "FIXED(5)";
+    public static final StressOption<DistributionFactory>  COL_COUNT = new StressOption<>(()->OptionDistribution.get(COL_COUNT_DEFAULT), Option.builder("col-count").hasArg().type(DistributionFactory.class).desc(format("Cell count distribution, per operation (Default %s)", COL_COUNT_DEFAULT)).build());
     public final int maxColumnsPerKey;
     public transient List<ByteBuffer> names;
     public final List<String> namestrs;
@@ -70,10 +81,10 @@ public class SettingsColumn extends AbstractSettings implements Serializable
     {
         try
         {
-            sizeDistribution = cmdLine.getParsedOptionValue(StressOption.COL_COUNT.option(), StressOption.COL_COUNT.dfltSupplier());
+            sizeDistribution = COL_COUNT.extract(cmdLine);
             {
-                timestamp = cmdLine.getOptionValue(StressOption.COL_TIMESTAMP.option());
-                comparator = cmdLine.getOptionValue(StressOption.COL_COMPARATOR.option(), (String)StressOption.COL_COMPARATOR.dfltSupplier().get());
+                timestamp = COL_TIMESTAMP.extract(cmdLine);
+                comparator = COL_COMPARATOR.extract(cmdLine);
 //            -- THE following is replaced by the verifier
 //            AbstractType parsed = null;
 //
@@ -93,7 +104,7 @@ public class SettingsColumn extends AbstractSettings implements Serializable
 //                System.exit(1);
 //            }1
             }
-            if (cmdLine.hasOption(StressOption.COL_NAMES.option()))
+            if (cmdLine.hasOption(COL_NAMES.option()))
             {
                 AbstractType comparator;
                 try
@@ -106,7 +117,7 @@ public class SettingsColumn extends AbstractSettings implements Serializable
                     throw new IllegalArgumentException(this.comparator + " is not a valid type");
                 }
 
-                final String[] names = cmdLine.getOptionValue(StressOption.COL_NAMES.option()).split(",");
+                final String[] names = cmdLine.getOptionValue(COL_NAMES.option()).split(",");
                 this.names = new ArrayList<>(names.length);
 
                 for (String columnName : names)
@@ -134,7 +145,7 @@ public class SettingsColumn extends AbstractSettings implements Serializable
             }
             else
             {
-                this.countDistribution = cmdLine.getParsedOptionValue(StressOption.COL_COUNT.option(), StressOption.COL_COUNT.dfltSupplier());
+                this.countDistribution = COL_COUNT.extract(cmdLine);
                 ByteBuffer[] names = new ByteBuffer[(int) countDistribution.get().maxValue()];
                 String[] namestrs = new String[(int) countDistribution.get().maxValue()];
                 for (int i = 0; i < names.length; i++)
@@ -154,7 +165,7 @@ public class SettingsColumn extends AbstractSettings implements Serializable
             }
             maxColumnsPerKey = (int) countDistribution.get().maxValue();
             variableColumnCount = countDistribution.get().minValue() < maxColumnsPerKey;
-            slice = cmdLine.hasOption(StressOption.COL_SLICE.option());
+            slice = cmdLine.hasOption(COL_SLICE.option());
         } catch (Exception e) {
             throw asRuntimeException(e);
         }
@@ -167,14 +178,14 @@ public class SettingsColumn extends AbstractSettings implements Serializable
     public static Options getOptions() {
 
         Options result = new Options()
-                .addOption(StressOption.COL_SUPER.option())
-                .addOption(StressOption.COL_COMPARATOR.option())
-                .addOption(StressOption.COL_SLICE.option())
-                .addOption(StressOption.COL_TIMESTAMP.option())
-                .addOption(StressOption.COL_SIZE.option());
+                .addOption(COL_SUPER.option())
+                .addOption(COL_COMPARATOR.option())
+                .addOption(COL_SLICE.option())
+                .addOption(COL_TIMESTAMP.option())
+                .addOption(COL_SIZE.option());
         OptionGroup COUNT_OR_NAMES = new OptionGroup()
-                .addOption(StressOption.COL_NAMES.option())
-                .addOption(StressOption.COL_COUNT.option());
+                .addOption(COL_NAMES.option())
+                .addOption(COL_COUNT.option());
 
         result.addOptionGroup(COUNT_OR_NAMES);
         return result;
@@ -286,4 +297,5 @@ public class SettingsColumn extends AbstractSettings implements Serializable
         this.names = new ArrayList<>(namesBuffer);
     }
 
+    private enum AcceptableComparators {TimeUUIDType, AsciiType, UTF8Type }
 }

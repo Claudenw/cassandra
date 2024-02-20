@@ -22,17 +22,10 @@ package org.apache.cassandra.stress.settings;
 
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Options;
 import org.apache.commons.cli.Option;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.Options;
 
 import org.apache.cassandra.stress.util.ResultLogger;
 
@@ -41,14 +34,15 @@ import static java.lang.String.format;
 public class SettingsPort extends AbstractSettings implements Serializable
 {
 
+    private static final int PORT_NATIVE_DEFAULT = 9042;
+    public static final StressOption<Integer>  PORT_NATIVE = new StressOption<>(()->PORT_NATIVE_DEFAULT, portBoundsChecker, Option.builder("port-native").hasArg(true).desc(format("Use this port for the Cassandra native protocol. (Default %s)", PORT_NATIVE_DEFAULT)).type(Integer.class)
+                                                                                                                                  .build());
+    private static final int PORT_JMX_DEFAULT = 7199;
+    public static final StressOption<Integer>  PORT_JMX = new StressOption<>(()->PORT_JMX_DEFAULT, portBoundsChecker, Option.builder("port-jmx").hasArg(true).desc(format("Use this port for the Cassandra JMX protocol. (Default %s)", PORT_JMX_DEFAULT)).type(Integer.class)
+                                                                                                                            .build());
     public final int nativePort;
     public final int jmxPort;
 
-    private static final String NATIVE = "port-native";
-    private static final String JMX = "port-jmx";
-
-    private static final int DEFAULT_NATIVE = 9042;
-    private static final int DEFAULT_JMX = 7199;
 
 
 //    public SettingsPort(PortOptions options)
@@ -59,20 +53,14 @@ public class SettingsPort extends AbstractSettings implements Serializable
 
     public SettingsPort(CommandLine cmdLine)
     {
-        try {
-            nativePort = cmdLine.getParsedOptionValue(NATIVE, DEFAULT_NATIVE);
-            jmxPort = cmdLine.getParsedOptionValue(JMX, DEFAULT_JMX);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+        nativePort = PORT_NATIVE.extract(cmdLine);
+        jmxPort = PORT_JMX.extract(cmdLine);
     }
 
     public static Options getOptions() {
-        Predicate<String> boundsChecker = rangeVerifier(0, Range.inclusive, 65535, Range.inclusive);
-        Options result = new Options();
-        result.addOption( Option.builder(NATIVE).hasArg(true).desc(format("Use this port for the Cassandra native protocol. (Default %s)", DEFAULT_NATIVE)).type(Integer.class).verifier(boundsChecker).build());
-        result.addOption( Option.builder(JMX).hasArg(true).desc(format("Use this port for retrieving statistics over jmx. (Default %s)", DEFAULT_JMX) ).type(Integer.class).verifier(boundsChecker).build());
-        return result;
+        return new Options()
+               .addOption(PORT_NATIVE.option())
+               .addOption(PORT_JMX.option());
     }
 
     public static SettingsPort get(CommandLine cmdLine) {

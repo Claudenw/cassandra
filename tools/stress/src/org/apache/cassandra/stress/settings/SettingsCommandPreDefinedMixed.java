@@ -51,9 +51,9 @@ public class SettingsCommandPreDefinedMixed extends SettingsCommandPreDefined
         super(Command.MIXED, commandLine);
 
         try {
-            clustering = commandLine.getParsedOptionValue(StressOption.COMMAND_CLUSTERING.option(), StressOption.COMMAND_CLUSTERING.dfltSupplier());
-            if (commandLine.hasOption(StressOption.COMMAND_RATIO.option())) {
-                ratios = ratios(s->Command.valueOf(s.toUpperCase()), commandLine.getOptionValues(StressOption.COMMAND_RATIO.option()));
+            clustering = COMMAND_CLUSTERING.extract(commandLine);
+            if (commandLine.hasOption(COMMAND_RATIO.option())) {
+                ratios = ratios(s->Command.valueOf(s.toUpperCase()), commandLine.getOptionValues(COMMAND_RATIO.option()));
                 if (ratios.size() == 0)
                     throw new IllegalArgumentException("Must specify at least one command with a non-zero ratio");
             } else {
@@ -82,9 +82,9 @@ public class SettingsCommandPreDefinedMixed extends SettingsCommandPreDefined
     // Option Declarations
     public static Options getOptions()
     {
-        return new Options()
-                .addOption(StressOption.COMMAND_CLUSTERING.option())
-                .addOption(StressOption.COMMAND_RATIO.option());
+        return SettingsCommand.getOptions()
+                .addOption(COMMAND_CLUSTERING.option())
+                .addOption(COMMAND_RATIO.option());
     }
 
 //    static class Options extends SettingsCommandPreDefined.Options
@@ -131,7 +131,7 @@ public class SettingsCommandPreDefinedMixed extends SettingsCommandPreDefined
     {
         super.printSettings(out);
         out.printf("  Command Ratios: %s%n", ratios);
-        out.printf("  Command Clustering Distribution: %s%n", commandLine.getOptionValue(StressOption.COMMAND_CLUSTERING.option()));
+        out.printf("  Command Clustering Distribution: %s%n", commandLine.getOptionValue(COMMAND_CLUSTERING.option()));
     }
 
     // CLI utility methods

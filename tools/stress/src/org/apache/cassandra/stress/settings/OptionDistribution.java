@@ -26,6 +26,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.common.base.Function;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.apache.commons.math3.distribution.ExponentialDistribution;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.UniformRealDistribution;
@@ -37,7 +39,7 @@ import org.apache.cassandra.stress.generate.*;
 /**
  * For selecting a mathematical distribution
  */
-public class OptionDistribution extends Option
+public class OptionDistribution
 {
 
     public static final Function<String, DistributionFactory> BUILDER = new Function<String, DistributionFactory>()
@@ -50,34 +52,6 @@ public class OptionDistribution extends Option
 
     private static final Pattern FULL = Pattern.compile("(~?)([A-Z]+)\\((.+)\\)", Pattern.CASE_INSENSITIVE);
     private static final Pattern ARGS = Pattern.compile("[^,]+");
-
-    final String prefix;
-    private String spec;
-    private final String defaultSpec;
-    private final String description;
-    private final boolean required;
-
-    public OptionDistribution(String prefix, String defaultSpec, String description)
-    {
-        this(prefix, defaultSpec, description, defaultSpec == null);
-    }
-
-    public OptionDistribution(String prefix, String defaultSpec, String description, boolean required)
-    {
-        this.prefix = prefix;
-        this.defaultSpec = defaultSpec;
-        this.description = description;
-        this.required = required;
-    }
-
-    @Override
-    public boolean accept(String param)
-    {
-        if (!param.toLowerCase().startsWith(prefix))
-            return false;
-        spec = param.substring(prefix.length());
-        return true;
-    }
 
     public static DistributionFactory get(String spec)
     {
@@ -97,59 +71,23 @@ public class OptionDistribution extends Option
         return inverse ? new InverseFactory(factory) : factory;
     }
 
-    public DistributionFactory get()
-    {
-        return spec != null ? get(spec) : defaultSpec != null ? get(defaultSpec) : null;
+    public static Options argumentOptions() {
+        return new Options()
+            .addOption(Option.builder(null).longOpt("EXP(min..max)").desc("An exponential ratio distribution over the range [min..max].").build())
+        .addOption(Option.builder(null).longOpt("EXTREME(min..max,shape)").desc("An extreme value (Weibull) distribution over the range [min..max].").build())
+        .addOption(Option.builder(null).longOpt("QEXTREME(min..max,shape,quantas)").desc( "An extreme value, split into quantas, within which the chance of selection is uniform.").build())
+            .addOption(Option.builder(null).longOpt("GAUSSIAN(min..max,stdvrng)").desc("A gaussian/normal distribution, where mean=(min+max)/2, and stdev is (mean-min)/stdvrng.").build())
+            .addOption(Option.builder(null).longOpt("GAUSSIAN(min..max,mean,stdev)").desc("A gaussian/normal distribution, with explicitly defined mean and stdev.").build())
+            .addOption(Option.builder(null).longOpt("UNIFORM(min..max)").desc("A uniform distribution over the range [min, max].").build())
+            .addOption(Option.builder(null).longOpt("FIXED(val)").desc("A fixed distribution, always returning the same value.").build())
+            .addOption(Option.builder(null).longOpt("SEQ(min..max)").desc("A fixed sequence, returning values in the range min to max sequentially (starting based on seed), wrapping if necessary.").build());
     }
 
-    @Override
-    public boolean happy()
-    {
-        return !required || spec != null;
+    public static List<String> argumentNotes() {
+        return Arrays.asList("Preceding the name with ~ will invert the distribution, e.g. ~exp(1..10) will yield 10 most, instead of least, often.",
+                             "Aliases: extr, qextr, gauss, normal, norm, weibull");
     }
 
-    public String longDisplay()
-    {
-        return shortDisplay() + ": " + description;
-    }
-
-    @Override
-    public List<String> multiLineDisplay()
-    {
-        return Arrays.asList(
-                GroupedOptions.formatMultiLine("EXP(min..max)", "An exponential distribution over the range [min..max]"),
-                GroupedOptions.formatMultiLine("EXTREME(min..max,shape)", "An extreme value (Weibull) distribution over the range [min..max]"),
-                GroupedOptions.formatMultiLine("QEXTREME(min..max,shape,quantas)", "An extreme value, split into quantas, within which the chance of selection is uniform"),
-                GroupedOptions.formatMultiLine("GAUSSIAN(min..max,stdvrng)", "A gaussian/normal distribution, where mean=(min+max)/2, and stdev is (mean-min)/stdvrng"),
-                GroupedOptions.formatMultiLine("GAUSSIAN(min..max,mean,stdev)", "A gaussian/normal distribution, with explicitly defined mean and stdev"),
-                GroupedOptions.formatMultiLine("UNIFORM(min..max)", "A uniform distribution over the range [min, max]"),
-                GroupedOptions.formatMultiLine("FIXED(val)", "A fixed distribution, always returning the same value"),
-                GroupedOptions.formatMultiLine("SEQ(min..max)", "A fixed sequence, returning values in the range min to max sequentially (starting based on seed), wrapping if necessary."),
-                "Preceding the name with ~ will invert the distribution, e.g. ~exp(1..10) will yield 10 most, instead of least, often",
-                "Aliases: extr, qextr, gauss, normal, norm, weibull"
-        );
-    }
-
-    boolean setByUser()
-    {
-        return spec != null;
-    }
-
-    boolean present()
-    {
-        return setByUser() || defaultSpec != null;
-    }
-
-    @Override
-    public String shortDisplay()
-    {
-        return (defaultSpec != null ? "[" : "") + prefix + "DIST(?)" + (defaultSpec != null ? "]" : "");
-    }
-
-    public String getOptionAsString()
-    {
-        return prefix + (spec == null ? defaultSpec : spec);
-    }
 
     private static final Map<String, Impl> LOOKUP;
     static
@@ -545,19 +483,6 @@ public class OptionDistribution extends Option
         @Override
         public String getConfigAsString(){return String.format("Sequence:  start=%d,end=%d", start, end);}
 
-    }
-
-
-    @Override
-    public int hashCode()
-    {
-        return prefix.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object that)
-    {
-        return super.equals(that) && ((OptionDistribution) that).prefix.equals(this.prefix);
     }
 
 }

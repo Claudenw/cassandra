@@ -108,31 +108,27 @@ public enum Command
         this.names = ImmutableList.copyOf(names);
         this.description = description;
     }
-//
-//    public void printHelp()
-//    {
-//        helpPrinter().run();
-//    }
-//
-//    public final Runnable helpPrinter()
-//    {
-//        switch (this)
-//        {
-//            case PRINT:
-//                return SettingsMisc.printHelpPrinter();
-//            case HELP:
-//                return SettingsMisc.helpHelpPrinter();
-//        }
-//        switch (category)
-//        {
-//            case USER:
-//                return SettingsCommandUser.helpPrinter();
-//            case BASIC:
-//                return SettingsCommandPreDefined.helpPrinter(this);
-//            case MIXED:
-//                return SettingsCommandPreDefinedMixed.helpPrinter();
-//        }
-//        throw new AssertionError();
-//    }
+
+    public void printHelp()
+    {
+        /*switch (this)
+        {
+            case PRINT:
+            case HELP:*/
+                SettingsMisc.printHelp();
+                /*
+                break;
+        }
+        switch (category)
+        {
+            case USER:
+                return SettingsCommandUser.printHelp();
+            case BASIC:
+                return SettingsCommandPreDefined.helpPrinter(this);
+            case MIXED:
+                return SettingsCommandPreDefinedMixed.helpPrinter();
+        }
+        throw new AssertionError();*/
+    }
 
 }

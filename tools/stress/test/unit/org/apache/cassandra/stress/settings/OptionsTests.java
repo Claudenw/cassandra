@@ -18,23 +18,10 @@
 
 package org.apache.cassandra.stress.settings;
 
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-
 public class OptionsTests {
 
 
     public static void main(String[] args) {
-        Options options = AbstractSettings.allOptions();
-/*
-        SettingsColumn.getOptions().getOptions().forEach(options::addOption);
-        SettingsCommand.getOptions().getOptions().forEach(options::addOption);
-        SettingsPopulation.getOptions().getOptions().forEach(options::addOption);
-        SettingsPort.getOptions().getOptions().forEach(options::addOption);
-        SettingsRate.getOptions().getOptions().forEach(options::addOption);
-*/
-        HelpFormatter formatter = new HelpFormatter();
-
-        formatter.printHelp("myapp", "HEADER", options, "FOOTER", true);
+        SettingsMisc.printHelp();
     }
 }
