@@ -22,8 +22,10 @@ package org.apache.cassandra.stress.settings;
 
 
 import java.io.Serializable;
-import java.util.*;
-import java.util.function.Supplier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -317,41 +319,26 @@ public class StressSettings implements Serializable
 //            throw new IllegalArgumentException(key + " is defined multiple times. Each option/command can be specified at most once.");
 //    }
 
-    private static class OptionsBuilder
-    {
-        Options result = new Options();
-
-        OptionsBuilder add(Options options) {
-            options.getOptions().forEach(result::addOption);
-            options.getOptionGroups().forEach(result::addOptionGroup);
-            return this;
-        }
-
-        Options build() {
-            return result;
-        }
-    }
-
     public static Options getOptions() {
-        return new OptionsBuilder()
-        .add(SettingsCommand.getOptions())
-        .add(SettingsRate.getOptions())
-        .add(SettingsPopulation.getOptions())
-        .add(SettingsInsert.getOptions())
-        .add(SettingsColumn.getOptions())
-        .add(SettingsErrors.getOptions())
-        .add(SettingsLog.getOptions())
-        .add(SettingsCredentials.getOptions())
-        .add(SettingsMode.getOptions())
-        .add(SettingsNode.getOptions())
-        .add(SettingsSchema.getOptions())
-        .add(SettingsTransport.getOptions())
-        .add(SettingsPort.getOptions())
-        .add(SettingsJMX.getOptions())
-        .add(SettingsGraph.getOptions())
-        .add(SettingsTokenRange.getOptions())
-        .add(SettingsReporting.getOptions())
-        .build();
+        return new Options()
+        .addOptions(SettingsCommand.getOptions())
+        .addOptions(SettingsRate.getOptions())
+        .addOptions(SettingsPopulation.getOptions())
+        .addOptions(SettingsInsert.getOptions())
+        .addOptions(SettingsColumn.getOptions())
+        .addOptions(SettingsErrors.getOptions())
+        .addOptions(SettingsLog.getOptions())
+        .addOptions(SettingsCredentials.getOptions())
+        .addOptions(SettingsMode.getOptions())
+        .addOptions(SettingsNode.getOptions())
+        .addOptions(SettingsSchema.getOptions())
+        .addOptions(SettingsTransport.getOptions())
+        .addOptions(SettingsPort.getOptions())
+        .addOptions(SettingsJMX.getOptions())
+        .addOptions(SettingsGraph.getOptions())
+        .addOptions(SettingsTokenRange.getOptions())
+        .addOptions(SettingsReporting.getOptions());
+
     }
     public static void printHelp()
     {

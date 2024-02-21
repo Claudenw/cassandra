@@ -199,9 +199,8 @@ abstract class AbstractSettings {
         {
             try
             {
-                T value = dfltSupplier.get();
-                value = commandLine.getParsedOptionValue(option(), value);
-                if (verifier != null & !verifier.test(value)) {
+                T value = commandLine.getParsedOptionValue(option(), dfltSupplier);
+                if (verifier != null && !verifier.test(value)) {
                     throw new ParseException(format("'%s' is not a legal value fo %s", commandLine.getOptionValue(option), key()));
                 }
                 return value;
