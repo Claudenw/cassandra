@@ -40,14 +40,14 @@ public class SettingsErrors extends AbstractSettings
     {
         try {
             ignore = commandLine.hasOption(ERROR_IGNORE.option());
-            int retries = ERROR_RETRIES.extract(commandLine);
-            this.tries = retries + 1;
+            tries = ERROR_RETRIES.extract(commandLine) + 1;
             skipReadValidation = commandLine.hasOption(SKIP_READ_VALIDATION.option());
         } catch (Exception e) {
             throw asRuntimeException(e);
         }
     }
 
+    // Option Declarations
     public static Options getOptions()
     {
         return new Options()
@@ -56,58 +56,12 @@ public class SettingsErrors extends AbstractSettings
                .addOption(SKIP_READ_VALIDATION.option());
     }
 
-    // Option Declarations
-
-//    public static final class Options extends GroupedOptions
-//    {
-//        final OptionSimple retries = new OptionSimple("retries=", "[0-9]+", "9", "Number of tries to perform for each operation before failing", false);
-//        final OptionSimple ignore = new OptionSimple("ignore", "", null, "Do not fail on errors", false);
-//        final OptionSimple skipReadValidation = new OptionSimple("skip-read-validation", "", null, "Skip read validation and message output", false);
-//        @Override
-//        public List<? extends Option> options()
-//        {
-//            return Arrays.asList(retries, ignore, skipReadValidation);
-//        }
-//    }
 
     // CLI Utility Methods
     public void printSettings(ResultLogger out)
     {
         out.printf("  Ignore: %b%n", ignore);
         out.printf("  Tries: %d%n", tries);
+        out.printf("  Skip validation: %b%n", skipReadValidation);
     }
-
-
-//    public static SettingsErrors get(Map<String, String[]> clArgs)
-//    {
-//        String[] params = clArgs.remove("-errors");
-//        if (params == null)
-//            return new SettingsErrors(new Options());
-//
-//        GroupedOptions options = GroupedOptions.select(params, new Options());
-//        if (options == null)
-//        {
-//            printHelp();
-//            System.out.println("Invalid -errors options provided, see output for valid options");
-//            System.exit(1);
-//        }
-//        return new SettingsErrors((Options) options);
-//    }
-//
-//    public static void printHelp()
-//    {
-//        GroupedOptions.printOptions(System.out, "-errors", new Options());
-//    }
-//
-//    public static Runnable helpPrinter()
-//    {
-//        return new Runnable()
-//        {
-//            @Override
-//            public void run()
-//            {
-//                printHelp();
-//            }
-//        };
-//    }
 }
