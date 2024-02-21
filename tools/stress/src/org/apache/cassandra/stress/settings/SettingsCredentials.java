@@ -20,6 +20,7 @@ package org.apache.cassandra.stress.settings;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.File;
 import java.util.Properties;
 
 import org.apache.cassandra.stress.util.ResultLogger;
@@ -37,7 +38,7 @@ public class SettingsCredentials extends AbstractSettings
     public static final String JMX_PASSWORD_PROPERTY_KEY = "jmx.password";
     public static final String TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY = "transport.truststore.password";
     public static final String TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY = "transport.keystore.password";
-    public static final StressOption<String> CREDENTIAL_FILE = new StressOption<>(Option.builder("credential-file").hasArg().argName("file").desc(format("File is supposed to be a standard property file with '%s', '%s', '%s', '%s', '%s', and '%s' as keys. " +
+    public static final StressOption<File> CREDENTIAL_FILE = new StressOption<>(Option.builder("credential-file").hasArg().type(File.class).desc(format("File is supposed to be a standard property file with '%s', '%s', '%s', '%s', '%s', and '%s' as keys. " +
                                                                                                                                                          "The values for these keys will be overriden by their command-line counterparts when specified.%n",
                                                                                                                                                          SettingsCredentials.CQL_USERNAME_PROPERTY_KEY,
                                                                                                                                                          SettingsCredentials.CQL_PASSWORD_PROPERTY_KEY,
@@ -46,7 +47,7 @@ public class SettingsCredentials extends AbstractSettings
                                                                                                                                                          SettingsCredentials.TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY,
                                                                                                                                                          SettingsCredentials.TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY)).build());
 
-    private final String file;
+    private final File file;
 
     public final String cqlUsername;
     public final String cqlPassword;
@@ -57,8 +58,8 @@ public class SettingsCredentials extends AbstractSettings
 
     public SettingsCredentials(CommandLine commandLine)
     {
-        this.file = commandLine.getOptionValue(CREDENTIAL_FILE.option());
-        if (commandLine.hasOption(CREDENTIAL_FILE.option())) {
+        this.file = CREDENTIAL_FILE.extract(commandLine);
+        if (file != null) {
             Properties properties = new Properties();
             try (InputStream is = new FileInputStream(new org.apache.cassandra.io.util.File(file).toJavaIOFile())) {
                     properties.load(is);
@@ -98,38 +99,4 @@ public class SettingsCredentials extends AbstractSettings
         out.printf("  Transport truststore password: %s%n", transportTruststorePassword == null ? "*not set*" : "*suppressed*");
         out.printf("  Transport keystore password: %s%n", transportKeystorePassword == null ? "*not set*" : "*suppressed*");
     }
-
-//    public static SettingsCredentials get(Map<String, String[]> clArgs)
-//    {
-//        String[] params = clArgs.remove("-credentials-file");
-//        if (params == null)
-//            return new SettingsCredentials(null);
-//
-//        if (params.length != 1)
-//        {
-//            printHelp();
-//            System.out.println("Invalid -credentials-file option provided, see output for valid options");
-//            System.exit(1);
-//        }
-//
-//        return new SettingsCredentials(params[0]);
-//    }
-//
-//    public static void printHelp()
-//    {
-//        System.out.println("Usage: -credentials-file <file> ");
-//        System.out.printf("File is supposed to be a standard property file with '%s', '%s', '%s', '%s', '%s', and '%s' as keys. " +
-//                          "The values for these keys will be overriden by their command-line counterparts when specified.%n",
-//                          CQL_USERNAME_PROPERTY_KEY,
-//                          CQL_PASSWORD_PROPERTY_KEY,
-//                          JMX_USERNAME_PROPERTY_KEY,
-//                          JMX_PASSWORD_PROPERTY_KEY,
-//                          TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY,
-//                          TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY);
-//    }
-//
-//    public static Runnable helpPrinter()
-//    {
-//        return SettingsCredentials::printHelp;
-//    }
 }

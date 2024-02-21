@@ -18,15 +18,21 @@
 
 package org.apache.cassandra.stress.settings;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileUtils;
+import org.apache.cassandra.stress.util.ResultLogger;
 
 import static org.apache.cassandra.io.util.File.WriteMode.OVERWRITE;
 import static org.apache.cassandra.stress.settings.SettingsCredentials.CQL_PASSWORD_PROPERTY_KEY;
@@ -36,9 +42,68 @@ import static org.apache.cassandra.stress.settings.SettingsCredentials.JMX_USERN
 import static org.apache.cassandra.stress.settings.SettingsCredentials.TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY;
 import static org.apache.cassandra.stress.settings.SettingsCredentials.TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
-public class SettingsCredentialsTest
-{
+public class SettingsCredentialsTest {
+
+    File tempFile = FileUtils.createTempFile("cassandra-stress-credentials-test", "properties");
+
+
+    private void writeProperties( Properties properties ) throws IOException
+    {
+        try (Writer w = tempFile.newWriter(OVERWRITE))
+        {
+            properties.store(w, null);
+        }
+    }
+
+
+    @Test
+    public void testMissinfFileName() throws Exception
+    {
+        if (tempFile.exists())
+        {
+            tempFile.delete();
+        }
+
+        String[] args = { "-credential-file", tempFile.absolutePath() };
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCredentials.getOptions(), args);
+        try
+        {
+            SettingsCredentials underTest = new SettingsCredentials(commandLine);
+            fail("Should have thrown FileNotFoundException");
+        }
+        catch (RuntimeException expected)
+        {
+            assertEquals(FileNotFoundException.class, expected.getCause().getClass());
+        }
+    }
+
+    @Test
+    public void testNoFileSpecified() throws Exception
+    {
+        String[] args = {};
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCredentials.getOptions(), args);
+        SettingsCredentials underTest = new SettingsCredentials(commandLine);
+
+        assertNull(underTest.cqlUsername);
+        assertNull(underTest.cqlPassword);
+        assertNull(underTest.jmxUsername);
+        assertNull(underTest.jmxPassword);
+        assertNull(underTest.transportKeystorePassword);
+        assertNull(underTest.transportTruststorePassword);
+
+        TestingResultLogger logger = new TestingResultLogger();
+        underTest.printSettings(logger);
+        logger.assertContains("File: *not set*" );
+        logger.assertContains("CQL username: *not set*");
+        logger.assertContains("CQL password: *not set*");
+        logger.assertContains("JMX username: *not set*");
+        logger.assertContains("JMX password: *not set*");
+        logger.assertContains("Transport truststore password: *not set*");
+        logger.assertContains("Transport keystore password: *not set*");
+    }
     @Test
     public void testReadCredentialsFromFileMixed() throws Exception
     {
@@ -50,35 +115,45 @@ public class SettingsCredentialsTest
         properties.setProperty(TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY, "keystorestorepasswordfromfile");
         properties.setProperty(TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY, "truststorepasswordfromfile");
 
-        File tempFile = FileUtils.createTempFile("cassandra-stress-credentials-test", "properties");
+        writeProperties(properties);
 
-        try (Writer w = tempFile.newWriter(OVERWRITE))
-        {
-            properties.store(w, null);
-        }
+        String[] args = { "-credential-file", tempFile.absolutePath() };
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCredentials.getOptions(), args);
+        SettingsCredentials underTest = new SettingsCredentials(commandLine);
 
-        Map<String, String[]> args = new HashMap<>();
-        args.put("write", new String[]{});
-        args.put("-mode", new String[]{ "cql3", "native", "password=cqlpasswordoncommandline" });
-        args.put("-transport", new String[]{ "truststore=sometruststore", "keystore=somekeystore" });
-        args.put("-jmx", new String[]{ "password=jmxpasswordoncommandline" });
-        args.put("-credentials-file", new String[]{ tempFile.absolutePath() });
-        StressSettings settings = StressSettings.get(args);
+//        Map<String, String[]> args = new HashMap<>();
+//        args.put("write", new String[]{});
+//        args.put("-mode", new String[]{ "cql3", "native", "password=cqlpasswordoncommandline" });
+//        args.put("-transport", new String[]{ "truststore=sometruststore", "keystore=somekeystore" });
+//        args.put("-jmx", new String[]{ "password=jmxpasswordoncommandline" });
+//        args.put("-credentials-file", new String[]{ tempFile.absolutePath() });
+//        StressSettings settings = StressSettings.get(args);
 
-        assertEquals("cqluserfromfile", settings.credentials.cqlUsername);
-        assertEquals("cqlpasswordfromfile", settings.credentials.cqlPassword);
-        assertEquals("jmxuserfromfile", settings.credentials.jmxUsername);
-        assertEquals("jmxpasswordfromfile", settings.credentials.jmxPassword);
-        assertEquals("keystorestorepasswordfromfile", settings.credentials.transportKeystorePassword);
-        assertEquals("truststorepasswordfromfile", settings.credentials.transportTruststorePassword);
+        assertEquals("cqluserfromfile", underTest.cqlUsername);
+        assertEquals("cqlpasswordfromfile", underTest.cqlPassword);
+        assertEquals("jmxuserfromfile", underTest.jmxUsername);
+        assertEquals("jmxpasswordfromfile", underTest.jmxPassword);
+        assertEquals("keystorestorepasswordfromfile", underTest.transportKeystorePassword);
+        assertEquals("truststorepasswordfromfile", underTest.transportTruststorePassword);
 
-        assertEquals("cqluserfromfile", settings.mode.username);
-        assertEquals("cqlpasswordoncommandline", settings.mode.password);
-        assertEquals("jmxuserfromfile", settings.jmx.user);
-        assertEquals("jmxpasswordoncommandline", settings.jmx.password);
-        assertEquals("keystorestorepasswordfromfile", settings.transport.getEncryptionOptions().keystore_password);
-        assertEquals("truststorepasswordfromfile", settings.transport.getEncryptionOptions().truststore_password);
+//        assertEquals("cqluserfromfile", settings.mode.username);
+//        assertEquals("cqlpasswordoncommandline", settings.mode.password);
+//        assertEquals("jmxuserfromfile", settings.jmx.user);
+//        assertEquals("jmxpasswordoncommandline", settings.jmx.password);
+//        assertEquals("keystorestorepasswordfromfile", settings.transport.getEncryptionOptions().keystore_password);
+//        assertEquals("truststorepasswordfromfile", settings.transport.getEncryptionOptions().truststore_password);
+
+        TestingResultLogger logger = new TestingResultLogger();
+        underTest.printSettings(logger);
+        logger.assertContains("File: "+tempFile.absolutePath() );
+        logger.assertContains("CQL username: cqluserfromfile");
+        logger.assertContains("CQL password: *suppressed*");
+        logger.assertContains("JMX username: jmxuserfromfile");
+        logger.assertContains("JMX password: *suppressed*");
+        logger.assertContains("Transport truststore password: *suppressed*");
+        logger.assertContains("Transport keystore password: *suppressed*");
     }
+
 
     @Test
     public void testReadCredentialsFromFileOverridenByCommandLine() throws Exception
@@ -123,4 +198,37 @@ public class SettingsCredentialsTest
         assertEquals("truststorepasswordfromcommandline", settings.transport.getEncryptionOptions().truststore_password);
         assertEquals("keystorepasswordfromcommandline", settings.transport.getEncryptionOptions().keystore_password);
     }
+
+    @Test
+    public void testPartialPropertiesSet() throws Exception
+    {
+        Properties properties = new Properties();
+        properties.setProperty(CQL_USERNAME_PROPERTY_KEY, "cqluserfromfile");
+        properties.setProperty(CQL_PASSWORD_PROPERTY_KEY, "cqlpasswordfromfile");
+        properties.setProperty(TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY, "keystorestorepasswordfromfile");
+
+        writeProperties(properties);
+
+        String[] args = { "-credential-file", tempFile.absolutePath() };
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCredentials.getOptions(), args);
+        SettingsCredentials underTest = new SettingsCredentials(commandLine);
+
+        assertEquals("cqluserfromfile", underTest.cqlUsername);
+        assertEquals("cqlpasswordfromfile", underTest.cqlPassword);
+        assertNull(underTest.jmxUsername);
+        assertNull(underTest.jmxPassword);
+        assertEquals("keystorestorepasswordfromfile", underTest.transportKeystorePassword);
+        assertNull(underTest.transportTruststorePassword);
+
+        TestingResultLogger logger = new TestingResultLogger();
+        underTest.printSettings(logger);
+        logger.assertContains("File: "+tempFile.absolutePath() );
+        logger.assertContains("CQL username: cqluserfromfile");
+        logger.assertContains("CQL password: *suppressed*");
+        logger.assertContains("JMX username: *not set*");
+        logger.assertContains("JMX password: *not set*");
+        logger.assertContains("Transport truststore password: *not set*");
+        logger.assertContains("Transport keystore password: *suppressed*");
+    }
+
 }

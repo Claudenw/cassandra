@@ -19,7 +19,6 @@
 package org.apache.cassandra.stress.settings;
 
 import java.util.List;
-import java.util.ArrayList;
 
 import org.apache.commons.cli.AlreadySelectedException;
 import org.apache.commons.cli.CommandLine;
@@ -30,7 +29,6 @@ import org.junit.Test;
 import org.apache.cassandra.db.marshal.AsciiType;
 import org.apache.cassandra.db.marshal.TimeUUIDType;
 import org.apache.cassandra.db.marshal.UTF8Type;
-import org.apache.cassandra.stress.util.ResultLogger;
 
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
@@ -238,42 +236,4 @@ public class SettingsColumnTests
             // do nothing.
         }
     }
-
-    class TestingResultLogger implements ResultLogger
-    {
-        List<String> results = new ArrayList<>();
-
-        public void assertContains(String s) {
-            assertTrue(String.format("Missing '%s'", s), results.stream().filter( str -> str.contains(s) ).findFirst().isPresent());
-        }
-        @Override
-        public void println(String line)
-        {
-            results.add(line);
-        }
-
-        @Override
-        public void println()
-        {
-        }
-
-        @Override
-        public void printException(Exception e)
-        {
-            println(e.toString());
-        }
-
-        @Override
-        public void flush()
-        {
-
-        }
-
-        @Override
-        public void printf(String s, Object... args)
-        {
-            println(String.format(s, args));
-        }
-    }
-
 }
