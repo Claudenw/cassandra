@@ -58,6 +58,17 @@ public class SettingsCredentialsTest {
         }
     }
 
+    public static Properties getFullProperties() {
+        Properties properties = new Properties();
+        properties.setProperty(CQL_USERNAME_PROPERTY_KEY, "cqluserfromfile");
+        properties.setProperty(CQL_PASSWORD_PROPERTY_KEY, "cqlpasswordfromfile");
+        properties.setProperty(JMX_USERNAME_PROPERTY_KEY, "jmxuserfromfile");
+        properties.setProperty(JMX_PASSWORD_PROPERTY_KEY, "jmxpasswordfromfile");
+        properties.setProperty(TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY, "keystorestorepasswordfromfile");
+        properties.setProperty(TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY, "truststorepasswordfromfile");
+        return properties;
+    }
+
 
     @Test
     public void testMissinfFileName() throws Exception
@@ -107,15 +118,8 @@ public class SettingsCredentialsTest {
     @Test
     public void testReadCredentialsFromFileMixed() throws Exception
     {
-        Properties properties = new Properties();
-        properties.setProperty(CQL_USERNAME_PROPERTY_KEY, "cqluserfromfile");
-        properties.setProperty(CQL_PASSWORD_PROPERTY_KEY, "cqlpasswordfromfile");
-        properties.setProperty(JMX_USERNAME_PROPERTY_KEY, "jmxuserfromfile");
-        properties.setProperty(JMX_PASSWORD_PROPERTY_KEY, "jmxpasswordfromfile");
-        properties.setProperty(TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY, "keystorestorepasswordfromfile");
-        properties.setProperty(TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY, "truststorepasswordfromfile");
 
-        writeProperties(properties);
+        writeProperties(getFullProperties());
 
         String[] args = { "-credential-file", tempFile.absolutePath() };
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCredentials.getOptions(), args);
