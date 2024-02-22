@@ -33,22 +33,25 @@ import org.apache.commons.cli.Options;
 
 public class SettingsGraph extends AbstractSettings
 {
-    public final String file;
+    public final File file;
     public final String revision;
     public final String title;
     public final String operation;
     public final File temporaryLogFile;
 
-    public static final StressOption<String> GRAPH_FILE = new StressOption<>(org.apache.commons.cli.Option.builder("graph-file").required().hasArg().argName("file").desc("HTML file to create or append to.").build());
-    public static final StressOption<String> GRAPH_REVISION = new StressOption<>(new org.apache.commons.cli.Option("graph-revision", true, "Unique name to assign to the current configuration being stressed."));
-    public static final StressOption<String> GRAPH_TITLE = new StressOption<>(new org.apache.commons.cli.Option("graph-title", true, "Title for chart. (Default: current date)"));
+    public static final StressOption<File> GRAPH_FILE = new StressOption<>(org.apache.commons.cli.Option.builder("graph-file")
+                                                                                                        .type(File.class).required().hasArg().desc("HTML file to create or append to.").build());
+    public static final StressOption<String> GRAPH_REVISION = new StressOption<>(()->"unknown",
+                                                                                 new org.apache.commons.cli.Option("graph-revision", true, "Unique name to assign to the current configuration being stressed."));
+    public static final StressOption<String> GRAPH_TITLE = new StressOption<>(()-> "cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format(new Date()),
+                                                                              new org.apache.commons.cli.Option("graph-title", true, "Title for chart. (Default: current date)"));
     public static final StressOption<String> GRAPH_NAME = new StressOption<>(new Option("graph-name", true, "Alternative name for current operation (Default: stress op name)"));
 
     public SettingsGraph(CommandLine commandLine, SettingsCommand stressCommand)
     {
-        file = commandLine.getOptionValue(GRAPH_FILE.option());
-        revision = commandLine.getOptionValue(GRAPH_REVISION.option());
-        title = commandLine.getOptionValue(GRAPH_TITLE.option(), ()-> "cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format(new Date()));
+        file = GRAPH_FILE.extract(commandLine);
+        revision = GRAPH_REVISION.extract(commandLine);
+        title = GRAPH_TITLE.extract(commandLine);
         operation = commandLine.getOptionValue(GRAPH_NAME.option(), stressCommand.type::name);
 
         if (inGraphMode())
@@ -63,23 +66,8 @@ public class SettingsGraph extends AbstractSettings
 
     public boolean inGraphMode()
     {
-        return this.file == null ? false : true;
+        return this.file != null;
     }
-
-    // Option Declarations
-//    private static final class GraphOptions extends GroupedOptions
-//    {
-//        final OptionSimple file = new OptionSimple("file=", ".*", null, "HTML file to create or append to", true);
-//        final OptionSimple revision = new OptionSimple("revision=", ".*", "unknown", "Unique name to assign to the current configuration being stressed", false);
-//        final OptionSimple title = new OptionSimple("title=", ".*", null, "Title for chart (current date by default)", false);
-//        final OptionSimple operation = new OptionSimple("op=", ".*", null, "Alternative name for current operation (stress op name used by default)", false);
-//
-//        @Override
-//        public List<? extends Option> options()
-//        {
-//            return Arrays.asList(file, revision, title, operation);
-//        }
-//    }
 
     // CLI Utility Methods
 

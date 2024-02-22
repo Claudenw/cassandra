@@ -60,7 +60,7 @@ public class StressGraph
 
     public void generateGraph()
     {
-        File htmlFile = new File(stressSettings.graph.file);
+        File htmlFile = stressSettings.graph.file;
         ObjectNode stats;
         if (htmlFile.isFile())
         {

@@ -23,6 +23,7 @@ package org.apache.cassandra.stress.settings;
 
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -45,31 +46,51 @@ public abstract class SettingsCommand extends AbstractSettings
 {
 
     public static final StressOption<String> NO_WARMUP = new StressOption<>(new Option("no-warmup", "Do not warmup the process"));
-    public static final StressOption<DurationSpec.IntSecondsBound> DURATION = new StressOption<>(Option.builder("duration").hasArg().type(DurationSpec.IntSecondsBound.class).desc("Time to run.").required(true).build());
+    public static final StressOption<DurationSpec.IntSecondsBound> DURATION = new StressOption<>(Option.builder("duration").hasArg().type(DurationSpec.IntSecondsBound.class)
+                                                                                                       .desc("Time to run. Not valid with -uncert-err or -n options.").build());
+    public static final StressOption<Double> UNCERT_ERR = new StressOption<>(()->0.2d,
+                                                                             rangeVerifier(0.0, Range.exclusive, 1.0, Range.exclusive),
+                                                                             Option.builder("uncert-err")
+                                                                                    .optionalArg(true)
+                                                                                   .desc("Run until the standard error of the mean is below this fraction. Not valid with -duration or -n options. (Default 0.2)")
+                                                                                   .type(Double.class).build());
+    public static final StressOption<Integer> UNCERT_MIN = new StressOption<>(()->30,
+                                                                              POSITIVE_VERIFIER,
+                                                                              Option.builder("uncert-min").hasArg()
+                                                                                    .desc(format("Run at least this many iterations before accepting uncertainty convergence. Only valid with %s. (Default 30)", UNCERT_ERR.key()))
+                                                                                    .type(Integer.class).build());
+    public static final StressOption<Integer> UNCERT_MAX = new StressOption<>(()->200,
+                                                                              POSITIVE_VERIFIER,
+                                                                              Option.builder("uncert-max").hasArg()
+                                                                                    .desc(format("Run at least this many iterations before accepting uncertainty convergence. Only valid with %s. (Default 200)", UNCERT_ERR.key()))
+                                                                                    .type(Integer.class).build());
+    public static final StressOption<ConsistencyLevel> CONSISTENCY = new StressOption<>(()->ConsistencyLevel.LOCAL_ONE,
+                                                                                        Option.builder("cl").hasArg()
+                                                                                              .desc(format("Consistency level to use. Valid options are %s. (Default %s)", enumOptionString(ConsistencyLevel.LOCAL_ONE), ConsistencyLevel.LOCAL_ONE))
+                                                                                              .type(ConsistencyLevel.class).converter(ConsistencyLevel::valueOf).build());
 
-    public static final StressOption<Double> UNCERT_ERR = new StressOption<>(()->0.2d, rangeVerifier(0.0, Range.exclusive, 1.0, Range.exclusive), Option.builder("uncert-err").hasArg()
-                                                                                                                                                        .desc("Run until the standard error of the mean is below this fraction. (Default 0.2)").type(Double.class).build());
-    public static final StressOption<Integer> UNCERT_MIN = new StressOption<>(()->30, POSITIVE_VERIFIER, Option.builder("uncert-min").hasArg().desc(format("Run at least this many iterations before accepting uncertainty convergence. Only valid with %s. (Default 30)", UNCERT_ERR.key()))
-                                                                                                               .type(Integer.class).build());
-    public static final StressOption<Integer> UNCERT_MAX = new StressOption<>(()->200, POSITIVE_VERIFIER, Option.builder("uncert-max").hasArg().desc(format("Run at least this many iterations before accepting uncertainty convergence. Only valid with %s. (Default 200)", UNCERT_ERR.key()))
-                                                                                                                .type(Integer.class).build());
-    public static final StressOption<ConsistencyLevel> CONSISTENCY = new StressOption<>(()->ConsistencyLevel.LOCAL_ONE, Option.builder("cl").hasArg().desc(format("Consistency level to use. Valid options are %s. (Default %s)", enumOptionString(ConsistencyLevel.LOCAL_ONE), ConsistencyLevel.LOCAL_ONE))
-                                                                                                                              .type(ConsistencyLevel.class).converter(ConsistencyLevel::valueOf).build());
+    public static final StressOption<TruncateWhen> TRUNCATE = new StressOption<>(()->TruncateWhen.NEVER,
+                                                                                 Option.builder("truncate").hasArg()
+                                                                                       .desc(format("When to truncate the table Valid values are %s. (Default %s)", enumOptionString(TruncateWhen.NEVER), TruncateWhen.NEVER))
+                                                                                       .converter(TruncateWhen::valueOf).build());
+
+    public static final StressOption<Long> COUNT = new StressOption<>(LONG_POSITIVE_VERIFIER, Option.builder("n").hasArg()
+                                                                            .desc("Number of operations to perform. Number may be followd by 'm' or 'k' (e.g. 5m). Not valid with -duration or -uncert-err options.")
+                                                                            .type(Long.class).converter(DISTRIBUTION_CONVERTER).required(true).build());
+
+
     public static final StressOption<String> COMMAND_PROFILE = new StressOption<>(Option.builder("command-profile").desc("Specify the path to a yaml cql3 profile. Multiple comma separated files can be added.").hasArgs().required().build());
     public static final StressOption<String> COMMAND_RATIO = new StressOption<>(Option.builder("command-ratio").hasArgs().desc("Specify the ratios for operations to perform. (e.g. (read=2 write=1) will perform 2 reads for each write)").build());
     public static final StressOption<Integer> COMMAND_KEYSIZE = new StressOption<>(()->10, POSITIVE_VERIFIER, Option.builder("comamnd-keysize").hasArg().desc("Key size in bytes. (Default 10)").type(Integer.class).build());
-    public static final StressOption<TruncateWhen> TRUNCATE = new StressOption<>(()->TruncateWhen.NEVER, Option.builder("truncate").hasArg().desc(format("When to truncate the table Valid values are %s. (Default %s)", enumOptionString(TruncateWhen.NEVER), TruncateWhen.NEVER))
-                                                                                                               .converter(TruncateWhen::valueOf).build());
-    public static final StressOption<Long> COUNT = new StressOption<>(Option.builder("n").hasArg().desc("Number of operations to perform. Number may be followd by 'm' or 'k' (e.g. 5m).").type(Long.class).converter(DISTRIBUTION_CONVERTER).required(true).build());
     private static final String COMMAND_CLUSTERING_DEFAULT = "GAUSSIAN(1..10)";
     public static final StressOption<DistributionFactory> COMMAND_CLUSTERING = new StressOption<>(()->OptionDistribution.get(COMMAND_CLUSTERING_DEFAULT), Option.builder("command-clustering").hasArg().desc(format("Distribution clustering runs of operations of the same kind. (Default %s)", COMMAND_CLUSTERING_DEFAULT))
                                                                                                                                                                 .type(DistributionFactory.class).build());
     private static final String COMMAND_ADD_DEFAULT = "FIXED(1)";
     public static final StressOption<DistributionFactory> COMMAND_ADD = new StressOption<>(()->OptionDistribution.get(COMMAND_ADD_DEFAULT), Option.builder("command-add").hasArg().type(DistributionFactory.class).desc(format("Distribution of value of counter increments. (Default %s)", COMMAND_ADD_DEFAULT)).build());
+
     public final Command type;
     public final long count;
-    public final long duration;
-    public final TimeUnit durationUnits;
+    public final DurationSpec  duration;
     public final boolean noWarmup;
     public final TruncateWhen truncate;
     public final ConsistencyLevel consistencyLevel;
@@ -88,38 +109,19 @@ public abstract class SettingsCommand extends AbstractSettings
 
             if (commandLine.hasOption(COUNT.option())) {
                 this.count = COUNT.extract(commandLine);
-                this.duration = 0;
-                this.durationUnits = null;
+                this.duration = null;
                 this.targetUncertainty = -1;
                 this.minimumUncertaintyMeasurements = -1;
                 this.maximumUncertaintyMeasurements = -1;
             } else if (commandLine.hasOption(DURATION.option())) {
                 this.count = -1;
-                String duration = commandLine.getOptionValue(DURATION.option());
-                this.duration = Long.parseLong(duration.substring(0, duration.length() - 1));
-                switch (duration.toLowerCase().charAt(duration.length() - 1)) {
-                    case 's':
-                        this.durationUnits = TimeUnit.SECONDS;
-                        break;
-                    case 'm':
-                        this.durationUnits = TimeUnit.MINUTES;
-                        break;
-                    case 'h':
-                        this.durationUnits = TimeUnit.HOURS;
-                        break;
-                    case 'd':
-                        this.durationUnits = TimeUnit.DAYS;
-                        break;
-                    default:
-                        throw new IllegalStateException();
-                }
+                this.duration = DURATION.extract(commandLine);
                 this.targetUncertainty = -1;
                 this.minimumUncertaintyMeasurements = -1;
                 this.maximumUncertaintyMeasurements = -1;
             } else {
                 this.count = -1;
-                this.duration = 0;
-                this.durationUnits = null;
+                this.duration = null;
                 this.targetUncertainty = UNCERT_ERR.extract(commandLine);
                 this.minimumUncertaintyMeasurements = UNCERT_MIN.extract(commandLine);
                 this.maximumUncertaintyMeasurements = UNCERT_MAX.extract(commandLine);
@@ -127,7 +129,6 @@ public abstract class SettingsCommand extends AbstractSettings
         } catch (Exception e) {
             throw asRuntimeException(e);
         }
-
     }
 //    public SettingsCommand(Command type, Options options, Count count, Duration duration, Uncertainty uncertainty)
 //    {
@@ -190,14 +191,47 @@ public abstract class SettingsCommand extends AbstractSettings
 //        final OptionSimple consistencyLevel = new OptionSimple("cl=", "ONE|QUORUM|LOCAL_QUORUM|EACH_QUORUM|ALL|ANY|TWO|THREE|LOCAL_ONE|SERIAL|LOCAL_SERIAL", "LOCAL_ONE", "Consistency level to use", false);
     public static Options getOptions() {
 
+        OptionGroup req = new OptionGroup()
+        {
+            @Override
+            public String toString()
+            {
+                StringBuilder buff = new StringBuilder();
+                Iterator<Option> iter = this.getOptions().iterator();
+                buff.append("One of the following options is required: ");
+
+                while (iter.hasNext())
+                {
+                    Option option = (Option) iter.next();
+                    if (option.getOpt() != null)
+                    {
+                        buff.append("-");
+                        buff.append(option.getOpt());
+                    }
+                    else
+                    {
+                        buff.append("--");
+                        buff.append(option.getLongOpt());
+                    }
+
+                    if (iter.hasNext())
+                    {
+                        buff.append(", ");
+                    }
+                }
+                buff.append(".");
+                return buff.toString();
+            }
+        }
+                          .addOption(COUNT.option())
+                          .addOption(DURATION.option())
+                          .addOption(UNCERT_ERR.option());
+        req.setRequired(true);
         return new Options()
                 .addOption(NO_WARMUP.option())
                 .addOption(TRUNCATE.option())
                 .addOption(CONSISTENCY.option())
-                .addOptionGroup(new OptionGroup()
-                        .addOption(COUNT.option())
-                        .addOption(DURATION.option())
-                        .addOption(UNCERT_ERR.option()))
+                .addOptionGroup(req)
                 .addOption(UNCERT_MIN.option())
                 .addOption(UNCERT_MAX.option())
                 ;
@@ -263,9 +297,9 @@ public abstract class SettingsCommand extends AbstractSettings
     {
         out.printf("  Type: %s%n", type.toString().toLowerCase());
         out.printf("  Count: %,d%n", count);
-        if (durationUnits != null)
+        if (duration != null)
         {
-            out.printf("  Duration: %,d %s%n", duration, durationUnits.toString());
+            out.printf("  Duration: %s%n", duration);
         }
         out.printf("  No Warmup: %s%n", noWarmup);
         out.printf("  Consistency Level: %s%n", consistencyLevel.toString());

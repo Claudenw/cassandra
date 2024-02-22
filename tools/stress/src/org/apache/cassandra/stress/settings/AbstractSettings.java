@@ -37,10 +37,23 @@ import static java.lang.String.format;
 
 
 abstract class AbstractSettings {
+
+    /* converters */
+
+    public static final Converter<long[], PatternSyntaxException> DIST_CONVERTER = s -> {
+        String[] bounds = s.split("\\.\\.+");
+        return new long[]{ OptionDistribution.parseLong(bounds[0]), OptionDistribution.parseLong(bounds[1])};
+    };
+    public static final Converter<PartitionGenerator.Order, IllegalArgumentException> ORDER_CONVERTER = s -> s==null?PartitionGenerator.Order.ARBITRARY: PartitionGenerator.Order.valueOf(s);
+
+    public static final Converter<Long,NumberFormatException> DISTRIBUTION_CONVERTER = OptionDistribution::parseLong;
+    public static final Converter<RatioDistributionFactory,Exception>  RATIO_DISTRIBUTION_FACTORY_CONVERTER = OptionRatioDistribution.BUILDER::apply;
+
+    public static final Converter<DurationSpec.IntSecondsBound,Exception> DURATION_CONVERTER = s -> new DurationSpec.IntSecondsBound(s);
+
+    public static Map<String,StressArgument> argumentMap;
+
     static {
-        init();
-    }
-    static void init() {
         initializeArguments();
     }
 
@@ -64,22 +77,9 @@ abstract class AbstractSettings {
         sa.notes.add("Valid options are: "+enumOptionString(PartitionGenerator.Order.ARBITRARY));
     }
 
-    public static Map<String,StressArgument> argumentMap;
 
-    /* converters */
 
-    public static final Converter<long[], PatternSyntaxException> DIST_CONVERTER = s -> {
-        String[] bounds = s.split("\\.\\.+");
-        return new long[]{ OptionDistribution.parseLong(bounds[0]), OptionDistribution.parseLong(bounds[1])};
-    };
-    public static final Converter<PartitionGenerator.Order, IllegalArgumentException> ORDER_CONVERTER = s -> s==null?PartitionGenerator.Order.ARBITRARY: PartitionGenerator.Order.valueOf(s);
 
-    public static final Converter<Long,NumberFormatException> DISTRIBUTION_CONVERTER = OptionDistribution::parseLong;
-    public static final Converter<RatioDistributionFactory,Exception>  RATIO_DISTRIBUTION_FACTORY_CONVERTER = OptionRatioDistribution.BUILDER::apply;
-
-    // public static final Converter<Integer,Exception> DURATION_CONVERTER = s -> new DurationSpec.IntSecondsBound(s).toSeconds();
-
-    public static final Converter<DurationSpec.IntSecondsBound,Exception> DURATION_CONVERTER = s -> new DurationSpec.IntSecondsBound(s);
 
     /* verifiers */
 
@@ -105,7 +105,17 @@ abstract class AbstractSettings {
     }
 
     /**
-     * Accepts values from 0 to Integer.MSX_VALUE inclusive.
+     * Accepts values from 0 to Long.MAX_VALUE inclusive
+     */
+    public static final Predicate<Long> LONG_POSITIVE_VERIFIER = rangeVerifier(0, Range.inclusive, Long.MAX_VALUE, Range.inclusive);
+    public static Predicate<Long> rangeVerifier(long lowerBound, Range lbRange,  long upperBound, Range ubRange) {
+        return value -> {
+            boolean result = (lbRange == Range.inclusive) ? value >= lowerBound : value > lowerBound;
+            return result && ((ubRange == Range.inclusive) ? value <= upperBound : value < upperBound);
+        };
+    }
+    /**
+     * Accepts values from 0 to Integer.MAX_VALUE inclusive.
      */
     public static final Predicate<Integer> POSITIVE_VERIFIER = rangeVerifier(0, Range.inclusive, Integer.MAX_VALUE, Range.inclusive);
 

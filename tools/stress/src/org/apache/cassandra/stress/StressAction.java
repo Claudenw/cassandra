@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
+import org.apache.cassandra.config.DurationSpec;
 import org.apache.cassandra.stress.operations.OpDistribution;
 import org.apache.cassandra.stress.operations.OpDistributionFactory;
 import org.apache.cassandra.stress.report.StressMetrics;
@@ -88,7 +89,7 @@ public class StressAction implements Runnable
             success = runMulti(settings.rate.auto, rateLimiter);
         else
             success = null != run(settings.command.getFactory(settings), settings.rate.threadCount, settings.command.count,
-                                  settings.command.duration, rateLimiter, settings.command.durationUnits, output, false);
+                                  settings.command.duration, rateLimiter, output, false);
 
         if (success)
             output.println("END");
@@ -122,7 +123,7 @@ public class StressAction implements Runnable
             // we need to warm up all the nodes in the cluster ideally, but we may not be the only stress instance;
             // so warm up all the nodes we're speaking to only.
             output.println(String.format("Warming up %s with %d iterations...", single.desc(), iterations));
-            boolean success = null != run(single, threads, iterations, 0, null, null, ResultLogger.NOOP, true);
+            boolean success = null != run(single, threads, iterations, null, null,  ResultLogger.NOOP, true);
             if (!success)
                 throw new RuntimeException("Failed to execute warmup");
         }
@@ -148,7 +149,7 @@ public class StressAction implements Runnable
                 settings.command.truncateTables(settings);
 
             StressMetrics result = run(settings.command.getFactory(settings), threadCount, settings.command.count,
-                                       settings.command.duration, rateLimiter, settings.command.durationUnits, output, false);
+                                       settings.command.duration, rateLimiter, output, false);
             if (result == null)
                 return false;
             results.add(result);
@@ -208,16 +209,15 @@ public class StressAction implements Runnable
     private StressMetrics run(OpDistributionFactory operations,
                               int threadCount,
                               long opCount,
-                              long duration,
+                              DurationSpec duration,
                               UniformRateLimiter rateLimiter,
-                              TimeUnit durationUnits,
                               ResultLogger output,
                               boolean isWarmup)
     {
         output.println(String.format("Running %s with %d threads %s",
                                      operations.desc(),
                                      threadCount,
-                                     durationUnits != null ? duration + " " + durationUnits.toString().toLowerCase()
+                                     duration != null ? duration
                                         : opCount > 0      ? "for " + opCount + " iteration"
                                                            : "until stderr of mean < " + settings.command.targetUncertainty));
         final WorkManager workManager;
@@ -261,9 +261,9 @@ public class StressAction implements Runnable
 
         metrics.start();
 
-        if (durationUnits != null)
+        if (duration != null)
         {
-            Uninterruptibles.sleepUninterruptibly(duration, durationUnits);
+            Uninterruptibles.sleepUninterruptibly(duration.quantity(), duration.unit());
             workManager.stop();
         }
         else if (opCount <= 0)
