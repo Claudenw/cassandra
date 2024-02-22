@@ -35,18 +35,24 @@ import static java.lang.String.format;
 public class SettingsInsert extends AbstractSettings
 {
 
-    public static final StressOption<DistributionFactory> INSERT_PARTITIONS = new StressOption<>(Option.builder("insert-partitions").hasArg().type(Integer.class).desc("The number of partitions to update in a single batch").build());
+    public static final StressOption<DistributionFactory> INSERT_PARTITIONS = new StressOption<>(Option.builder("insert-partitions").hasArg().type(DistributionFactory.class)
+                                                                                                       .desc("The number of partitions to update in a single batch").hasArg()
+                                                                                                       .build());
     public static final StressOption<BatchStatement.Type>  INSERT_BATCH_TYPE = new StressOption<>(Option.builder("insert-batchtype").hasArg()
-                                                                                                        .converter(s ->BatchStatement.Type.valueOf(s.toUpperCase())).desc(format("Specify the type of batch statement. Valid values are %s.", enumOptionString(BatchStatement.Type.UNLOGGED))).build());
-    public static final StressOption<RatioDistributionFactory> INSERT_SELECT_RATIO = new StressOption<>(Option.builder("insert-select-ratio").desc("The uniform probability of visiting any CQL row in the generated partition.")
+                                                                                                        .converter(s ->BatchStatement.Type.valueOf(s.toUpperCase()))
+                                                                                                        .desc(format("Specify the type of batch statement. Valid values are %s.", enumOptionString(BatchStatement.Type.UNLOGGED))).build());
+    public static final StressOption<RatioDistributionFactory> INSERT_SELECT_RATIO = new StressOption<>(Option.builder("insert-select-ratio")
+                                                                                                              .desc("The uniform probability of visiting any CQL row in the generated partition.")
                                                                                                         .hasArg().type(RatioDistributionFactory.class).converter(RATIO_DISTRIBUTION_FACTORY_CONVERTER).build());
     private static final String INSERT_VISITS_DEFAULT = "FIXED(1)";
-    public static final StressOption<DistributionFactory> INSERT_VISITS = new StressOption<>(()->OptionDistribution.get(INSERT_VISITS_DEFAULT), Option.builder("insert-visits").hasArg().type(DistributionFactory.class)
-                                                                                                                                                      .desc(format("The target number of inserts to split a partition into; if more than one, the partition will be placed in the revisit set. (Default %s)", INSERT_VISITS_DEFAULT)).build());
+    public static final StressOption<DistributionFactory> INSERT_VISITS = new StressOption<>(()->OptionDistribution.get(INSERT_VISITS_DEFAULT),
+                                                                                             Option.builder("insert-visits").hasArg().type(DistributionFactory.class)
+                                                                                                   .desc(format("The target number of inserts to split a partition into; if more than one, the partition will be placed in the revisit set. (Default %s)", INSERT_VISITS_DEFAULT)).build());
     private static final String INSERT_REVISIT_DEFAULT = "UNIFORM(1..1M)";
-    public static final StressOption<DistributionFactory> INSERT_REVISIT = new StressOption<>(()->OptionDistribution.get(INSERT_REVISIT_DEFAULT), Option.builder("insert-revisit").hasArg().type(DistributionFactory.class)
-                                                                                                                                                        .desc(format("The distribution with which we revisit partial writes (see %s); implicitly defines size of revisit collection. (Default %s)", INSERT_VISITS.key(), INSERT_REVISIT_DEFAULT)).build());
-    private static final String INSERT_ROW_POPULATION_RATIO_DEFAULT = "fixed(1)/1";
+    public static final StressOption<DistributionFactory> INSERT_REVISIT = new StressOption<>(()->OptionDistribution.get(INSERT_REVISIT_DEFAULT),
+                                                                                              Option.builder("insert-revisit").hasArg().type(DistributionFactory.class)
+                                                                                                    .desc(format("The distribution with which we revisit partial writes (see %s); implicitly defines size of revisit collection. (Default %s)", INSERT_VISITS.key(), INSERT_REVISIT_DEFAULT)).build());
+    private static final String INSERT_ROW_POPULATION_RATIO_DEFAULT = "FIXED(1)/1";
     public static final StressOption<RatioDistributionFactory> INSERT_ROW_POPULATION_RATIO = new StressOption<>(()-> {try
 
         {
@@ -54,8 +60,9 @@ public class SettingsInsert extends AbstractSettings
         }catch (Exception e) {
             throw asRuntimeException(e);
         }},
-                                                                                                                Option.builder("insert-row-population-ratio").desc(format("The percent of a given rows columns to populate. (default %s)",INSERT_ROW_POPULATION_RATIO_DEFAULT))
-                                                                                                                .hasArg().type(RatioDistributionFactory.class).converter(RATIO_DISTRIBUTION_FACTORY_CONVERTER).build());
+                                                                                                                Option.builder("insert-row-population-ratio")
+                                                                                                                      .desc(format("The percent of a given rows columns to populate. (default %s)",INSERT_ROW_POPULATION_RATIO_DEFAULT))
+                                                                                                                      .hasArg().type(RatioDistributionFactory.class).converter(RATIO_DISTRIBUTION_FACTORY_CONVERTER).build());
     public final DistributionFactory revisit;
     public final DistributionFactory visits;
     public final DistributionFactory batchsize;
@@ -87,22 +94,6 @@ public class SettingsInsert extends AbstractSettings
         ;
     }
 
-/*    private static class InsertOptions extends GroupedOptions
-    {
-        final OptionDistribution visits = new OptionDistribution("visits=", "fixed(1)", "The target number of inserts to split a partition into; if more than one, the partition will be placed in the revisit set");
-        final OptionDistribution revisit = new OptionDistribution("revisit=", "uniform(1..1M)", "The distribution with which we revisit partial writes (see visits); implicitly defines size of revisit collection");
-        final OptionDistribution partitions = new OptionDistribution("partitions=", null, "The number of partitions to update in a single batch", false);
-        final OptionSimple batchType = new OptionSimple("batchtype=", "unlogged|logged|counter", null, "Specify the type of batch statement (LOGGED, UNLOGGED or COUNTER)", false);
-        final OptionRatioDistribution selectRatio = new OptionRatioDistribution("select-ratio=", null, "The uniform probability of visiting any CQL row in the generated partition", false);
-        final OptionRatioDistribution rowPopulationRatio = new OptionRatioDistribution("row-population-ratio=", "fixed(1)/1", "The percent of a given rows columns to populate", false);
-
-        @Override
-        public List<? extends Option> options()
-        {
-            return Arrays.asList(revisit, visits, partitions, batchType, selectRatio, rowPopulationRatio);
-        }
-    }*/
-
     // CLI Utility Methods
     public void printSettings(ResultLogger out)
     {
@@ -119,7 +110,7 @@ public class SettingsInsert extends AbstractSettings
         {
             out.println("  Batchsize: " +batchsize.getConfigAsString());
         }
-        if (batchsize != null)
+        if (selectRatio != null)
         {
             out.println("  Select Ratio: " +selectRatio.getConfigAsString());
         }
@@ -134,39 +125,5 @@ public class SettingsInsert extends AbstractSettings
             out.println("  Batch Type: not batching");
         }
     }
-
-
-//    public static SettingsInsert get(Map<String, String[]> clArgs)
-//    {
-//        String[] params = clArgs.remove("-insert");
-//        if (params == null)
-//            return new SettingsInsert(new InsertOptions());
-//
-//        InsertOptions options = GroupedOptions.select(params, new InsertOptions());
-//        if (options == null)
-//        {
-//            printHelp();
-//            System.out.println("Invalid -insert options provided, see output for valid options");
-//            System.exit(1);
-//        }
-//        return new SettingsInsert(options);
-//    }
-//
-//    public static void printHelp()
-//    {
-//        GroupedOptions.printOptions(System.out, "-insert", new InsertOptions());
-//    }
-//
-//    public static Runnable helpPrinter()
-//    {
-//        return new Runnable()
-//        {
-//            @Override
-//            public void run()
-//            {
-//                printHelp();
-//            }
-//        };
-//    }
 }
 

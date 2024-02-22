@@ -41,7 +41,6 @@ public class SettingsGraphTest
     @Test
     public void defaultTest() throws ParseException
     {
-
         String[] args = {"-uncert-err", "-graph-file", "outputFile"};
 
         SettingsCommand settingsCommand = SettingsCommandTests.getInstance(Command.HELP, workingOptions, args);
