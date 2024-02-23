@@ -50,7 +50,7 @@ public class SettingsJMXTest
         assertNull(underTest.user);
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "Username: null");
+        logger.assertContains( "Username: *not set*");
         logger.assertContains( "Password: *not set*");
 
 
@@ -122,7 +122,7 @@ public class SettingsJMXTest
         assertNull(underTest.user);
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "Username: null");
+        logger.assertContains( "Username: *not set*");
         logger.assertContains( "Password: *suppressed*");
 
 

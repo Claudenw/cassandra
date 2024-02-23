@@ -151,7 +151,7 @@ public class StressSettings implements Serializable
 
                 EncryptionOptions encOptions = transport.getEncryptionOptions();
                 JavaDriverClient c = new JavaDriverClient(this, node.nodes, port.nativePort, encOptions);
-                c.connect(mode.compression());
+                c.connect(mode.compression);
                 if (keyspace != null)
                     c.execute("USE \"" + keyspace + "\";", org.apache.cassandra.db.ConsistencyLevel.ONE);
 

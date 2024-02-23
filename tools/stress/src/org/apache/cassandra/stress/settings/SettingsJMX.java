@@ -22,6 +22,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
+import net.nicoulaj.compilecommand.annotations.Print;
 import org.apache.cassandra.stress.util.ResultLogger;
 
 import static java.lang.String.format;
@@ -55,7 +56,7 @@ public class SettingsJMX extends AbstractSettings
     // CLI Utility Methods
     public void printSettings(ResultLogger out)
     {
-        out.printf("  Username: %s%n", user);
-        out.printf("  Password: %s%n", (password == null ? "*not set*" : "*suppressed*"));
+        out.printf("  Username: %s%n", PrintUtils.printNull(user));
+        out.printf("  Password: %s%n", PrintUtils.printSensitive(password));
     }
 }

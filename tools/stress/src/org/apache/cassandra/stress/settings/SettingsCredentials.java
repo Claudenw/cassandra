@@ -91,12 +91,12 @@ public class SettingsCredentials extends AbstractSettings
     // CLI Utility Methods
     public void printSettings(ResultLogger out)
     {
-        out.printf("  File: %s%n", file == null ? "*not set*" : file);
-        out.printf("  CQL username: %s%n", cqlUsername == null ? "*not set*" : cqlUsername);
-        out.printf("  CQL password: %s%n", cqlPassword == null ? "*not set*" : "*suppressed*");
-        out.printf("  JMX username: %s%n", jmxUsername == null ? "*not set*" : jmxUsername);
-        out.printf("  JMX password: %s%n", jmxPassword == null ? "*not set*" : "*suppressed*");
-        out.printf("  Transport truststore password: %s%n", transportTruststorePassword == null ? "*not set*" : "*suppressed*");
-        out.printf("  Transport keystore password: %s%n", transportKeystorePassword == null ? "*not set*" : "*suppressed*");
+        out.printf("  File: %s%n", PrintUtils.printNull(file));
+        out.printf("  CQL username: %s%n", PrintUtils.printNull(cqlUsername));
+        out.printf("  CQL password: %s%n", PrintUtils.printSensitive(cqlPassword));
+        out.printf("  JMX username: %s%n", PrintUtils.printNull(jmxUsername));
+        out.printf("  JMX password: %s%n", PrintUtils.printSensitive(jmxPassword));
+        out.printf("  Transport truststore password: %s%n", PrintUtils.printSensitive(transportTruststorePassword));
+        out.printf("  Transport keystore password: %s%n", PrintUtils.printSensitive(transportKeystorePassword));
     }
 }

@@ -163,7 +163,6 @@ abstract class AbstractSettings {
         return result;
     }
 
-
     public static class StressOption<T> {
 
         private Option option;
@@ -203,6 +202,12 @@ abstract class AbstractSettings {
 
         public String key() {
             return format("-%s",option.getOpt());
+        }
+
+        public T extract(CommandLine commandLine, T defaultValue)
+        {
+            T result = extract(commandLine);
+            return result == null ? defaultValue : result;
         }
 
         public T extract(CommandLine commandLine)
@@ -262,6 +267,16 @@ abstract class AbstractSettings {
 
         public void addOption( String name, String description) {
             options.addOption( Option.builder(null).longOpt(name).desc(description).build());
+        }
+    }
+
+    public static class PrintUtils {
+        public static String printSensitive(Object sensitive) {
+            return sensitive == null ? "*not set*" : "*suppressed*";
+        }
+
+        public static Object printNull(Object value) {
+            return value == null ? "*not set*" : value;
         }
     }
 }

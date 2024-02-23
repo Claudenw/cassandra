@@ -20,6 +20,7 @@ package org.apache.cassandra.stress.settings;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.apache.cassandra.stress.util.ResultLogger;
 
@@ -32,6 +33,11 @@ public class TestingResultLogger implements ResultLogger
     public void assertContains(String s) {
         assertTrue(String.format("Missing '%s'", s), results.stream().filter( str -> str.contains(s) ).findFirst().isPresent());
     }
+
+    public void assertContains(String s, Supplier<String> msg) {
+        assertTrue(String.format("%s: Missing '%s'", msg.get(), s), results.stream().filter( str -> str.contains(s) ).findFirst().isPresent());
+    }
+
     @Override
     public void println(String line)
     {
