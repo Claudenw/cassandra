@@ -153,32 +153,6 @@ public class SettingsMode extends AbstractSettings
         ;
     }
 
-//    private static class Cql3Options extends GroupedOptions
-//    {
-//        final OptionSimple protocolVersion = new OptionSimple("protocolVersion=", "[2-5]+", "NEWEST_SUPPORTED", "CQL Protocol Version", false);
-//        final OptionSimple usePrepared = new OptionSimple("prepared", "", null, "Use prepared statements", false);
-//        final OptionSimple useUnPrepared = new OptionSimple("unprepared", "", null, "Use unprepared statements", false);
-//        final OptionSimple useCompression = new OptionSimple("compression=", "none|lz4|snappy", "none", "", false);
-//        final OptionSimple port = new OptionSimple("port=", "[0-9]+", "9046", "", false);
-//        final OptionSimple user = new OptionSimple("user=", ".+", null,
-//                                                   format("CQL user, when specified, it will override the value in credentials file for key '%s'", CQL_USERNAME_PROPERTY_KEY),
-//                                                   false);
-//        final OptionSimple password = new OptionSimple("password=", ".+", null,
-//                                                       format("CQL password, when specified, it will override the value in credentials file for key '%s'", CQL_PASSWORD_PROPERTY_KEY),
-//                                                       false);
-//        final OptionSimple authProvider = new OptionSimple("auth-provider=", ".*", null, "Fully qualified implementation of com.datastax.driver.core.AuthProvider", false);
-//        final OptionSimple maxPendingPerConnection = new OptionSimple("maxPending=", "[0-9]+", "128", "Maximum pending requests per connection", false);
-//        final OptionSimple connectionsPerHost = new OptionSimple("connectionsPerHost=", "[0-9]+", "8", "Number of connections per host", false);
-//        final OptionSimple simplenative = new OptionSimple("simplenative", "", null, "", false);
-//
-//        @Override
-//        public List<? extends Option> options()
-//        {
-//            return Arrays.asList(user, password, port, authProvider,maxPendingPerConnection,
-//                                 useCompression, connectionsPerHost, usePrepared, useUnPrepared,
-//                                 protocolVersion, simplenative);
-//        }
-//    }
     // CLI Utility Methods
     public void printSettings(ResultLogger out)
     {
@@ -190,56 +164,6 @@ public class SettingsMode extends AbstractSettings
         out.printf("  Auth Provider Class: %s%n", PrintUtils.printNull(authProvider));
         out.printf("  Max Pending Per Connection: %s%n", PrintUtils.printNull(maxPendingPerConnection));
         out.printf("  Connections Per Host: %s%n", PrintUtils.printNull(connectionsPerHost));
-        out.printf("  Compression: %s%n", compression);
+        out.printf("  Compression: %s%n", compression == ProtocolOptions.Compression.NONE ? "NONE" : compression);
     }
-
-//    public static SettingsMode get(Map<String, String[]> clArgs, SettingsCredentials credentials)
-//    {
-//        String[] params = clArgs.remove("-mode");
-//        List<String> paramList = new ArrayList<>();
-//        if (params == null)
-//        {
-//            Cql3Options opts = new Cql3Options();
-//            opts.accept("prepared");
-//            return new SettingsMode(opts, credentials);
-//        }
-//        for (String item : params)
-//        {
-//            // Warn on obsolete arguments, to be removed in future release
-//            if (item.equals("cql3") || item.equals("native"))
-//            {
-//                System.err.println("Warning: ignoring deprecated parameter: " + item);
-//            }
-//            else
-//            {
-//                paramList.add(item);
-//            }
-//        }
-//        if (paramList.contains("prepared") && paramList.contains("unprepared"))
-//        {
-//            System.err.println("Warning: can't specify both prepared and unprepared, using prepared");
-//            paramList.remove("unprepared");
-//        }
-//        String[] updated = paramList.toArray(new String[paramList.size()]);
-//        GroupedOptions options = new Cql3Options();
-//        GroupedOptions.select(updated, options);
-//        return new SettingsMode(options, credentials);
-//    }
-//
-//    public static void printHelp()
-//    {
-//        GroupedOptions.printOptions(System.out, "-mode", new Cql3Options());
-//    }
-//
-//    public static Runnable helpPrinter()
-//    {
-//        return new Runnable()
-//        {
-//            @Override
-//            public void run()
-//            {
-//                printHelp();
-//            }
-//        };
-//    }
 }

@@ -22,11 +22,9 @@ package org.apache.cassandra.stress.settings;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.InetSocketAddress;
-import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
@@ -38,12 +36,8 @@ import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileUtils;
-import org.apache.hc.core5.reactor.ConnectionInitiator;
 
-import static java.lang.String.format;
 import static org.apache.cassandra.io.util.File.WriteMode.OVERWRITE;
-import static org.apache.cassandra.stress.settings.SettingsCredentials.CQL_PASSWORD_PROPERTY_KEY;
-import static org.apache.cassandra.stress.settings.SettingsCredentials.CQL_USERNAME_PROPERTY_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
@@ -79,7 +73,7 @@ public class SettingsModeTest
         logger.assertContains("Auth Provider Class: *not set*");
         logger.assertContains("Max Pending Per Connection: 128");
         logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: ");
+        logger.assertContains("Compression: NONE");
 
 
         // try with configuration file
@@ -112,7 +106,7 @@ public class SettingsModeTest
         logger.assertContains("Auth Provider Class: *not set*");
         logger.assertContains("Max Pending Per Connection: 128");
         logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: ");
+        logger.assertContains("Compression: NONE");
     }
 
     @Test
@@ -142,7 +136,7 @@ public class SettingsModeTest
         logger.assertContains("Auth Provider Class: *not set*");
         logger.assertContains("Max Pending Per Connection: 128");
         logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: ");
+        logger.assertContains("Compression: NONE");
 
 
         // try with configuration file
@@ -175,7 +169,7 @@ public class SettingsModeTest
         logger.assertContains("Auth Provider Class: *not set*");
         logger.assertContains("Max Pending Per Connection: 128");
         logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: ");
+        logger.assertContains("Compression: NONE");
     }
 
     @Test
@@ -205,7 +199,7 @@ public class SettingsModeTest
         logger.assertContains("Auth Provider Class: *not set*");
         logger.assertContains("Max Pending Per Connection: 128");
         logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: ");
+        logger.assertContains("Compression: NONE");
 
 
         // try with configuration file
@@ -238,7 +232,7 @@ public class SettingsModeTest
         logger.assertContains("Auth Provider Class: *not set*");
         logger.assertContains("Max Pending Per Connection: 128");
         logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: ");
+        logger.assertContains("Compression: NONE");
     }
 
     @Test
@@ -271,7 +265,7 @@ public class SettingsModeTest
             logger.assertContains("Auth Provider Class: *not set*", ()->ver.name());
             logger.assertContains("Max Pending Per Connection: 128", ()->ver.name());
             logger.assertContains("Connections Per Host: 8", ()->ver.name());
-            logger.assertContains("Compression: ", ()->ver.name());
+            logger.assertContains("Compression: NONE", ()->ver.name());
         }
     }
 
@@ -305,7 +299,7 @@ public class SettingsModeTest
             logger.assertContains("Auth Provider Class: *not set*", ()->style.name());
             logger.assertContains("Max Pending Per Connection: 128", ()->style.name());
             logger.assertContains("Connections Per Host: 8", ()->style.name());
-            logger.assertContains("Compression: ", ()->style.name());
+            logger.assertContains("Compression: NONE", ()->style.name());
         }
     }
 
@@ -370,7 +364,7 @@ public class SettingsModeTest
         logger.assertContains("Auth Provider Class: "+TestingAuthProvider.class.getName());
         logger.assertContains("Max Pending Per Connection: 128");
         logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: ");
+        logger.assertContains("Compression: NONE");
 
         try {
             args = new String[] { "-auth-provider", String.class.getName() };
@@ -411,7 +405,7 @@ public class SettingsModeTest
         logger.assertContains("Auth Provider Class: *not set*");
         logger.assertContains("Max Pending Per Connection: 128");
         logger.assertContains("Connections Per Host: 3");
-        logger.assertContains("Compression: ");
+        logger.assertContains("Compression: NONE");
 
         try {
             args = new String[] {"-connections-per-host", "-1"};
@@ -451,7 +445,7 @@ public class SettingsModeTest
         logger.assertContains("Auth Provider Class: *not set*");
         logger.assertContains("Max Pending Per Connection: 3");
         logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: ");
+        logger.assertContains("Compression: NONE");
 
         try {
             args = new String[] {"-max-pending-connections", "-1"};
@@ -492,7 +486,7 @@ public class SettingsModeTest
         logger.assertContains("Auth Provider Class: *not set*");
         logger.assertContains("Max Pending Per Connection: *not set*");
         logger.assertContains("Connections Per Host: *not set*");
-        logger.assertContains("Compression: ");
+        logger.assertContains("Compression: NONE");
 
         // test will all args
         args = new String[] {"-simple-native", "-protocol-version", "4", "-cql-style", "CQL_PREPARED", "-use-compression", "lz4", "-user", "commandLineUser", "-password", "commandLinePwd", "-auth-provider",  TestingAuthProvider.class.getName(),
@@ -520,12 +514,11 @@ public class SettingsModeTest
         logger.assertContains("Auth Provider Class: *not set*");
         logger.assertContains("Max Pending Per Connection: *not set*");
         logger.assertContains("Connections Per Host: *not set*");
-        logger.assertContains("Compression: ");
+        logger.assertContains("Compression: NONE");
     }
 
     public static class TestingAuthProvider implements AuthProvider
     {
-
         @Override
         public Authenticator newAuthenticator(InetSocketAddress inetSocketAddress, String s) throws AuthenticationException
         {

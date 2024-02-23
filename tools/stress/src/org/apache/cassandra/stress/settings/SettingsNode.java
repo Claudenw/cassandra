@@ -31,6 +31,7 @@ import com.google.common.net.HostAndPort;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 
 import com.datastax.driver.core.Host;
@@ -41,27 +42,29 @@ public class SettingsNode extends AbstractSettings
 {
     public static final StressOption<String> NODE_DATACENTER = new StressOption<>(new Option("datacenter", true, "Datacenter used for DCAwareRoundRobinLoadPolicy"));
     public static final StressOption<String> NODE_WHITELIST = new StressOption<>(new Option("whitelist", "Limit communications to the provided nodes"));
-    public static final StressOption<FileInputStream> NODE_FILE = new StressOption<>(Option.builder("node-file").desc("Node file (one per line)").hasArg().argName("file").type(FileInputStream.class).build());
-    public static final StressOption<List<String>> NODE_LIST = new StressOption<>(Option.builder("node-list").desc("A comma delimited list of nodes.").hasArg()
+    public static final StressOption<FileInputStream> NODE_FILE = new StressOption<>(Option.builder("node-file").desc("Node file (one per line).  May not be used with -node-list.").hasArg().argName("file").type(FileInputStream.class).build());
+    public static final StressOption<List<String>> NODE_LIST = new StressOption<>(()->List.of("localhost"),
+                                                                                  Option.builder("node-list").desc("A comma delimited list of nodes.  May not be used with -node-file.").hasArg()
                                                                                         .converter(s -> Arrays.asList(s.split(","))).build());
     public final List<String> nodes;
     public final boolean isWhiteList;
     public final String datacenter;
+    private final Random random;
 
     public SettingsNode(CommandLine commandLine)
     {
+        this.random = new Random();
         if (commandLine.hasOption(NODE_FILE.option()))
         {
             String node;
-            List<String> tmpNodes = new ArrayList<>();
+            nodes = new ArrayList<>();
             try(BufferedReader in = new BufferedReader(new InputStreamReader(NODE_FILE.extract(commandLine))))
             {
                 while ((node = in.readLine()) != null)
                 {
                     if (node.length() > 0)
-                        tmpNodes.add(node);
+                        nodes.add(node);
                 }
-                nodes = Arrays.asList(tmpNodes.toArray(new String[tmpNodes.size()]));
             }
             catch(Exception e)
             {
@@ -72,7 +75,6 @@ public class SettingsNode extends AbstractSettings
         {
             nodes = NODE_LIST.extract(commandLine);
         }
-
         isWhiteList = commandLine.hasOption(NODE_WHITELIST.option());
         datacenter = NODE_DATACENTER.extract(commandLine);
     }
@@ -134,36 +136,20 @@ public class SettingsNode extends AbstractSettings
 
     public String randomNode()
     {
-        int index = (int) (Math.random() * nodes.size());
-        if (index >= nodes.size())
-            index = nodes.size() - 1;
-        return nodes.get(index);
+        return nodes.get( random.nextInt(0,nodes.size()));
     }
 
+    // Option Declarations
     public static Options getOptions() {
         return new Options()
                .addOption(NODE_DATACENTER.option())
                .addOption(NODE_WHITELIST.option())
+               .addOptionGroup(
+               new OptionGroup()
                .addOption(NODE_FILE.option())
-               .addOption(NODE_LIST.option())
+               .addOption(NODE_LIST.option()))
         ;
     }
-
-    // Option Declarations
-//
-//    public static final class Options extends GroupedOptions
-//    {
-//        final OptionSimple datacenter = new OptionSimple("datacenter=", ".*", null, "Datacenter used for DCAwareRoundRobinLoadPolicy", false);
-//        final OptionSimple whitelist = new OptionSimple("whitelist", "", null, "Limit communications to the provided nodes", false);
-//        final OptionSimple file = new OptionSimple("file=", ".*", null, "Node file (one per line)", false);
-//        final OptionSimple list = new OptionSimple("", "[^=,]+(,[^=,]+)*", "localhost", "comma delimited list of nodes", false);
-//
-//        @Override
-//        public List<? extends Option> options()
-//        {
-//            return Arrays.asList(datacenter, whitelist, file, list);
-//        }
-//    }
 
 
     // CLI Utility Methods
@@ -171,32 +157,6 @@ public class SettingsNode extends AbstractSettings
     {
         out.println("  Nodes: " + nodes);
         out.println("  Is White List: " + isWhiteList);
-        out.println("  Datacenter: " + datacenter);
+        out.println("  Datacenter: " + PrintUtils.printNull(datacenter));
     }
-
-//    public static SettingsNode get(Map<String, String[]> clArgs)
-//    {
-//        String[] params = clArgs.remove("-node");
-//        if (params == null)
-//            return new SettingsNode(new Options());
-//
-//        GroupedOptions options = GroupedOptions.select(params, new Options());
-//        if (options == null)
-//        {
-//            printHelp();
-//            System.out.println("Invalid -node options provided, see output for valid options");
-//            System.exit(1);
-//        }
-//        return new SettingsNode((Options) options);
-//    }
-//
-//    public static void printHelp()
-//    {
-//        GroupedOptions.printOptions(System.out, "-node", new Options());
-//    }
-//
-//    public static Runnable helpPrinter()
-//    {
-//        return SettingsNode::printHelp;
-//    }
 }
