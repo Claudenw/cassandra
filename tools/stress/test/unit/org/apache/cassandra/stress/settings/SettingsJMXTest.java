@@ -21,7 +21,6 @@ package org.apache.cassandra.stress.settings;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;

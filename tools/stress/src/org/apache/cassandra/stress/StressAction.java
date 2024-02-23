@@ -226,7 +226,7 @@ public class StressAction implements Runnable
         else
             workManager = new WorkManager.FixedWorkManager(opCount);
 
-        final StressMetrics metrics = new StressMetrics(output, settings.log.intervalMillis, settings);
+        final StressMetrics metrics = new StressMetrics(output, settings.log.interval.to(TimeUnit.MILLISECONDS), settings);
 
         final CountDownLatch releaseConsumers = new CountDownLatch(1);
         final CountDownLatch done = new CountDownLatch(threadCount);

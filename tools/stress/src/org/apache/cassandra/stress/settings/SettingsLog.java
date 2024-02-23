@@ -40,11 +40,13 @@ public class SettingsLog extends AbstractSettings
     public static final StressOption<String> LOG_NO_SETTINGS = new StressOption<>(new Option("log-no-settings", "Disable printing of settings values at start of test."));
     public static final StressOption<File> LOG_FILE = new StressOption<>(Option.builder("log-file").desc("Log to the specified file.").hasArg().type(File.class).build());
     public static final StressOption<File> LOG_HEADER_FILE = new StressOption<>(Option.builder("log-header-file").desc("Log headers to the specified file.").hasArg().type(File.class).build());
-    public static final StressOption<DurationSpec.IntSecondsBound> LOG_INTERVAL = new StressOption<>(Option.builder("log-interval").desc("Log progress every <value> seconds or milliseconds.  Should have a pattern like 2s or 3000ms")
-                                                                                     .required().hasArg().type(DurationSpec.IntSecondsBound.class).build());
-    public static final StressOption<Level> LOG_LEVEL = new StressOption<>(Option.builder("log-level").desc("The Level to log at. Valid options are: "+AbstractSettings.enumOptionString(Level.VERBOSE))
+    public static final StressOption<DurationSpec.IntSecondsBound> LOG_INTERVAL = new StressOption<>(() -> new DurationSpec.IntSecondsBound("1s"),
+                                                                                                     Option.builder("log-interval").desc("Log progress every <value> seconds or milliseconds.  Should have a pattern like 2s or 3000ms")
+                                                                                     .hasArg().type(DurationSpec.IntSecondsBound.class).build());
+    public static final StressOption<Level> LOG_LEVEL = new StressOption<>(() -> Level.NORMAL,
+                                                                           Option.builder("log-level").desc("Logging level. Valid options are: "+AbstractSettings.enumOptionString(Level.VERBOSE)+". (Default = MORMAL)")
                                                                                  .type(Level.class).converter(s -> Level.valueOf(s.toUpperCase()))
-                                                                           .hasArg().argName("level").required().build());
+                                                                                 .hasArg().argName("level").build());
 
     public static enum Level
     {
@@ -55,19 +57,16 @@ public class SettingsLog extends AbstractSettings
     public final boolean noSettings;
     public final File file;
     public final File hdrFile;
-    public final int intervalMillis;
+    public final DurationSpec interval;
     public final Level level;
 
     public SettingsLog(CommandLine commandLine)
     {
-
         noSummary = commandLine.hasOption(LOG_NO_SUMMARY.option());
         noSettings = commandLine.hasOption(LOG_NO_SETTINGS.option());
         file = LOG_FILE.extract(commandLine);
         hdrFile = LOG_HEADER_FILE.extract(commandLine);
-
-        DurationSpec.IntSecondsBound interval = LOG_INTERVAL.extract(commandLine);
-        intervalMillis = interval.toMilliseconds();
+        interval = LOG_INTERVAL.extract(commandLine);
         level = LOG_LEVEL.extract(commandLine);
     }
 
@@ -95,63 +94,13 @@ public class SettingsLog extends AbstractSettings
         ;
     }
 
-//    public static final class Options extends GroupedOptions
-//    {
-//        final OptionSimple noSummmary = new OptionSimple("no-summary", "", null, "Disable printing of aggregate statistics at the end of a test", false);
-//        final OptionSimple noSettings = new OptionSimple("no-settings", "", null, "Disable printing of settings values at start of test", false);
-//        final OptionSimple outputFile = new OptionSimple("file=", ".*", null, "Log to a file", false);
-//        final OptionSimple hdrOutputFile = new OptionSimple("hdrfile=", ".*", null, "Log to a file", false);
-//        final OptionSimple interval = new OptionSimple("interval=", "[0-9]+(ms|s|)", "1s", "Log progress every <value> seconds or milliseconds", false);
-//        final OptionSimple level = new OptionSimple("level=", "(minimal|normal|verbose)", "normal", "Logging level (minimal, normal or verbose)", false);
-//
-//        @Override
-//        public List<? extends Option> options()
-//        {
-//            return Arrays.asList(level, noSummmary, outputFile, hdrOutputFile, interval, noSettings);
-//        }
-//    }
-
     // CLI Utility Methods
     public void printSettings(ResultLogger out)
     {
         out.printf("  No Summary: %b%n", noSummary);
         out.printf("  No Settings: %b%n", noSettings);
         out.printf("  File: %s%n", file);
-        out.printf("  Interval Millis: %d%n", intervalMillis);
+        out.printf("  Interval: %s%n", interval);
         out.printf("  Level: %s%n", level);
     }
-
-//
-//    public static SettingsLog get(Map<String, String[]> clArgs)
-//    {
-//        String[] params = clArgs.remove("-log");
-//        if (params == null)
-//            return new SettingsLog(new Options());
-//
-//        GroupedOptions options = GroupedOptions.select(params, new Options());
-//        if (options == null)
-//        {
-//            printHelp();
-//            System.out.println("Invalid -log options provided, see output for valid options");
-//            System.exit(1);
-//        }
-//        return new SettingsLog((Options) options);
-//    }
-//
-//    public static void printHelp()
-//    {
-//        GroupedOptions.printOptions(System.out, "-log", new Options());
-//    }
-//
-//    public static Runnable helpPrinter()
-//    {
-//        return new Runnable()
-//        {
-//            @Override
-//            public void run()
-//            {
-//                printHelp();
-//            }
-//        };
-//    }
 }
