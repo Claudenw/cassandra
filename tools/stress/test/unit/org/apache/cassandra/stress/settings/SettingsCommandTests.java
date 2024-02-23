@@ -101,7 +101,7 @@ public class SettingsCommandTests
     @Test
     public void durationTest() throws ParseException
     {
-        SettingsCommand underTest = getInstance(Command.HELP, SettingsCommand.getOptions(), new String[]{ "-duration", "2m",});
+        SettingsCommand underTest = getInstance(Command.HELP, SettingsCommand.getOptions(), new String[]{ "-duration", "2m"});
         assertEquals(Command.HELP, underTest.type);
         assertFalse(underTest.noWarmup);
         assertEquals( 2, underTest.duration.quantity());
@@ -117,7 +117,7 @@ public class SettingsCommandTests
     @Test
     public void countTest() throws ParseException
     {
-        SettingsCommand underTest = getInstance(Command.HELP, SettingsCommand.getOptions(), new String[]{ "-n", "5",});
+        SettingsCommand underTest = getInstance(Command.HELP, SettingsCommand.getOptions(), new String[]{ "-n", "5"});
         assertEquals(Command.HELP, underTest.type);
         assertFalse(underTest.noWarmup);
         assertNull( underTest.duration);
@@ -128,7 +128,7 @@ public class SettingsCommandTests
         assertEquals(ConsistencyLevel.LOCAL_ONE, underTest.consistencyLevel);
         assertEquals(SettingsCommand.TruncateWhen.NEVER, underTest.truncate);
 
-        underTest = getInstance(Command.HELP, SettingsCommand.getOptions(), new String[]{ "-n", "0",});
+        underTest = getInstance(Command.HELP, SettingsCommand.getOptions(), new String[]{ "-n", "0"});
         assertEquals(Command.HELP, underTest.type);
         assertFalse(underTest.noWarmup);
         assertNull( underTest.duration);
@@ -140,7 +140,7 @@ public class SettingsCommandTests
         assertEquals(SettingsCommand.TruncateWhen.NEVER, underTest.truncate);
 
         try {
-            getInstance(Command.HELP, SettingsCommand.getOptions(), new String[]{ "-n", "-1",});
+            getInstance(Command.HELP, SettingsCommand.getOptions(), new String[]{ "-n", "-1"});
             fail("Should have thrown ParseException");
         } catch (RuntimeException expected)
         {

@@ -37,15 +37,17 @@ import static java.lang.String.format;
 public class SettingsPopulation extends AbstractSettings implements Serializable
 {
 
-    public static final StressOption<PartitionGenerator.Order> POPULATION_ORDER = new StressOption<>(Option.builder("population-order").hasArg()
-                                                                                                           .desc("Defines the (intra-)partition order; if not specified, will be consistent but arbitrary order.  ")
+    /*
+    this.distribution = dist.seed.get();
+    or
+            this.sequence = null;
+            this.readlookback = null;
+            this.wrap = false;
+     */
+    public static final StressOption<PartitionGenerator.Order> POPULATION_ORDER = new StressOption<>(()-> PartitionGenerator.Order.ARBITRARY,
+                                                                                                     Option.builder("population-order").hasArg()
+                                                                                                           .desc("Defines the (intra-)partition order. Valid values are: "+enumOptionString(PartitionGenerator.Order.ARBITRARY)+". (Default "+PartitionGenerator.Order.ARBITRARY+")")
                                                                                                            .type(PartitionGenerator.Order.class).build());
-    public final DistributionFactory distribution;
-    public final DistributionFactory readlookback;
-    public final PartitionGenerator.Order order;
-    public final boolean wrap;
-    public final long[] sequence;
-
 
     public static final StressOption<long[]> POPULATION_SEQ = new StressOption<>(Option.builder("population-seq").hasArg()
                                                                                  .argName("start,end")
@@ -54,17 +56,26 @@ public class SettingsPopulation extends AbstractSettings implements Serializable
                                                                                        .converter(DIST_CONVERTER)
                                                                                        .build());
     public static final StressOption<DistributionFactory> POPULATION_READ = new StressOption<>(Option.builder("population-read-lookback").hasArg()
-                                                                                                     .desc(format("Select read seeds from the recently visited write seeds. Only applies if %s is specified.", POPULATION_SEQ.key()))
+                                                                                                     .desc(format("Select read seeds from the recently visited write seeds. Only applies if -%s is specified.", POPULATION_SEQ.key()))
                                                                                                      .type(DistributionFactory.class).build());
     public static final StressOption<String> POPULATION_NO_WRAP = new StressOption<>(Option.builder("population-no-wrap")
-                                                                                           .desc(format("Terminate the stress test once all seeds in the range have been visited. Only applies if %s is specified.", POPULATION_SEQ.key()))
+                                                                                           .desc(format("Terminate the stress test once all seeds in the range have been visited. Only applies if -%s is specified.", POPULATION_SEQ.key()))
                                                                                            .build());
     public static final StressOption<DistributionFactory> POPULATION_DIST = new StressOption<>(Option.builder("population-dist").hasArg()
                                                                                                      .desc("Seeds are selected from this distribution.")
                                                                                                      .type(DistributionFactory.class).build());
+
+
     private static final OptionGroup DIST_GROUP = new OptionGroup()
-    .addOption(POPULATION_DIST.option())
-    .addOption(POPULATION_SEQ.option());
+                                                  .addOption(POPULATION_DIST.option())
+                                                  .addOption(POPULATION_SEQ.option());
+
+    public final DistributionFactory distribution;
+    public final DistributionFactory readlookback;
+    public final PartitionGenerator.Order order;
+    public final boolean wrap;
+    public final long[] sequence;
+
 
 
 //    private SettingsPopulation(GenerateOptions options, DistributionOptions dist, SequentialOptions pop)
@@ -97,22 +108,22 @@ public class SettingsPopulation extends AbstractSettings implements Serializable
 //        this(options, null, options);
 //    }
 
-    private SettingsPopulation(PartitionGenerator.Order order, DistributionFactory distribution) {
-        this.order = order;
-            this.distribution = distribution;
-            this.sequence = null;
-            this.readlookback = null;
-            this.wrap = false;
-    }
-
-    private SettingsPopulation(PartitionGenerator.Order order, final long[] sequence,
-                               final DistributionFactory readlookback, boolean wrap) {
-        this.order = order;
-    this.distribution = null;
-    this.sequence = sequence;
-    this.readlookback = readlookback;
-    this.wrap = wrap;
-    }
+//    private SettingsPopulation(PartitionGenerator.Order order, DistributionFactory distribution) {
+//        this.order = order;
+//            this.distribution = distribution;
+//            this.sequence = null;
+//            this.readlookback = null;
+//            this.wrap = false;
+//    }
+//
+//    private SettingsPopulation(PartitionGenerator.Order order, final long[] sequence,
+//                               final DistributionFactory readlookback, boolean wrap) {
+//        this.order = order;
+//    this.distribution = null;
+//    this.sequence = sequence;
+//    this.readlookback = readlookback;
+//    this.wrap = wrap;
+//    }
 
 //    private SettingsPopulation(CommandLine cmdLine, SettingsCommand settingsCommand)  {
 //        this.order = POPULATION_ORDER.extract(cmdLine);
@@ -130,41 +141,62 @@ public class SettingsPopulation extends AbstractSettings implements Serializable
 //        }
 //    }
 
+    private class Builder {
+        DistributionFactory distribution;
+        DistributionFactory readlookback;
 
-    public static SettingsPopulation get(CommandLine commandLine, SettingsCommand command) {
+        long[] sequence;
+        boolean wrap;
+
+        public void setDistribution(DistributionFactory dist) {
+            this.distribution = dist;
+            this.readlookback = null;
+            this.sequence = null;
+            this.wrap = false;
+        }
+
+        public void setSequence(long[] sequence, DistributionFactory readlookback, boolean wrap) {
+            this.distribution = null;
+            this.sequence = sequence;
+            this.readlookback = readlookback;
+            this.wrap = wrap;
+        }
+    }
+
+    public SettingsPopulation(CommandLine commandLine, SettingsCommand command) {
+        Builder builder = new Builder();
         // set default size to number of commands requested, unless set to err convergence, then use 1M
         long defaultLimit = command.count <= 0 ? 1000000 : command.count;
-        try {
-        PartitionGenerator.Order order = POPULATION_ORDER.extract(commandLine);
-
+        builder.setSequence(new long[] {1, defaultLimit}, POPULATION_READ.extract(commandLine), false);
+        order = POPULATION_ORDER.extract(commandLine);
         if (DIST_GROUP.getSelected() == null)
         {
-            if (command instanceof SettingsCommandUser && ((SettingsCommandUser)command).hasInsertOnly())
+            if (!(command instanceof SettingsCommandUser && ((SettingsCommandUser)command).hasInsertOnly()))
             {
-                return new SettingsPopulation(order, new long[] {1, defaultLimit},
-                                              POPULATION_READ.extract(commandLine),
-                                              !commandLine.hasOption(POPULATION_NO_WRAP.option()));
-            }
-
-            // return defaults:
-            switch(command.type)
-            {
-                case WRITE:
-                case COUNTER_WRITE:
-                    return new SettingsPopulation(order, new long[] {1, defaultLimit}, POPULATION_READ.extract(commandLine), !commandLine.hasOption(POPULATION_NO_WRAP.option()));
-                default:
-                    return new SettingsPopulation(order, OptionDistribution.get( String.format("gaussian(1..%s)", defaultLimit)));
+                switch (command.type)
+                {
+                    case WRITE:
+                    case COUNTER_WRITE:
+                        break;
+                    default:
+                        builder.setDistribution(OptionDistribution.get(String.format("gaussian(1..%s)", defaultLimit)));
+                        break;
+                }
             }
         }
-        if (commandLine.hasOption(POPULATION_DIST.option())) {
-            return new SettingsPopulation(order, POPULATION_DIST.extract(commandLine));
-        } else {
-            return new SettingsPopulation(order, commandLine.getParsedOptionValue(POPULATION_SEQ.option(), DIST_CONVERTER.apply("1.." + defaultLimit)),
-                    POPULATION_READ.extract(commandLine), !commandLine.hasOption(POPULATION_NO_WRAP.option()));
+        else if (commandLine.hasOption(POPULATION_DIST.option()))
+        {
+            builder.setDistribution(POPULATION_DIST.extract(commandLine));
         }
-        } catch (Exception ex) {
-            throw asRuntimeException(ex);
+        else
+        {
+            builder.sequence = POPULATION_SEQ.extract(commandLine, builder.sequence);
+            builder.wrap = !commandLine.hasOption(POPULATION_NO_WRAP.option());
         }
+        this.readlookback = builder.readlookback;
+        this.sequence = builder.sequence;
+        this.distribution = builder.distribution;
+        this.wrap = builder.wrap;
     }
 
 

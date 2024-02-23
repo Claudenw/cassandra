@@ -197,7 +197,7 @@ public class StressSettings implements Serializable
         StressSettings settings = new StressSettings(
         settingsCommand,
         new SettingsRate(commandLine),
-        SettingsPopulation.get(commandLine, settingsCommand),
+        new SettingsPopulation(commandLine, settingsCommand),
         new SettingsInsert(commandLine),
         new SettingsColumn(commandLine),
         new SettingsErrors(commandLine),
