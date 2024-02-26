@@ -34,19 +34,21 @@ import static org.junit.Assert.assertTrue;
 public class SettingsGraphTest
 {
 
-    private Options workingOptions = new Options().addOptions(SettingsCommand.getOptions())
-                         .addOptions(SettingsGraph.getOptions());
+//    private Options SettingsGraph.getOptions() = new Options().addOptions(SettingsCommand.getOptions())
+//                         .addOptions(SettingsGraph.getOptions());
 
+    SettingsCommand getSettingsCommand(Command type, String... args) throws ParseException
+    {
+        return SettingsCommandTests.getInstance(type, SettingsCommand.getOptions(), args);
+    }
 
     @Test
     public void defaultTest() throws ParseException
     {
-        String[] args = {"-uncert-err", "-graph-file", "outputFile"};
+        String[] args = {"-graph-file", "outputFile"};
 
-        SettingsCommand settingsCommand = SettingsCommandTests.getInstance(Command.HELP, workingOptions, args);
-        CommandLine commandLine = DefaultParser.builder().build().parse(workingOptions, args);
-
-        SettingsGraph underTest = new SettingsGraph(commandLine, settingsCommand);
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsGraph.getOptions(), args);
+        SettingsGraph underTest = new SettingsGraph(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
         assertEquals(new File("outputFile"), underTest.file);
         assertEquals("unknown", underTest.revision);
         assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date())));
@@ -63,12 +65,10 @@ public class SettingsGraphTest
     @Test
     public void revisionTest() throws ParseException
     {
-        String[] args = {"-uncert-err", "-graph-file", "outputFile", "-graph-revision", "revisionString"};
+        String[] args = {"-graph-file", "outputFile", "-graph-revision", "revisionString"};
 
-        SettingsCommand settingsCommand = SettingsCommandTests.getInstance(Command.HELP, workingOptions, args);
-        CommandLine commandLine = DefaultParser.builder().build().parse(workingOptions, args);
-
-        SettingsGraph underTest = new SettingsGraph(commandLine, settingsCommand);
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsGraph.getOptions(), args);
+        SettingsGraph underTest = new SettingsGraph(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
         assertEquals(new File("outputFile"), underTest.file);
         assertEquals("revisionString", underTest.revision);
         assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date())));
@@ -86,12 +86,10 @@ public class SettingsGraphTest
     public void titleTest() throws ParseException
     {
 
-        String[] args = {"-uncert-err", "-graph-file", "outputFile", "-graph-title", "titleString"};
+        String[] args = {"-graph-file", "outputFile", "-graph-title", "titleString"};
 
-        SettingsCommand settingsCommand = SettingsCommandTests.getInstance(Command.HELP, workingOptions, args);
-        CommandLine commandLine = DefaultParser.builder().build().parse(workingOptions, args);
-
-        SettingsGraph underTest = new SettingsGraph(commandLine, settingsCommand);
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsGraph.getOptions(), args);
+        SettingsGraph underTest = new SettingsGraph(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
         assertEquals(new File("outputFile"), underTest.file);
         assertEquals("unknown", underTest.revision);
         assertEquals("titleString", underTest.title);
@@ -109,12 +107,10 @@ public class SettingsGraphTest
     public void nameTest() throws ParseException
     {
 
-        String[] args = { "-uncert-err", "-graph-file", "outputFile", "-graph-name", "nameString" };
+        String[] args = { "-graph-file", "outputFile", "-graph-name", "nameString" };
 
-        SettingsCommand settingsCommand = SettingsCommandTests.getInstance(Command.HELP, workingOptions, args);
-        CommandLine commandLine = DefaultParser.builder().build().parse(workingOptions, args);
-
-        SettingsGraph underTest = new SettingsGraph(commandLine, settingsCommand);
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsGraph.getOptions(), args);
+        SettingsGraph underTest = new SettingsGraph(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
         assertEquals(new File("outputFile"), underTest.file);
         assertEquals("unknown", underTest.revision);
         assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date())));

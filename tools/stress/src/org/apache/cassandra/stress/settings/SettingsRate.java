@@ -34,23 +34,35 @@ public class SettingsRate extends AbstractSettings implements Serializable
 
     private static final int IGNORE = -1;
 
-    public static final StressOption<String> RATE_AUTO = new StressOption<>(new Option("rate-auto", "Stop increasing threads once throughput saturates."));
+    public static final StressOption<String> RATE_AUTO = new StressOption<>(new Option("rate-auto", "Stop increasing threads once throughput saturates. (Not valid with -rate-fixed or -rate-throttle)"));
 
     private static final int RATE_MIN_CLIENTS_DEFAULT = 4;
-    public static final StressOption<Integer> RATE_MIN_CLIENTS = new StressOption<>(()->RATE_MIN_CLIENTS_DEFAULT, POSITIVE_VERIFIER, Option.builder("rate-min-clients").hasArg(true).desc(format("Run at least this many clients concurrently.  (Only valid with %s) (Default %s)", RATE_AUTO.key(),
-                                                                                                                                                                                            RATE_MIN_CLIENTS_DEFAULT)).type(Integer.class).build());
+    public static final StressOption<Integer> RATE_MIN_CLIENTS = new StressOption<>(()->RATE_MIN_CLIENTS_DEFAULT,
+                                                                                    POSITIVE_VERIFIER,
+                                                                                    Option.builder("rate-min-clients").hasArg().type(Integer.class)
+                                                                                          .desc(format("Run at least this many clients concurrently.  (Only valid with %s) (Default %s)", RATE_AUTO.key(), RATE_MIN_CLIENTS_DEFAULT)).build());
 
     private static final int RATE_MAX_CLIENTS_DEFAULT = 1000;
-    public static final StressOption<Integer> RATE_MAX_CLIENTS = new StressOption<>(()->RATE_MAX_CLIENTS_DEFAULT, POSITIVE_VERIFIER, Option.builder("rate-max-clients").hasArg(true)
-                                                                                                                                           .desc(format("Run at most this many clients concurrently.  (Only valid with %s) (Default %s)", RATE_AUTO.key(), RATE_MAX_CLIENTS_DEFAULT))
-                                                                                                                                           .type(Integer.class).build());
-    public static final StressOption<Integer> RATE_FIXED = new StressOption(POSITIVE_VERIFIER, Option.builder("rate-fixed").desc("Run this many clients concurrently." ).type(Integer.class).build());
-    public static final StressOption<Integer> RATE_THROTTLE = new StressOption<>(POSITIVE_VERIFIER, Option.builder("rate-throttle").desc("Throttle operations per second across all clients to a maximum rate (or less) with no implied schedule.").type(Integer.class).build());
-
+    public static final StressOption<Integer> RATE_MAX_CLIENTS = new StressOption<>(()->RATE_MAX_CLIENTS_DEFAULT,
+                                                                                    POSITIVE_VERIFIER,
+                                                                                    Option.builder("rate-max-clients").hasArg()
+                                                                                          .desc(format("Run at most this many clients concurrently.  (Only valid with %s) (Default %s)", RATE_AUTO.key(), RATE_MAX_CLIENTS_DEFAULT))
+                                                                                          .type(Integer.class).build());
+    public static final StressOption<Integer> RATE_FIXED = new StressOption(POSITIVE_VERIFIER,
+                                                                            Option.builder("rate-fixed").type(Integer.class).hasArg()
+                                                                                  .desc("Maximum operations per second. (Not valid with -rate-auto or -rate-throttle)").build());
     private static final int RATE_THROTTLE_DEFAULT = 0;
-    public static final StressOption<Integer> RATE_CLIENTS = new StressOption<>(()->RATE_THROTTLE_DEFAULT, POSITIVE_VERIFIER, Option.builder("rate-clients").hasArg(true)
-                                                                                                                                    .desc(format("Run this many clients concurrently.  (Only valid with %s or %s) (Default: %s)", RATE_FIXED.key(), RATE_THROTTLE.key(), RATE_THROTTLE_DEFAULT))
-                                                                                                                              .hasArg().type(Integer.class).build());
+    public static final StressOption<Integer> RATE_THROTTLE = new StressOption<>(()->RATE_THROTTLE_DEFAULT,
+                                                                                 POSITIVE_VERIFIER,
+                                                                                 Option.builder("rate-throttle").type(Integer.class).hasArg()
+                                                                                       .desc(format("Throttle operations per second across all clients to a maximum rate (or less) with no implied schedule. (Not valid with -%s or -%s) (Default: %s).",
+                                                                                                    RATE_FIXED.key(), RATE_AUTO.key(), RATE_THROTTLE_DEFAULT)).build());
+
+    private static final int RATE_CLIENTS_DEFAULT = 0;
+    public static final StressOption<Integer> RATE_CLIENTS = new StressOption<>(()->RATE_CLIENTS_DEFAULT,
+                                                                                POSITIVE_VERIFIER,
+                                                                                Option.builder("rate-clients").hasArg().type(Integer.class)
+                                                                                      .desc(format("Run this many clients concurrently.  (Only valid with -%s or -%s) (Default: %s)", RATE_FIXED.key(), RATE_THROTTLE.key(), RATE_CLIENTS_DEFAULT)).build());
 
     private static OptionGroup AUTO_OR_THREADS = new OptionGroup()
                                                  .addOption(RATE_AUTO.option())
@@ -90,43 +102,56 @@ public class SettingsRate extends AbstractSettings implements Serializable
 //        isFixed = false;
 //    }
 
-    public SettingsRate(CommandLine cmdLine)
+    private static boolean overrideThreadCount(SettingsCommand command) {
+        if (AUTO_OR_THREADS.getSelected() == null)
+        {
+            switch (command.type)
+            {
+                case WRITE:
+                case COUNTER_WRITE:
+                    return command.count > 0;
+            }
+        }
+        return false;
+    }
+
+    public SettingsRate(CommandLine cmdLine, SettingsCommand command)
     {
         this.auto = cmdLine.hasOption(RATE_AUTO.option());
         this.isFixed = cmdLine.hasOption(RATE_FIXED.option());
         if (this.auto)
         {
             this.minThreads = RATE_MIN_CLIENTS.extract(cmdLine);
-            this.maxThreads = RATE_CLIENTS.extract(cmdLine);
+            this.maxThreads = RATE_MAX_CLIENTS.extract(cmdLine);
             this.threadCount = IGNORE;
-            this.opsPerSecond = RATE_CLIENTS.dfltSupplier().get();
+            this.opsPerSecond = 0;
         }
         else
         {
-            this.threadCount = RATE_CLIENTS.extract(cmdLine);
+            this.threadCount = overrideThreadCount(command) ? 200 :RATE_CLIENTS.extract(cmdLine);
             this.opsPerSecond = isFixed ? RATE_FIXED.extract(cmdLine) : RATE_THROTTLE.extract(cmdLine);
             this.minThreads = IGNORE;
             this.maxThreads = IGNORE;
         }
     }
-
-    private SettingsRate(int rate) {
-        this.auto = false;
-        this.isFixed = true;
-                this.threadCount = rate;
-                this.opsPerSecond = RATE_CLIENTS.dfltSupplier().get();
-                this.minThreads = IGNORE;
-                this.maxThreads = IGNORE;
-    }
-
-    public SettingsRate() {
-        this.auto = true;
-        this.isFixed = false;
-        this.threadCount = IGNORE;
-        this.opsPerSecond = RATE_CLIENTS.dfltSupplier().get();
-        this.minThreads = RATE_MIN_CLIENTS.dfltSupplier().get();
-        this.maxThreads = RATE_MAX_CLIENTS.dfltSupplier().get();
-    }
+//
+//    private SettingsRate(int rate) {
+//        this.auto = false;
+//        this.isFixed = true;
+//                this.threadCount = rate;
+//                this.opsPerSecond = RATE_CLIENTS.dfltSupplier().get();
+//                this.minThreads = IGNORE;
+//                this.maxThreads = IGNORE;
+//    }
+//
+//    public SettingsRate() {
+//        this.auto = true;
+//        this.isFixed = false;
+//        this.threadCount = IGNORE;
+//        this.opsPerSecond = RATE_CLIENTS.dfltSupplier().get();
+//        this.minThreads = RATE_MIN_CLIENTS.dfltSupplier().get();
+//        this.maxThreads = RATE_MAX_CLIENTS.dfltSupplier().get();
+//    }
 
     // Option Declarations
 
@@ -179,26 +204,26 @@ public class SettingsRate extends AbstractSettings implements Serializable
         }
     }
 
-    public static SettingsRate get(CommandLine cmdLine, SettingsCommand command)
-    {
-        if (AUTO_OR_THREADS.getSelected() == null)
-        {
-            switch (command.type)
-            {
-                case WRITE:
-                case COUNTER_WRITE:
-                    if (command.count > 0)
-                    {
-//
-//                        ThreadOptions options = new ThreadOptions();
-//                        options.accept("threads=200");
-                        return new SettingsRate(200);
-                    }
-            }
-            return new SettingsRate();
-        }
-        return new SettingsRate(cmdLine);
-    }
+//    public static SettingsRate get(CommandLine cmdLine, SettingsCommand command)
+//    {
+//        if (AUTO_OR_THREADS.getSelected() == null)
+//        {
+//            switch (command.type)
+//            {
+//                case WRITE:
+//                case COUNTER_WRITE:
+//                    if (command.count > 0)
+//                    {
+////
+////                        ThreadOptions options = new ThreadOptions();
+////                        options.accept("threads=200");
+//                        return new SettingsRate(200);
+//                    }
+//            }
+//            return new SettingsRate();
+//        }
+//        return new SettingsRate(cmdLine);
+//    }
 
 //    public static void printHelp()
 //    {

@@ -24,7 +24,6 @@ import java.io.Writer;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
@@ -37,15 +36,18 @@ import static org.junit.Assert.assertNull;
 
 public class SettingsJMXTest
 {
-    private Options workingOptions = new Options().addOptions(SettingsJMX.getOptions()).addOptions(SettingsCredentials.getOptions());
+    SettingsCredentials getSettingsCredentials(String... args) throws ParseException
+    {
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCredentials.getOptions(), args);
+        return new SettingsCredentials(commandLine);
+    }
 
     @Test
     public void defaultTest() throws ParseException, IOException
     {
         String[] args = {};
-        CommandLine commandLine = DefaultParser.builder().build().parse(workingOptions, args);
-        SettingsCredentials settingsCredentials = new SettingsCredentials(commandLine);
-        SettingsJMX underTest = new SettingsJMX(commandLine, settingsCredentials);
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsJMX.getOptions(), args);
+        SettingsJMX underTest = new SettingsJMX(commandLine, getSettingsCredentials());
         assertNull(underTest.password);
         assertNull(underTest.user);
         TestingResultLogger logger = new TestingResultLogger();
@@ -56,14 +58,11 @@ public class SettingsJMXTest
 
         // try with configuration file
         File tempFile = FileUtils.createTempFile("cassandra-stress-jmx-test", "properties");
-        args = new String[] { "-credential-file", tempFile.absolutePath()};
         try (Writer w = tempFile.newWriter(OVERWRITE))
         {
             SettingsCredentialsTest.getFullProperties().store(w, null);
         }
-        commandLine = DefaultParser.builder().build().parse(workingOptions, args);
-        settingsCredentials = new SettingsCredentials(commandLine);
-        underTest = new SettingsJMX(commandLine, settingsCredentials);
+        underTest = new SettingsJMX(commandLine, getSettingsCredentials("-credential-file", tempFile.absolutePath()));
         assertEquals("jmxpasswordfromfile", underTest.password);
         assertEquals("jmxuserfromfile", underTest.user);
 
@@ -77,9 +76,8 @@ public class SettingsJMXTest
     public void userTest() throws ParseException, IOException
     {
         String[] args = { "-jmx-user", "commandlineuser"};
-        CommandLine commandLine = DefaultParser.builder().build().parse(workingOptions, args);
-        SettingsCredentials settingsCredentials = new SettingsCredentials(commandLine);
-        SettingsJMX underTest = new SettingsJMX(commandLine, settingsCredentials);
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsJMX.getOptions(), args);
+        SettingsJMX underTest = new SettingsJMX(commandLine, getSettingsCredentials());
         assertNull(underTest.password);
         assertEquals("commandlineuser", underTest.user);
         TestingResultLogger logger = new TestingResultLogger();
@@ -94,14 +92,11 @@ public class SettingsJMXTest
         {
             SettingsCredentialsTest.getFullProperties().store(w, null);
         }
-        args = new String[] { "-credential-file", tempFile.absolutePath(), "-jmx-user", "commandlineuser"};
         try (Writer w = tempFile.newWriter(OVERWRITE))
         {
             SettingsCredentialsTest.getFullProperties().store(w, null);
         }
-        commandLine = DefaultParser.builder().build().parse(workingOptions, args);
-        settingsCredentials = new SettingsCredentials(commandLine);
-        underTest = new SettingsJMX(commandLine, settingsCredentials);
+        underTest = new SettingsJMX(commandLine, getSettingsCredentials("-credential-file", tempFile.absolutePath()));
         assertEquals("jmxpasswordfromfile", underTest.password);
         assertEquals("commandlineuser", underTest.user);
 
@@ -115,9 +110,8 @@ public class SettingsJMXTest
     public void passwordTest() throws ParseException, IOException
     {
         String[] args = { "-jmx-password", "commandlinepassword"};
-        CommandLine commandLine = DefaultParser.builder().build().parse(workingOptions, args);
-        SettingsCredentials settingsCredentials = new SettingsCredentials(commandLine);
-        SettingsJMX underTest = new SettingsJMX(commandLine, settingsCredentials);
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsJMX.getOptions(), args);
+        SettingsJMX underTest = new SettingsJMX(commandLine, getSettingsCredentials());
         assertEquals("commandlinepassword", underTest.password);
         assertNull(underTest.user);
         TestingResultLogger logger = new TestingResultLogger();
@@ -132,14 +126,11 @@ public class SettingsJMXTest
         {
             SettingsCredentialsTest.getFullProperties().store(w, null);
         }
-        args = new String[] { "-credential-file", tempFile.absolutePath(), "-jmx-password", "commandlinepassword"};
         try (Writer w = tempFile.newWriter(OVERWRITE))
         {
             SettingsCredentialsTest.getFullProperties().store(w, null);
         }
-        commandLine = DefaultParser.builder().build().parse(workingOptions, args);
-        settingsCredentials = new SettingsCredentials(commandLine);
-        underTest = new SettingsJMX(commandLine, settingsCredentials);
+        underTest = new SettingsJMX(commandLine, getSettingsCredentials( "-credential-file", tempFile.absolutePath()));
         assertEquals("commandlinepassword", underTest.password);
         assertEquals("jmxuserfromfile", underTest.user);
 

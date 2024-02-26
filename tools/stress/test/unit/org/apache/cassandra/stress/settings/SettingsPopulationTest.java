@@ -37,17 +37,18 @@ import static org.junit.Assert.fail;
 
 public class SettingsPopulationTest
 {
-    Options getOptions() {
-        return new Options().addOptions(SettingsCommand.getOptions()).addOptions(SettingsPopulation.getOptions());
+    SettingsCommand getSettingsCommand(Command type, String... args) throws ParseException
+    {
+        return SettingsCommandTests.getInstance(type, SettingsCommand.getOptions(), args);
     }
+
     @Test
     public void defaultsTest() throws ParseException
     {
         // settings command that is a count.
-        String[] args = {"-n", "5"};
-        CommandLine commandLine = DefaultParser.builder().build().parse(getOptions(), args);
-        SettingsCommand settingsCommand = SettingsCommandTests.getInstance(Command.HELP, getOptions(), args);
-        SettingsPopulation underTest = new SettingsPopulation(commandLine, settingsCommand);
+        String[] args = {};
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsPopulation.getOptions(), args);
+        SettingsPopulation underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.HELP, "-n", "5"));
         assertNull(underTest.sequence);
         assertNull(underTest.readlookback);
         assertEquals("Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667",underTest.distribution.getConfigAsString());
@@ -61,9 +62,7 @@ public class SettingsPopulationTest
         logger.assertContains("Wrap: false");
 
         // settings command that is a count & WRITE
-        commandLine = DefaultParser.builder().build().parse(getOptions(), args);
-        settingsCommand = SettingsCommandTests.getInstance(Command.WRITE, getOptions(), args);
-        underTest = new SettingsPopulation(commandLine, settingsCommand);
+        underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.WRITE, "-n", "5"));
         assertArrayEquals(new long[]{1l, 5l}, underTest.sequence);
         assertNull(underTest.readlookback);
         assertNull(underTest.distribution);
@@ -77,10 +76,7 @@ public class SettingsPopulationTest
         logger.assertContains("Wrap: false");
 
         // settings command that is a duration
-        args = new String[] {"-duration", "2m"};
-        commandLine = DefaultParser.builder().build().parse(getOptions(), args);
-        settingsCommand = SettingsCommandTests.getInstance(Command.HELP, getOptions(), args);
-        underTest = new SettingsPopulation(commandLine, settingsCommand);
+        underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.HELP, "-duration", "2m"));
         assertNull(underTest.sequence);
         assertNull(underTest.readlookback);
         assertEquals("Gaussian:  min=1,max=1000000,mean=500000.500000,stdev=166666.500000",underTest.distribution.getConfigAsString());
@@ -94,10 +90,7 @@ public class SettingsPopulationTest
         logger.assertContains("Wrap: false");
 
         // settings command that is uncert-err
-        args = new String[] {"-uncert-err"};
-        commandLine = DefaultParser.builder().build().parse(getOptions(), args);
-        settingsCommand = SettingsCommandTests.getInstance(Command.HELP, getOptions(), args);
-        underTest = new SettingsPopulation(commandLine, settingsCommand);
+        underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
         assertNull(underTest.sequence);
         assertNull(underTest.readlookback);
         assertEquals("Gaussian:  min=1,max=1000000,mean=500000.500000,stdev=166666.500000",underTest.distribution.getConfigAsString());
@@ -120,10 +113,9 @@ public class SettingsPopulationTest
     @Test
     public void populationOrderTest() throws ParseException
     {
-        String[] args = {"-n", "5", "-population-order", "SHUFFLED" };
-        CommandLine commandLine = DefaultParser.builder().build().parse(getOptions(), args);
-        SettingsCommand settingsCommand = SettingsCommandTests.getInstance(Command.HELP, getOptions(), args);
-        SettingsPopulation underTest = new SettingsPopulation(commandLine, settingsCommand);
+        String[] args = {"-population-order", "SHUFFLED" };
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsPopulation.getOptions(), args);
+        SettingsPopulation underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.HELP, "-n", "5"));
         assertNull(underTest.sequence);
         assertNull(underTest.readlookback);
         assertEquals("Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667",underTest.distribution.getConfigAsString());
@@ -136,10 +128,9 @@ public class SettingsPopulationTest
         logger.assertContains("Order: "+PartitionGenerator.Order.SHUFFLED);
         logger.assertContains("Wrap: false");
 
-        args = new String[] {"-n", "5", "-population-order", "SORTED" };
-        commandLine = DefaultParser.builder().build().parse(getOptions(), args);
-        settingsCommand = SettingsCommandTests.getInstance(Command.HELP, getOptions(), args);
-        underTest = new SettingsPopulation(commandLine, settingsCommand);
+        args = new String[] {"-population-order", "SORTED" };
+        commandLine = DefaultParser.builder().build().parse(SettingsPopulation.getOptions(), args);
+        underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.HELP, "-n", "5"));
         assertNull(underTest.sequence);
         assertNull(underTest.readlookback);
         assertEquals("Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667",underTest.distribution.getConfigAsString());
@@ -152,10 +143,9 @@ public class SettingsPopulationTest
         logger.assertContains("Order: "+PartitionGenerator.Order.SORTED);
         logger.assertContains("Wrap: false");
 
-        args = new String[] {"-n", "5", "-population-order", "ARBITRARY" };
-        commandLine = DefaultParser.builder().build().parse(getOptions(), args);
-        settingsCommand = SettingsCommandTests.getInstance(Command.HELP, getOptions(), args);
-        underTest = new SettingsPopulation(commandLine, settingsCommand);
+        args = new String[] {"-population-order", "ARBITRARY" };
+        commandLine = DefaultParser.builder().build().parse(SettingsPopulation.getOptions(), args);
+        underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.HELP, "-n", "5"));
         assertNull(underTest.sequence);
         assertNull(underTest.readlookback);
         assertEquals("Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667",underTest.distribution.getConfigAsString());
@@ -173,9 +163,9 @@ public class SettingsPopulationTest
     public void populationSequenceTest() throws ParseException
     {
         String[] args = { "-population-seq", "5..10" };
-        CommandLine commandLine = DefaultParser.builder().build().parse(getOptions(), args);
-        SettingsCommand settingsCommand = SettingsCommandTests.getInstance(Command.HELP, getOptions(), args);
-        SettingsPopulation underTest = new SettingsPopulation(commandLine, settingsCommand);
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsPopulation.getOptions(), args);
+        SettingsPopulation underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.HELP, "-n", "5"));
+
         assertArrayEquals(new long[]{5l,10l}, underTest.sequence);
         assertNull(underTest.readlookback);
         assertNull(underTest.distribution);
@@ -192,10 +182,9 @@ public class SettingsPopulationTest
     @Test
     public void populationDistTest() throws ParseException
     {
-        String[] args = {"-n", "5", "-population-dist", "FIXED(5)" };
-        CommandLine commandLine = DefaultParser.builder().build().parse(getOptions(), args);
-        SettingsCommand settingsCommand = SettingsCommandTests.getInstance(Command.HELP, getOptions(), args);
-        SettingsPopulation underTest = new SettingsPopulation(commandLine, settingsCommand);
+        String[] args = {"-population-dist", "FIXED(5)" };
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsPopulation.getOptions(), args);
+        SettingsPopulation underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.HELP, "-n", "5"));
         assertNull(underTest.sequence);
         assertNull(underTest.readlookback);
         assertEquals("Fixed:  key=5",underTest.distribution.getConfigAsString());
@@ -208,23 +197,14 @@ public class SettingsPopulationTest
         logger.assertContains("Order: "+PartitionGenerator.Order.ARBITRARY);
         logger.assertContains("Wrap: false");
     }
-    /*
-                                                                                           .build());
-    public static final StressOption<DistributionFactory> POPULATION_READ = new StressOption<>(Option.builder("population-read-lookback").hasArg()
-                                                                                                     .desc(format("Select read seeds from the recently visited write seeds. Only applies if -%s is specified.", POPULATION_SEQ.key()))
-                                                                                                     .type(DistributionFactory.class).build());
-    public static final StressOption<String> POPULATION_NO_WRAP = new StressOption<>(Option.builder("population-no-wrap")
-
-     */
 
     @Test
     public void readLookbackTest() throws ParseException
     {
         // verify without dist-seq it is not applied.
-        String[] args = {"-n", "5", "-population-read-lookback", "FIXED(5)" };
-        CommandLine commandLine = DefaultParser.builder().build().parse(getOptions(), args);
-        SettingsCommand settingsCommand = SettingsCommandTests.getInstance(Command.HELP, getOptions(), args);
-        SettingsPopulation underTest = new SettingsPopulation(commandLine, settingsCommand);
+        String[] args = {"-population-read-lookback", "FIXED(5)" };
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsPopulation.getOptions(), args);
+        SettingsPopulation underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.HELP, "-n", "5"));
         assertNull(underTest.sequence);
         assertNull(underTest.readlookback);
         assertEquals("Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667",underTest.distribution.getConfigAsString());
@@ -238,10 +218,9 @@ public class SettingsPopulationTest
         logger.assertContains("Wrap: false");
 
         // verify
-        args = new String[] {"-n", "5", "-population-read-lookback", "FIXED(5)", "-population-seq", "5..10"  };
-        commandLine = DefaultParser.builder().build().parse(getOptions(), args);
-        settingsCommand = SettingsCommandTests.getInstance(Command.HELP, getOptions(), args);
-        underTest = new SettingsPopulation(commandLine, settingsCommand);
+        args = new String[] {"-population-read-lookback", "FIXED(5)", "-population-seq", "5..10"  };
+        commandLine = DefaultParser.builder().build().parse(SettingsPopulation.getOptions(), args);
+        underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.HELP, "-n", "5"));
         assertArrayEquals( new long[] {5l, 10l}, underTest.sequence);
         assertEquals("Fixed:  key=5", underTest.readlookback.getConfigAsString());
         assertNull(underTest.distribution);
@@ -260,10 +239,9 @@ public class SettingsPopulationTest
     public void noWrapTest() throws ParseException
     {
         // verify without dist-seq it is not applied.
-        String[] args = {"-n", "5", "-population-no-wrap" };
-        CommandLine commandLine = DefaultParser.builder().build().parse(getOptions(), args);
-        SettingsCommand settingsCommand = SettingsCommandTests.getInstance(Command.HELP, getOptions(), args);
-        SettingsPopulation underTest = new SettingsPopulation(commandLine, settingsCommand);
+        String[] args = {"-population-no-wrap" };
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsPopulation.getOptions(), args);
+        SettingsPopulation underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.HELP, "-n", "5"));
         assertNull(underTest.sequence);
         assertNull(underTest.readlookback);
         assertEquals("Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667",underTest.distribution.getConfigAsString());
@@ -277,10 +255,9 @@ public class SettingsPopulationTest
         logger.assertContains("Wrap: false");
 
         // verify
-        args = new String[] {"-n", "5", "-population-no-wrap", "-population-seq", "5..10"  };
-        commandLine = DefaultParser.builder().build().parse(getOptions(), args);
-        settingsCommand = SettingsCommandTests.getInstance(Command.HELP, getOptions(), args);
-        underTest = new SettingsPopulation(commandLine, settingsCommand);
+        args = new String[] {"-population-no-wrap", "-population-seq", "5..10"  };
+        commandLine = DefaultParser.builder().build().parse(SettingsPopulation.getOptions(), args);
+        underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.HELP, "-n", "5"));
         assertArrayEquals( new long[] {5l, 10l}, underTest.sequence);
         assertNull(underTest.readlookback);
         assertNull(underTest.distribution);
@@ -301,7 +278,7 @@ public class SettingsPopulationTest
         String[] args = { "-population-seq", "1..5", "-population-dist", "FIXED(5)" };
         try
         {
-            DefaultParser.builder().build().parse(getOptions(), args);
+            DefaultParser.builder().build().parse(SettingsPopulation.getOptions(), args);
             fail("Should have thrown AlreadySelectedException");
         } catch (AlreadySelectedException expected) {
             // do nothing
