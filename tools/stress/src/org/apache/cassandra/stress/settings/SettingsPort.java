@@ -43,14 +43,6 @@ public class SettingsPort extends AbstractSettings implements Serializable
     public final int nativePort;
     public final int jmxPort;
 
-
-
-//    public SettingsPort(PortOptions options)
-//    {
-//        nativePort = Integer.parseInt(options.nativePort.value());
-//        jmxPort = Integer.parseInt(options.jmxPort.value());
-//    }
-
     public SettingsPort(CommandLine cmdLine)
     {
         nativePort = PORT_NATIVE.extract(cmdLine);
@@ -63,55 +55,11 @@ public class SettingsPort extends AbstractSettings implements Serializable
                .addOption(PORT_JMX.option());
     }
 
-    public static SettingsPort get(CommandLine cmdLine) {
-        return new SettingsPort(cmdLine);
-    }
-
-
-
-//    // Option Declarations
-//
-//    private static final class PortOptions extends GroupedOptions
-//    {
-//        final OptionSimple nativePort = new OptionSimple("native=", "[0-9]+", "9042", "Use this port for the Cassandra native protocol", false);
-//        final OptionSimple jmxPort = new OptionSimple("jmx=", "[0-9]+", "7199", "Use this port for retrieving statistics over jmx", false);
-//
-//        @Override
-//        public List<? extends Option> options()
-//        {
-//            return Arrays.asList(nativePort, jmxPort);
-//        }
-//    }
-
     // CLI Utility Methods
     public void printSettings(ResultLogger out)
     {
         out.printf("  Native Port: %d%n", nativePort);
         out.printf("  JMX Port: %d%n", jmxPort);
     }
-
-
-//    public static SettingsPort get(Map<String, String[]> clArgs)
-//    {
-//        String[] params = clArgs.remove("-port");
-//        if (params == null)
-//        {
-//            return new SettingsPort(new PortOptions());
-//        }
-//        PortOptions options = GroupedOptions.select(params, new PortOptions());
-//        if (options == null)
-//        {
-//            printHelp();
-//            System.out.println("Invalid -port options provided, see output for valid options");
-//            System.exit(1);
-//        }
-//        return new SettingsPort(options);
-//    }
-
-//    public static void printHelp()
-//    {
-//        GroupedOptions.printOptions(System.out, "-port", new PortOptions());
-//    }
-//    }
 }
 

@@ -19,6 +19,7 @@
 package org.apache.cassandra.stress.settings;
 
 
+import org.apache.commons.cli.AlreadySelectedException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
@@ -171,7 +172,7 @@ public class SettingsPopulationTest
     @Test
     public void populationSequenceTest() throws ParseException
     {
-        String[] args = {"-n", "5", "-population-seq", "5..10" };
+        String[] args = { "-population-seq", "5..10" };
         CommandLine commandLine = DefaultParser.builder().build().parse(getOptions(), args);
         SettingsCommand settingsCommand = SettingsCommandTests.getInstance(Command.HELP, getOptions(), args);
         SettingsPopulation underTest = new SettingsPopulation(commandLine, settingsCommand);
@@ -291,5 +292,19 @@ public class SettingsPopulationTest
         logger.assertContains("Sequence: 5..10");
         logger.assertContains("Order: "+PartitionGenerator.Order.ARBITRARY);
         logger.assertContains("Wrap: false");
+    }
+
+    @Test
+    public void distSeqExclusionTest() throws ParseException
+    {
+
+        String[] args = { "-population-seq", "1..5", "-population-dist", "FIXED(5)" };
+        try
+        {
+            DefaultParser.builder().build().parse(getOptions(), args);
+            fail("Should have thrown AlreadySelectedException");
+        } catch (AlreadySelectedException expected) {
+            // do nothing
+        }
     }
 }

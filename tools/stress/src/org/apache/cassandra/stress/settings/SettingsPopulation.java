@@ -199,7 +199,7 @@ public class SettingsPopulation extends AbstractSettings implements Serializable
         this.wrap = builder.wrap;
     }
 
-
+    // Option Declarations
     public static Options getOptions()
     {
         return new Options()
@@ -208,55 +208,6 @@ public class SettingsPopulation extends AbstractSettings implements Serializable
         .addOption(POPULATION_NO_WRAP.option())
         .addOption(POPULATION_ORDER.option());
     }
-
-    // Option Declarations
-
-//    private static class GenerateOptions extends GroupedOptions
-//    {
-//        final OptionSimple contents = new OptionSimple("contents=", "(sorted|shuffled)", null, "SORTED or SHUFFLED (intra-)partition order; if not specified, will be consistent but arbitrary order", false);
-//
-//        @Override
-//        public List<? extends Option> options()
-//        {
-//            return Arrays.asList(contents);
-//        }
-//    }
-//
-//    private static final class DistributionOptions extends GenerateOptions
-//    {
-//        final OptionDistribution seed;
-//
-//        public DistributionOptions(String defaultLimit)
-//        {
-//            seed = new OptionDistribution("dist=", "gaussian(1.." + defaultLimit + ")", "Seeds are selected from this distribution");
-//        }
-//
-//        @Override
-//        public List<? extends Option> options()
-//        {
-//            return ImmutableList.<Option>builder().add(seed).addAll(super.options()).build();
-//        }
-//    }
-//
-//    private static final class SequentialOptions extends GenerateOptions
-//    {
-//        final OptionSimple populate;
-//        final OptionDistribution lookback = new OptionDistribution("read-lookback=", null, "Select read seeds from the recently visited write seeds", false);
-//        final OptionSimple nowrap = new OptionSimple("no-wrap", "", null, "Terminate the stress test once all seeds in the range have been visited", false);
-//
-//        public SequentialOptions(String defaultLimit)
-//        {
-//            populate = new OptionSimple("seq=", "[0-9]+[MBK]?\\.\\.+[0-9]+[MBK]?",
-//                    "1.." + defaultLimit,
-//                    "Generate all seeds in sequence", true);
-//        }
-//
-//        @Override
-//        public List<? extends Option> options()
-//        {
-//            return ImmutableList.<Option>builder().add(populate, nowrap, lookback).addAll(super.options()).build();
-//        }
-//    }
 
     // CLI Utility Methods
 
@@ -279,58 +230,5 @@ public class SettingsPopulation extends AbstractSettings implements Serializable
         out.printf("  Order: %s%n", order);
         out.printf("  Wrap: %b%n", wrap);
     }
-
-//    public static SettingsPopulation get(Map<String, String[]> clArgs, SettingsCommand command)
-//    {
-//        // set default size to number of commands requested, unless set to err convergence, then use 1M
-//        String defaultLimit = command.count <= 0 ? "1000000" : Long.toString(command.count);
-//
-//        String[] params = clArgs.remove("-pop");
-//        if (params == null)
-//        {
-//            if (command instanceof SettingsCommandUser && ((SettingsCommandUser)command).hasInsertOnly())
-//            {
-//                return new SettingsPopulation(new SequentialOptions(defaultLimit));
-//            }
-//
-//            // return defaults:
-//            switch(command.type)
-//            {
-//                case WRITE:
-//                case COUNTER_WRITE:
-//                    return new SettingsPopulation(new SequentialOptions(defaultLimit));
-//                default:
-//                    return new SettingsPopulation(new DistributionOptions(defaultLimit));
-//            }
-//        }
-//        GroupedOptions options = GroupedOptions.select(params, new SequentialOptions(defaultLimit), new DistributionOptions(defaultLimit));
-//        if (options == null)
-//        {
-//            printHelp();
-//            System.out.println("Invalid -pop options provided, see output for valid options");
-//            System.exit(1);
-//        }
-//        return options instanceof SequentialOptions ?
-//                new SettingsPopulation((SequentialOptions) options) :
-//                new SettingsPopulation((DistributionOptions) options);
-//    }
-//
-//    public static void printHelp()
-//    {
-//        GroupedOptions.printOptions(System.out, "-pop", new SequentialOptions("N"), new DistributionOptions("N"));
-//    }
-//
-//    public static Runnable helpPrinter()
-//    {
-//        return new Runnable()
-//        {
-//            @Override
-//            public void run()
-//            {
-//                printHelp();
-//            }
-//        };
-//    }
-
 }
 
