@@ -24,7 +24,6 @@ import java.util.Date;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
@@ -33,10 +32,6 @@ import static org.junit.Assert.assertTrue;
 
 public class SettingsGraphTest
 {
-
-//    private Options SettingsGraph.getOptions() = new Options().addOptions(SettingsCommand.getOptions())
-//                         .addOptions(SettingsGraph.getOptions());
-
     SettingsCommand getSettingsCommand(Command type, String... args) throws ParseException
     {
         return SettingsCommandTests.getInstance(type, SettingsCommand.getOptions(), args);

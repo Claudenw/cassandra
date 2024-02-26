@@ -75,33 +75,6 @@ public class SettingsRate extends AbstractSettings implements Serializable
     public final int opsPerSecond;
     public final boolean isFixed;
 
-//    public SettingsRate(ThreadOptions options)
-//    {
-//        auto = false;
-//        threadCount = Integer.parseInt(options.threads.value());
-//        String throttleOpt = options.throttle.value();
-//        String fixedOpt = options.fixed.value();
-//        int throttle = Integer.parseInt(throttleOpt.substring(0, throttleOpt.length() - 2));
-//        int fixed = Integer.parseInt(fixedOpt.substring(0, fixedOpt.length() - 2));
-//        if(throttle != 0 && fixed != 0)
-//            throw new IllegalArgumentException("can't have both fixed and throttle set, choose one.");
-//        opsPerSecond = Math.max(fixed, throttle);
-//        isFixed = (opsPerSecond == fixed);
-//
-//        minThreads = -1;
-//        maxThreads = -1;
-//    }
-//
-//    public SettingsRate(AutoOptions auto)
-//    {
-//        this.auto = auto.auto.setByUser();
-//        this.minThreads = Integer.parseInt(auto.minThreads.value());
-//        this.maxThreads = Integer.parseInt(auto.maxThreads.value());
-//        this.threadCount = -1;
-//        this.opsPerSecond = 0;
-//        isFixed = false;
-//    }
-
     private static boolean overrideThreadCount(SettingsCommand command) {
         if (AUTO_OR_THREADS.getSelected() == null)
         {
@@ -134,52 +107,6 @@ public class SettingsRate extends AbstractSettings implements Serializable
             this.maxThreads = IGNORE;
         }
     }
-//
-//    private SettingsRate(int rate) {
-//        this.auto = false;
-//        this.isFixed = true;
-//                this.threadCount = rate;
-//                this.opsPerSecond = RATE_CLIENTS.dfltSupplier().get();
-//                this.minThreads = IGNORE;
-//                this.maxThreads = IGNORE;
-//    }
-//
-//    public SettingsRate() {
-//        this.auto = true;
-//        this.isFixed = false;
-//        this.threadCount = IGNORE;
-//        this.opsPerSecond = RATE_CLIENTS.dfltSupplier().get();
-//        this.minThreads = RATE_MIN_CLIENTS.dfltSupplier().get();
-//        this.maxThreads = RATE_MAX_CLIENTS.dfltSupplier().get();
-//    }
-
-    // Option Declarations
-
-//    private static final class AutoOptions extends GroupedOptions
-//    {
-//        final OptionSimple auto = new OptionSimple("auto", "", null, "stop increasing threads once throughput saturates", false);
-//        final OptionSimple minThreads = new OptionSimple("threads>=", "[0-9]+", "4", "run at least this many clients concurrently", false);
-//        final OptionSimple maxThreads = new OptionSimple("threads<=", "[0-9]+", "1000", "run at most this many clients concurrently", false);
-//
-//        @Override
-//        public List<? extends Option> options()
-//        {
-//            return Arrays.asList(minThreads, maxThreads, auto);
-//        }
-//    }
-//
-//    private static final class ThreadOptions extends GroupedOptions
-//    {
-//        final OptionSimple threads = new OptionSimple("threads=", "[0-9]+", null, "run this many clients concurrently", true);
-//        final OptionSimple throttle = new OptionSimple("throttle=", "[0-9]+/s", "0/s", "throttle operations per second across all clients to a maximum rate (or less) with no implied schedule", false);
-//        final OptionSimple fixed = new OptionSimple("fixed=", "[0-9]+/s", "0/s", "expect fixed rate of operations per second across all clients with implied schedule", false);
-//
-//        @Override
-//        public List<? extends Option> options()
-//        {
-//            return Arrays.asList(threads, throttle, fixed);
-//        }
-//    }
 
     public static Options getOptions() {
         return new Options()
@@ -190,7 +117,6 @@ public class SettingsRate extends AbstractSettings implements Serializable
     }
 
     // CLI Utility Methods
-
     public void printSettings(ResultLogger out)
     {
         out.printf("  Auto: %b%n", auto);
@@ -203,36 +129,5 @@ public class SettingsRate extends AbstractSettings implements Serializable
             out.printf("  OpsPer Sec: %d%n", opsPerSecond);
         }
     }
-
-//    public static SettingsRate get(CommandLine cmdLine, SettingsCommand command)
-//    {
-//        if (AUTO_OR_THREADS.getSelected() == null)
-//        {
-//            switch (command.type)
-//            {
-//                case WRITE:
-//                case COUNTER_WRITE:
-//                    if (command.count > 0)
-//                    {
-////
-////                        ThreadOptions options = new ThreadOptions();
-////                        options.accept("threads=200");
-//                        return new SettingsRate(200);
-//                    }
-//            }
-//            return new SettingsRate();
-//        }
-//        return new SettingsRate(cmdLine);
-//    }
-
-//    public static void printHelp()
-//    {
-//        GroupedOptions.printOptions(System.out, "-rate", new ThreadOptions(), new AutoOptions());
-//    }
-//
-//    public static Runnable helpPrinter()
-//    {
-//        return SettingsRate::printHelp;
-//    }
 }
 
