@@ -43,8 +43,8 @@ public class SettingsReportingTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Output frequency: 1s");
-        logger.assertContains("Header frequency: 0s");
+        logger.assertEndsWith("Output frequency: 1s");
+        logger.assertEndsWith("Header frequency: 0s");
     }
 
     @Test
@@ -61,8 +61,8 @@ public class SettingsReportingTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Output frequency: 1s");
-        logger.assertContains("Header frequency: 3m");
+        logger.assertEndsWith("Output frequency: 1s");
+        logger.assertEndsWith("Header frequency: 3m");
     }
 
     @Test
@@ -79,7 +79,7 @@ public class SettingsReportingTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Output frequency: 3s");
-        logger.assertContains("Header frequency: 0s");
+        logger.assertEndsWith("Output frequency: 3s");
+        logger.assertEndsWith("Header frequency: 0s");
     }
 }

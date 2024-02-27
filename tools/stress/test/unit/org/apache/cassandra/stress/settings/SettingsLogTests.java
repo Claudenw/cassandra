@@ -49,11 +49,11 @@ public class SettingsLogTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("No Summary: false");
-        logger.assertContains("No Settings: false");
-        logger.assertContains("File: null");
-        logger.assertContains("Interval: 1s");
-        logger.assertContains("Level: NORMAL");
+        logger.assertEndsWith("No Summary: false");
+        logger.assertEndsWith("No Settings: false");
+        logger.assertEndsWith("File: null");
+        logger.assertEndsWith("Interval: 1s");
+        logger.assertEndsWith("Level: NORMAL");
     }
 
     @Test
@@ -72,11 +72,11 @@ public class SettingsLogTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("No Summary: true");
-        logger.assertContains("No Settings: false");
-        logger.assertContains("File: null");
-        logger.assertContains("Interval: 1s");
-        logger.assertContains("Level: NORMAL");
+        logger.assertEndsWith("No Summary: true");
+        logger.assertEndsWith("No Settings: false");
+        logger.assertEndsWith("File: null");
+        logger.assertEndsWith("Interval: 1s");
+        logger.assertEndsWith("Level: NORMAL");
     }
 
     @Test
@@ -95,11 +95,11 @@ public class SettingsLogTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("No Summary: false");
-        logger.assertContains("No Settings: true");
-        logger.assertContains("File: null");
-        logger.assertContains("Interval: 1s");
-        logger.assertContains("Level: NORMAL");
+        logger.assertEndsWith("No Summary: false");
+        logger.assertEndsWith("No Settings: true");
+        logger.assertEndsWith("File: null");
+        logger.assertEndsWith("Interval: 1s");
+        logger.assertEndsWith("Level: NORMAL");
     }
 
     @Test
@@ -119,11 +119,11 @@ public class SettingsLogTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("No Summary: false");
-        logger.assertContains("No Settings: false");
-        logger.assertContains("File: " + expected);
-        logger.assertContains("Interval: 1s");
-        logger.assertContains("Level: NORMAL");
+        logger.assertEndsWith("No Summary: false");
+        logger.assertEndsWith("No Settings: false");
+        logger.assertEndsWith("File: " + expected);
+        logger.assertEndsWith("Interval: 1s");
+        logger.assertEndsWith("Level: NORMAL");
     }
 
     @Test
@@ -143,11 +143,11 @@ public class SettingsLogTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("No Summary: false");
-        logger.assertContains("No Settings: false");
-        logger.assertContains("File: null");
-        logger.assertContains("Interval: 1s");
-        logger.assertContains("Level: NORMAL");
+        logger.assertEndsWith("No Summary: false");
+        logger.assertEndsWith("No Settings: false");
+        logger.assertEndsWith("File: null");
+        logger.assertEndsWith("Interval: 1s");
+        logger.assertEndsWith("Level: NORMAL");
     }
 
     @Test
@@ -166,11 +166,11 @@ public class SettingsLogTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("No Summary: false");
-        logger.assertContains("No Settings: false");
-        logger.assertContains("File: null");
-        logger.assertContains("Interval: 3m");
-        logger.assertContains("Level: NORMAL");
+        logger.assertEndsWith("No Summary: false");
+        logger.assertEndsWith("No Settings: false");
+        logger.assertEndsWith("File: null");
+        logger.assertEndsWith("Interval: 3m");
+        logger.assertEndsWith("Level: NORMAL");
     }
 
     @Test
@@ -189,10 +189,10 @@ public class SettingsLogTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("No Summary: false");
-        logger.assertContains("No Settings: false");
-        logger.assertContains("File: null");
-        logger.assertContains("Interval: 1s");
+        logger.assertEndsWith("No Summary: false");
+        logger.assertEndsWith("No Settings: false");
+        logger.assertEndsWith("File: null");
+        logger.assertEndsWith("Interval: 1s");
 
         args = new String[]{ "-log-level", "MINIMAL" };
         commandLine = DefaultParser.builder().build().parse(SettingsLog.getOptions(), args);

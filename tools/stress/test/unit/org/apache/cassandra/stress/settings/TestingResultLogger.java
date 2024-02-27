@@ -20,7 +20,9 @@ package org.apache.cassandra.stress.settings;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import org.apache.cassandra.stress.util.ResultLogger;
 
@@ -30,14 +32,21 @@ public class TestingResultLogger implements ResultLogger
 {
     List<String> results = new ArrayList<>();
 
-    public void assertContains(String s) {
-        assertTrue(String.format("Missing '%s'", s), results.stream().filter( str -> str.contains(s) ).findFirst().isPresent());
+    public void assertEndsWith(String s) {
+        assertTrue(String.format("Missing '%s'", s), results.stream().filter( str -> str.endsWith(s) ).findFirst().isPresent());
     }
 
-    public void assertContains(String s, Supplier<String> msg) {
-        assertTrue(String.format("%s: Missing '%s'", msg.get(), s), results.stream().filter( str -> str.contains(s) ).findFirst().isPresent());
+    public void assertEndsWith(String s, Supplier<String> msg) {
+        assertTrue(String.format("%s: Missing '%s'", msg.get(), s), results.stream().filter( str -> str.endsWith(s) ).findFirst().isPresent());
     }
 
+    public void assertContainsRegex(String regex) {
+        assertContains(Pattern.compile(regex).asPredicate(), ()->"Missing: "+regex);
+    }
+
+    private void assertContains(Predicate<String> predicate, Supplier<String> msg) {
+        assertTrue(msg.get(), results.stream().filter( predicate ).findFirst().isPresent());
+    }
     @Override
     public void println(String line)
     {

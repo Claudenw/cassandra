@@ -42,8 +42,8 @@ public class SettingsErrorsTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Ignore: false");
-        logger.assertContains("Tries: 10");
+        logger.assertEndsWith("Ignore: false");
+        logger.assertEndsWith("Tries: 10");
     }
 
     @Test
@@ -58,9 +58,9 @@ public class SettingsErrorsTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Ignore: false");
-        logger.assertContains("Tries: 10");
-        logger.assertContains("Skip validation: true");
+        logger.assertEndsWith("Ignore: false");
+        logger.assertEndsWith("Tries: 10");
+        logger.assertEndsWith("Skip validation: true");
     }
 
     @Test
@@ -75,9 +75,9 @@ public class SettingsErrorsTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Ignore: true");
-        logger.assertContains("Tries: 10");
-        logger.assertContains("Skip validation: false");
+        logger.assertEndsWith("Ignore: true");
+        logger.assertEndsWith("Tries: 10");
+        logger.assertEndsWith("Skip validation: false");
     }
 
     @Test
@@ -92,8 +92,8 @@ public class SettingsErrorsTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Ignore: false");
-        logger.assertContains("Tries: 6");
+        logger.assertEndsWith("Ignore: false");
+        logger.assertEndsWith("Tries: 6");
 
 
 

@@ -18,10 +18,6 @@
 
 package org.apache.cassandra.stress.settings;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.ParseException;
@@ -51,10 +47,10 @@ public class SettingsInsertTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Revisits: Uniform:  min=1,max=1000000");
-        logger.assertContains("Visits: Fixed:  key=1");
-        logger.assertContains("Row Population Ratio: Ratio: divisor=1.000000;delegate=Fixed:  key=1");
-        logger.assertContains("Batch Type: not batching");
+        logger.assertEndsWith("Revisits: Uniform:  min=1,max=1000000");
+        logger.assertEndsWith("Visits: Fixed:  key=1");
+        logger.assertEndsWith("Row Population Ratio: Ratio: divisor=1.000000;delegate=Fixed:  key=1");
+        logger.assertEndsWith("Batch Type: not batching");
     }
 
     @Test
@@ -73,11 +69,11 @@ public class SettingsInsertTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Revisits: Uniform:  min=1,max=1000000");
-        logger.assertContains("Visits: Fixed:  key=1");
-        logger.assertContains("Row Population Ratio: Ratio: divisor=1.000000;delegate=Fixed:  key=1");
-        logger.assertContains("Batch Type: not batching");
-        logger.assertContains("Batchsize: Fixed:  key=3");
+        logger.assertEndsWith("Revisits: Uniform:  min=1,max=1000000");
+        logger.assertEndsWith("Visits: Fixed:  key=1");
+        logger.assertEndsWith("Row Population Ratio: Ratio: divisor=1.000000;delegate=Fixed:  key=1");
+        logger.assertEndsWith("Batch Type: not batching");
+        logger.assertEndsWith("Batchsize: Fixed:  key=3");
     }
 
     @Test
@@ -96,11 +92,11 @@ public class SettingsInsertTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Revisits: Uniform:  min=1,max=1000000");
-        logger.assertContains("Visits: Fixed:  key=1");
-        logger.assertContains("Row Population Ratio: Ratio: divisor=1.000000;delegate=Fixed:  key=1");
-        logger.assertContains("Batch Type: not batching");
-        logger.assertContains("Select Ratio: Ratio: divisor=2.000000;delegate=Fixed:  key=3");
+        logger.assertEndsWith("Revisits: Uniform:  min=1,max=1000000");
+        logger.assertEndsWith("Visits: Fixed:  key=1");
+        logger.assertEndsWith("Row Population Ratio: Ratio: divisor=1.000000;delegate=Fixed:  key=1");
+        logger.assertEndsWith("Batch Type: not batching");
+        logger.assertEndsWith("Select Ratio: Ratio: divisor=2.000000;delegate=Fixed:  key=3");
     }
 
     @Test
@@ -119,9 +115,9 @@ public class SettingsInsertTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Revisits: Uniform:  min=1,max=1000000");
-        logger.assertContains("Visits: Fixed:  key=1");
-        logger.assertContains("Row Population Ratio: Ratio: divisor=1.000000;delegate=Fixed:  key=1");
-        logger.assertContains("Batch Type: UNLOGGED");
+        logger.assertEndsWith("Revisits: Uniform:  min=1,max=1000000");
+        logger.assertEndsWith("Visits: Fixed:  key=1");
+        logger.assertEndsWith("Row Population Ratio: Ratio: divisor=1.000000;delegate=Fixed:  key=1");
+        logger.assertEndsWith("Batch Type: UNLOGGED");
     }
 }

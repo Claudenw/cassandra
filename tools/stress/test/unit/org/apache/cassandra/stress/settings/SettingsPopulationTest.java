@@ -22,7 +22,6 @@ package org.apache.cassandra.stress.settings;
 import org.apache.commons.cli.AlreadySelectedException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
@@ -57,9 +56,9 @@ public class SettingsPopulationTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Distribution: Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667");
-        logger.assertContains("Order: "+PartitionGenerator.Order.ARBITRARY);
-        logger.assertContains("Wrap: false");
+        logger.assertEndsWith("Distribution: Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667");
+        logger.assertEndsWith("Order: " + PartitionGenerator.Order.ARBITRARY);
+        logger.assertEndsWith("Wrap: false");
 
         // settings command that is a count & WRITE
         underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.WRITE, "-n", "5"));
@@ -71,9 +70,9 @@ public class SettingsPopulationTest
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Sequence: 1..5");
-        logger.assertContains("Order: "+PartitionGenerator.Order.ARBITRARY);
-        logger.assertContains("Wrap: false");
+        logger.assertEndsWith("Sequence: 1..5");
+        logger.assertEndsWith("Order: " + PartitionGenerator.Order.ARBITRARY);
+        logger.assertEndsWith("Wrap: false");
 
         // settings command that is a duration
         underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.HELP, "-duration", "2m"));
@@ -85,9 +84,9 @@ public class SettingsPopulationTest
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Distribution: Gaussian:  min=1,max=1000000,mean=500000.500000,stdev=166666.500000");
-        logger.assertContains("Order: "+PartitionGenerator.Order.ARBITRARY);
-        logger.assertContains("Wrap: false");
+        logger.assertEndsWith("Distribution: Gaussian:  min=1,max=1000000,mean=500000.500000,stdev=166666.500000");
+        logger.assertEndsWith("Order: " + PartitionGenerator.Order.ARBITRARY);
+        logger.assertEndsWith("Wrap: false");
 
         // settings command that is uncert-err
         underTest = new SettingsPopulation(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
@@ -99,9 +98,9 @@ public class SettingsPopulationTest
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Distribution: Gaussian:  min=1,max=1000000,mean=500000.500000,stdev=166666.500000");
-        logger.assertContains("Order: "+PartitionGenerator.Order.ARBITRARY);
-        logger.assertContains("Wrap: false");
+        logger.assertEndsWith("Distribution: Gaussian:  min=1,max=1000000,mean=500000.500000,stdev=166666.500000");
+        logger.assertEndsWith("Order: " + PartitionGenerator.Order.ARBITRARY);
+        logger.assertEndsWith("Wrap: false");
     }
 
     @Test
@@ -124,9 +123,9 @@ public class SettingsPopulationTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Distribution: Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667");
-        logger.assertContains("Order: "+PartitionGenerator.Order.SHUFFLED);
-        logger.assertContains("Wrap: false");
+        logger.assertEndsWith("Distribution: Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667");
+        logger.assertEndsWith("Order: " + PartitionGenerator.Order.SHUFFLED);
+        logger.assertEndsWith("Wrap: false");
 
         args = new String[] {"-population-order", "SORTED" };
         commandLine = DefaultParser.builder().build().parse(SettingsPopulation.getOptions(), args);
@@ -139,9 +138,9 @@ public class SettingsPopulationTest
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Distribution: Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667");
-        logger.assertContains("Order: "+PartitionGenerator.Order.SORTED);
-        logger.assertContains("Wrap: false");
+        logger.assertEndsWith("Distribution: Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667");
+        logger.assertEndsWith("Order: " + PartitionGenerator.Order.SORTED);
+        logger.assertEndsWith("Wrap: false");
 
         args = new String[] {"-population-order", "ARBITRARY" };
         commandLine = DefaultParser.builder().build().parse(SettingsPopulation.getOptions(), args);
@@ -154,9 +153,9 @@ public class SettingsPopulationTest
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Distribution: Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667");
-        logger.assertContains("Order: "+PartitionGenerator.Order.ARBITRARY);
-        logger.assertContains("Wrap: false");
+        logger.assertEndsWith("Distribution: Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667");
+        logger.assertEndsWith("Order: " + PartitionGenerator.Order.ARBITRARY);
+        logger.assertEndsWith("Wrap: false");
     }
 
     @Test
@@ -174,9 +173,9 @@ public class SettingsPopulationTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Sequence: 5..10");
-        logger.assertContains("Order: "+PartitionGenerator.Order.ARBITRARY);
-        logger.assertContains("Wrap: true");
+        logger.assertEndsWith("Sequence: 5..10");
+        logger.assertEndsWith("Order: " + PartitionGenerator.Order.ARBITRARY);
+        logger.assertEndsWith("Wrap: true");
     }
 
     @Test
@@ -193,9 +192,9 @@ public class SettingsPopulationTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Distribution: Fixed:  key=5");
-        logger.assertContains("Order: "+PartitionGenerator.Order.ARBITRARY);
-        logger.assertContains("Wrap: false");
+        logger.assertEndsWith("Distribution: Fixed:  key=5");
+        logger.assertEndsWith("Order: " + PartitionGenerator.Order.ARBITRARY);
+        logger.assertEndsWith("Wrap: false");
     }
 
     @Test
@@ -213,9 +212,9 @@ public class SettingsPopulationTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Distribution: Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667");
-        logger.assertContains("Order: "+PartitionGenerator.Order.ARBITRARY);
-        logger.assertContains("Wrap: false");
+        logger.assertEndsWith("Distribution: Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667");
+        logger.assertEndsWith("Order: " + PartitionGenerator.Order.ARBITRARY);
+        logger.assertEndsWith("Wrap: false");
 
         // verify
         args = new String[] {"-population-read-lookback", "FIXED(5)", "-population-seq", "5..10"  };
@@ -229,10 +228,10 @@ public class SettingsPopulationTest
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Sequence: 5..10");
-        logger.assertContains("Read Look Back: Fixed:  key=5");
-        logger.assertContains("Order: "+PartitionGenerator.Order.ARBITRARY);
-        logger.assertContains("Wrap: true");
+        logger.assertEndsWith("Sequence: 5..10");
+        logger.assertEndsWith("Read Look Back: Fixed:  key=5");
+        logger.assertEndsWith("Order: " + PartitionGenerator.Order.ARBITRARY);
+        logger.assertEndsWith("Wrap: true");
     }
 
     @Test
@@ -250,9 +249,9 @@ public class SettingsPopulationTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Distribution: Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667");
-        logger.assertContains("Order: "+PartitionGenerator.Order.ARBITRARY);
-        logger.assertContains("Wrap: false");
+        logger.assertEndsWith("Distribution: Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667");
+        logger.assertEndsWith("Order: " + PartitionGenerator.Order.ARBITRARY);
+        logger.assertEndsWith("Wrap: false");
 
         // verify
         args = new String[] {"-population-no-wrap", "-population-seq", "5..10"  };
@@ -266,9 +265,9 @@ public class SettingsPopulationTest
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Sequence: 5..10");
-        logger.assertContains("Order: "+PartitionGenerator.Order.ARBITRARY);
-        logger.assertContains("Wrap: false");
+        logger.assertEndsWith("Sequence: 5..10");
+        logger.assertEndsWith("Order: " + PartitionGenerator.Order.ARBITRARY);
+        logger.assertEndsWith("Wrap: false");
     }
 
     @Test

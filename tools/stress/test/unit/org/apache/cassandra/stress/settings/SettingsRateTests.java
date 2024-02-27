@@ -54,9 +54,9 @@ public class SettingsRateTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: false");
-        logger.assertContains("Thread Count: 0");
-        logger.assertContains("OpsPer Sec: 0");
+        logger.assertEndsWith("Auto: false");
+        logger.assertEndsWith("Thread Count: 0");
+        logger.assertEndsWith("OpsPer Sec: 0");
 
 
         // with override forcing command
@@ -70,9 +70,9 @@ public class SettingsRateTests
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: false");
-        logger.assertContains("Thread Count: 200");
-        logger.assertContains("OpsPer Sec: 0");
+        logger.assertEndsWith("Auto: false");
+        logger.assertEndsWith("Thread Count: 200");
+        logger.assertEndsWith("OpsPer Sec: 0");
 
     }
 
@@ -92,9 +92,9 @@ public class SettingsRateTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: true");
-        logger.assertContains("Min Threads: 4");
-        logger.assertContains("Max Threads: 1000");
+        logger.assertEndsWith("Auto: true");
+        logger.assertEndsWith("Min Threads: 4");
+        logger.assertEndsWith("Max Threads: 1000");
 
         // with override forcing command
         underTest = underTest = new SettingsRate(commandLine, getSettingsCommand(Command.WRITE));
@@ -108,9 +108,9 @@ public class SettingsRateTests
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: true");
-        logger.assertContains("Min Threads: 4");
-        logger.assertContains("Max Threads: 1000");
+        logger.assertEndsWith("Auto: true");
+        logger.assertEndsWith("Min Threads: 4");
+        logger.assertEndsWith("Max Threads: 1000");
 
     }
 
@@ -131,9 +131,9 @@ public class SettingsRateTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: false");
-        logger.assertContains("Thread Count: 0");
-        logger.assertContains("OpsPer Sec: 5");
+        logger.assertEndsWith("Auto: false");
+        logger.assertEndsWith("Thread Count: 0");
+        logger.assertEndsWith("OpsPer Sec: 5");
 
         // with override forcing command
         underTest = new SettingsRate(commandLine, getSettingsCommand(Command.WRITE));
@@ -147,9 +147,9 @@ public class SettingsRateTests
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: false");
-        logger.assertContains("Thread Count: 0");
-        logger.assertContains("OpsPer Sec: 5");
+        logger.assertEndsWith("Auto: false");
+        logger.assertEndsWith("Thread Count: 0");
+        logger.assertEndsWith("OpsPer Sec: 5");
 
         // test with negative value
         args = new String[] {"-rate-fixed", "-1"};
@@ -221,9 +221,9 @@ public class SettingsRateTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: true");
-        logger.assertContains("Min Threads: 10");
-        logger.assertContains("Max Threads: 1000");
+        logger.assertEndsWith("Auto: true");
+        logger.assertEndsWith("Min Threads: 10");
+        logger.assertEndsWith("Max Threads: 1000");
 
         // with override forcing command
         underTest = new SettingsRate(commandLine, getSettingsCommand(Command.WRITE));
@@ -237,9 +237,9 @@ public class SettingsRateTests
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: true");
-        logger.assertContains("Min Threads: 10");
-        logger.assertContains("Max Threads: 1000");
+        logger.assertEndsWith("Auto: true");
+        logger.assertEndsWith("Min Threads: 10");
+        logger.assertEndsWith("Max Threads: 1000");
 
         // no effect for non-auto
         args = new String[] {"-rate-min-clients", "10"};
@@ -255,9 +255,9 @@ public class SettingsRateTests
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: false");
-        logger.assertContains("Thread Count: 0");
-        logger.assertContains("OpsPer Sec: 0");
+        logger.assertEndsWith("Auto: false");
+        logger.assertEndsWith("Thread Count: 0");
+        logger.assertEndsWith("OpsPer Sec: 0");
 
         // test negative value
         try
@@ -288,9 +288,9 @@ public class SettingsRateTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: true");
-        logger.assertContains("Min Threads: 4");
-        logger.assertContains("Max Threads: 10");
+        logger.assertEndsWith("Auto: true");
+        logger.assertEndsWith("Min Threads: 4");
+        logger.assertEndsWith("Max Threads: 10");
 
         // with override forcing command
         underTest = new SettingsRate(commandLine, getSettingsCommand(Command.WRITE));
@@ -304,9 +304,9 @@ public class SettingsRateTests
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: true");
-        logger.assertContains("Min Threads: 4");
-        logger.assertContains("Max Threads: 10");
+        logger.assertEndsWith("Auto: true");
+        logger.assertEndsWith("Min Threads: 4");
+        logger.assertEndsWith("Max Threads: 10");
 
         // no effect for non-auto
         args = new String[] {"-rate-min-clients", "10"};
@@ -323,9 +323,9 @@ public class SettingsRateTests
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: false");
-        logger.assertContains("Thread Count: 0");
-        logger.assertContains("OpsPer Sec: 0");
+        logger.assertEndsWith("Auto: false");
+        logger.assertEndsWith("Thread Count: 0");
+        logger.assertEndsWith("OpsPer Sec: 0");
 
         // test negative value
         try
@@ -357,9 +357,9 @@ public class SettingsRateTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: false");
-        logger.assertContains("Thread Count: 0");
-        logger.assertContains("OpsPer Sec: 100");
+        logger.assertEndsWith("Auto: false");
+        logger.assertEndsWith("Thread Count: 0");
+        logger.assertEndsWith("OpsPer Sec: 100");
 
 
         // with override forcing command
@@ -374,9 +374,9 @@ public class SettingsRateTests
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: false");
-        logger.assertContains("Thread Count: 0");
-        logger.assertContains("OpsPer Sec: 100");
+        logger.assertEndsWith("Auto: false");
+        logger.assertEndsWith("Thread Count: 0");
+        logger.assertEndsWith("OpsPer Sec: 100");
 
         // test with negative value
         args = new String[] {"-rate-throttle", "-1"};
@@ -408,9 +408,9 @@ public class SettingsRateTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: false");
-        logger.assertContains("Thread Count: 500");
-        logger.assertContains("OpsPer Sec: 100");
+        logger.assertEndsWith("Auto: false");
+        logger.assertEndsWith("Thread Count: 500");
+        logger.assertEndsWith("OpsPer Sec: 100");
 
 
         // with override forcing command
@@ -425,9 +425,9 @@ public class SettingsRateTests
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Auto: false");
-        logger.assertContains("Thread Count: 500");
-        logger.assertContains("OpsPer Sec: 100");
+        logger.assertEndsWith("Auto: false");
+        logger.assertEndsWith("Thread Count: 500");
+        logger.assertEndsWith("OpsPer Sec: 100");
 
         // test with negative value
         args = new String[] {"-rate-throttle", "100", "-rate-clients", "-1" };

@@ -41,25 +41,23 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 
 public class SettingsSchema extends AbstractSettings implements Serializable
 {
-
-    public static final String DEFAULT_VALIDATOR  = "BytesType";
     public static final StressOption<Class<? extends AbstractReplicationStrategy>> SCHEMA_REP_STRATEGY = new StressOption<>(() -> org.apache.cassandra.locator.SimpleStrategy.class,
-                                                                                                                            Option.builder("schema-replication-strategy")
-                                                                                                                                  .desc( "The replication strategy to use followed by optional arguments.  Must be followed by another option or '--'., defaults to SimpleStrategy.")
-                                                                                                                                  .converter(Converter.CLASS).argName("class").hasArgs().build());
+                                                                                                                            Option.builder("schema-replication")
+                                                                                                                                  .desc( "The replication strategy class. (Default = SimpleStrategy)")
+                                                                                                                                  .converter(AbstractReplicationStrategy::getClass).argName("class").hasArgs().build());
 
     public static final StressOption<Map<String,String>> SCHEMA_REP_ARGS = new StressOption<>(() -> Collections.emptyMap(),
-                                                                                                                            Option.builder("schema-replication-arguments")
+                                                                                                                            Option.builder("schema-replication-args")
                                                                                                                                   .hasArgs()
                                                                                                                                   .valueSeparator()
                                                                                                                                   .desc( "The optional arguments for the replication strategy.  Must be followed by another option or '--'.")
-                                                                                                                                  .hasArgs().build());
-    public static final StressOption<Class<? extends AbstractCompactionStrategy>> SCHEMA_COMPACTION_STRATEGY = new StressOption<>(Option.builder("schema-compaction").desc("The compaction strategy with optional arguments in the form X=Y. " +
-                                                                                                                                                                           "Must be followed by another option or '--'")
-                                                                                                                                        .converter(CompactionParams::classFromName).hasArg().argName("class or short name").build());
+                                                                                                                                  .build());
+    public static final StressOption<Class<? extends AbstractCompactionStrategy>> SCHEMA_COMPACTION_STRATEGY = new StressOption<>(Option.builder("schema-compaction").converter(CompactionParams::classFromName).hasArg().argName("class or short name")
+                                                                                                                                        .desc("The compaction strategy.")
+                                                                                                                                        .build());
 
     public static final StressOption<Map<String,String>> SCHEMA_COMPACTION_ARGS = new StressOption<>(() -> Collections.emptyMap(),
-                                                                                              Option.builder("schema-compaction-arguments")
+                                                                                              Option.builder("schema-compaction-args")
                                                                                                     .hasArgs()
                                                                                                     .valueSeparator()
                                                                                                     .desc( "The optional arguments for the compaction strategy.  Must be followed by another option or '--'.")
@@ -68,20 +66,30 @@ public class SettingsSchema extends AbstractSettings implements Serializable
     public static final StressOption<String> SCHEMA_KEYSPACE = new StressOption<>(()->"keyspace1", new Option("schema-keyspace", true, "The keyspace name to use. (Default: keyspace1)"));
     public static final StressOption<String> SCHEMA_COMPRESSION = new StressOption<>(new Option("schema-compression", true, "Specify the compression to use for sstable. (Default: no-compression)"));
 
-    private final Class<? extends AbstractReplicationStrategy> replicationStrategy;
-    private final Map<String, String> replicationStrategyOptions;
 
-    private final String compression;
-    private final Class<? extends AbstractCompactionStrategy> compactionStrategy;
-    private final Map<String, String> compactionStrategyOptions;
+
+    final Class<? extends AbstractReplicationStrategy> replicationStrategy;
+    final Map<String, String> replicationStrategyOptions;
+
+    final String compression;
+    final Class<? extends AbstractCompactionStrategy> compactionStrategy;
+    final Map<String, String> compactionStrategyOptions;
 
     public final String keyspace;
 
     public SettingsSchema(CommandLine commandLine, SettingsCommand command)
     {
         if (command instanceof SettingsCommandUser)
+        {
+            for (Option option : getOptions().getOptions())
+            {
+                if (commandLine.hasOption(option))
+                {
+                    throw new IllegalArgumentException(String.format("Shema option %s can not be used with the 'user' Command", option.getKey()));
+                }
+            }
             keyspace = null; //this should never be used - StressProfile passes keyspace name directly
-        else
+        } else
             keyspace = SCHEMA_KEYSPACE.extract(commandLine);
 
         replicationStrategy = SCHEMA_REP_STRATEGY.extract(commandLine);

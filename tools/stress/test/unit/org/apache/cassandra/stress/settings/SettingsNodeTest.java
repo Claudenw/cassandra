@@ -60,9 +60,9 @@ public class SettingsNodeTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Nodes: [localhost]");
-        logger.assertContains("Is White List: false");
-        logger.assertContains("Datacenter: *not set*");
+        logger.assertEndsWith("Nodes: [localhost]");
+        logger.assertEndsWith("Is White List: false");
+        logger.assertEndsWith("Datacenter: *not set*");
     }
 
     @Test
@@ -77,9 +77,9 @@ public class SettingsNodeTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Nodes: [localhost]");
-        logger.assertContains("Is White List: false");
-        logger.assertContains("Datacenter: dc1");
+        logger.assertEndsWith("Nodes: [localhost]");
+        logger.assertEndsWith("Is White List: false");
+        logger.assertEndsWith("Datacenter: dc1");
     }
 
     @Test
@@ -94,9 +94,9 @@ public class SettingsNodeTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Nodes: [localhost]");
-        logger.assertContains("Is White List: true");
-        logger.assertContains("Datacenter: *not set*");
+        logger.assertEndsWith("Nodes: [localhost]");
+        logger.assertEndsWith("Is White List: true");
+        logger.assertEndsWith("Datacenter: *not set*");
     }
 
     @Test
@@ -111,9 +111,9 @@ public class SettingsNodeTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Nodes: [one, two, three]");
-        logger.assertContains("Is White List: false");
-        logger.assertContains("Datacenter: *not set*");
+        logger.assertEndsWith("Nodes: [one, two, three]");
+        logger.assertEndsWith("Is White List: false");
+        logger.assertEndsWith("Datacenter: *not set*");
     }
 
     @Test
@@ -151,9 +151,9 @@ public class SettingsNodeTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Nodes: [four, five, six]");
-        logger.assertContains("Is White List: false");
-        logger.assertContains("Datacenter: *not set*");
+        logger.assertEndsWith("Nodes: [four, five, six]");
+        logger.assertEndsWith("Is White List: false");
+        logger.assertEndsWith("Datacenter: *not set*");
     }
 
     @Test

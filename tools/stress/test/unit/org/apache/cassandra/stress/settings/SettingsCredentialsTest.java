@@ -27,12 +27,10 @@ import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileUtils;
-import org.apache.cassandra.stress.util.ResultLogger;
 
 import static org.apache.cassandra.io.util.File.WriteMode.OVERWRITE;
 import static org.apache.cassandra.stress.settings.SettingsCredentials.CQL_PASSWORD_PROPERTY_KEY;
@@ -107,13 +105,13 @@ public class SettingsCredentialsTest {
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("File: *not set*" );
-        logger.assertContains("CQL username: *not set*");
-        logger.assertContains("CQL password: *not set*");
-        logger.assertContains("JMX username: *not set*");
-        logger.assertContains("JMX password: *not set*");
-        logger.assertContains("Transport truststore password: *not set*");
-        logger.assertContains("Transport keystore password: *not set*");
+        logger.assertEndsWith("File: *not set*" );
+        logger.assertEndsWith("CQL username: *not set*");
+        logger.assertEndsWith("CQL password: *not set*");
+        logger.assertEndsWith("JMX username: *not set*");
+        logger.assertEndsWith("JMX password: *not set*");
+        logger.assertEndsWith("Transport truststore password: *not set*");
+        logger.assertEndsWith("Transport keystore password: *not set*");
     }
     @Test
     public void testReadCredentialsFromFileMixed() throws Exception
@@ -149,13 +147,13 @@ public class SettingsCredentialsTest {
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("File: "+tempFile.absolutePath() );
-        logger.assertContains("CQL username: cqluserfromfile");
-        logger.assertContains("CQL password: *suppressed*");
-        logger.assertContains("JMX username: jmxuserfromfile");
-        logger.assertContains("JMX password: *suppressed*");
-        logger.assertContains("Transport truststore password: *suppressed*");
-        logger.assertContains("Transport keystore password: *suppressed*");
+        logger.assertEndsWith("File: " + tempFile.absolutePath() );
+        logger.assertEndsWith("CQL username: cqluserfromfile");
+        logger.assertEndsWith("CQL password: *suppressed*");
+        logger.assertEndsWith("JMX username: jmxuserfromfile");
+        logger.assertEndsWith("JMX password: *suppressed*");
+        logger.assertEndsWith("Transport truststore password: *suppressed*");
+        logger.assertEndsWith("Transport keystore password: *suppressed*");
     }
 
 
@@ -226,13 +224,13 @@ public class SettingsCredentialsTest {
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("File: "+tempFile.absolutePath() );
-        logger.assertContains("CQL username: cqluserfromfile");
-        logger.assertContains("CQL password: *suppressed*");
-        logger.assertContains("JMX username: *not set*");
-        logger.assertContains("JMX password: *not set*");
-        logger.assertContains("Transport truststore password: *not set*");
-        logger.assertContains("Transport keystore password: *suppressed*");
+        logger.assertEndsWith("File: " + tempFile.absolutePath() );
+        logger.assertEndsWith("CQL username: cqluserfromfile");
+        logger.assertEndsWith("CQL password: *suppressed*");
+        logger.assertEndsWith("JMX username: *not set*");
+        logger.assertEndsWith("JMX password: *not set*");
+        logger.assertEndsWith("Transport truststore password: *not set*");
+        logger.assertEndsWith("Transport keystore password: *suppressed*");
     }
 
 }

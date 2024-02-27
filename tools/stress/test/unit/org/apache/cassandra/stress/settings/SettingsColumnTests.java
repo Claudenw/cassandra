@@ -60,14 +60,14 @@ public class SettingsColumnTests
         assertEquals("Fixed:  key=5", underTest.countDistribution.getConfigAsString());
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Max Columns Per Key: 5");
-        logger.assertContains("Column Names: [C0, C1, C2, C3, C4]");
-        logger.assertContains("Comparator: null");
-        logger.assertContains("Timestamp: null");
-        logger.assertContains("Variable Column Count: false");
-        logger.assertContains("Slice: false");
-        logger.assertContains("Size Distribution: Fixed:  key=34");
-        logger.assertContains("Count Distribution: Fixed:  key=5");
+        logger.assertEndsWith("Max Columns Per Key: 5");
+        logger.assertEndsWith("Column Names: [C0, C1, C2, C3, C4]");
+        logger.assertEndsWith("Comparator: null");
+        logger.assertEndsWith("Timestamp: null");
+        logger.assertEndsWith("Variable Column Count: false");
+        logger.assertEndsWith("Slice: false");
+        logger.assertEndsWith("Size Distribution: Fixed:  key=34");
+        logger.assertEndsWith("Count Distribution: Fixed:  key=5");
     }
 
     @Test
@@ -89,14 +89,14 @@ public class SettingsColumnTests
         assertEquals("Count:  fixed=3", underTest.countDistribution.getConfigAsString());
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "Max Columns Per Key: 3");
-        logger.assertContains( "Column Names: [name1, name2, name3]");
-        logger.assertContains("Comparator: "+AsciiType.instance.getClass().getName());
-        logger.assertContains("Timestamp: 1708441057");
-        logger.assertContains("Variable Column Count: false");
-        logger.assertContains("Slice: true");
-        logger.assertContains("Size Distribution: Fixed:  key=10");
-        logger.assertContains("Count Distribution: Count:  fixed=3");
+        logger.assertEndsWith("Max Columns Per Key: 3");
+        logger.assertEndsWith("Column Names: [name1, name2, name3]");
+        logger.assertEndsWith("Comparator: " + AsciiType.instance.getClass().getName());
+        logger.assertEndsWith("Timestamp: 1708441057");
+        logger.assertEndsWith("Variable Column Count: false");
+        logger.assertEndsWith("Slice: true");
+        logger.assertEndsWith("Size Distribution: Fixed:  key=10");
+        logger.assertEndsWith("Count Distribution: Count:  fixed=3");
 
         System.out.println(commandLine);
     }

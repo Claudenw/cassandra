@@ -70,15 +70,15 @@ public class SettingsModeTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Username: *not set*");
-        logger.assertContains("Password: *not set*");
-        logger.assertContains("API: "+ConnectionAPI.JAVA_DRIVER_NATIVE);
-        logger.assertContains("Connection Style: "+ConnectionStyle.CQL_PREPARED);
-        logger.assertContains("Protocol Version: "+ProtocolVersion.NEWEST_SUPPORTED);
-        logger.assertContains("Auth Provider Class: *not set*");
-        logger.assertContains("Max Pending Per Connection: 128");
-        logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: NONE");
+        logger.assertEndsWith("Username: *not set*");
+        logger.assertEndsWith("Password: *not set*");
+        logger.assertEndsWith("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE);
+        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL_PREPARED);
+        logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED);
+        logger.assertEndsWith("Auth Provider Class: *not set*");
+        logger.assertEndsWith("Max Pending Per Connection: 128");
+        logger.assertEndsWith("Connections Per Host: 8");
+        logger.assertEndsWith("Compression: NONE");
 
 
         // try with configuration file
@@ -101,15 +101,15 @@ public class SettingsModeTest
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Username: cqluserfromfile");
-        logger.assertContains("Password: *suppressed*");
-        logger.assertContains("API: "+ConnectionAPI.JAVA_DRIVER_NATIVE);
-        logger.assertContains("Connection Style: "+ConnectionStyle.CQL_PREPARED);
-        logger.assertContains("Protocol Version: "+ProtocolVersion.NEWEST_SUPPORTED);
-        logger.assertContains("Auth Provider Class: *not set*");
-        logger.assertContains("Max Pending Per Connection: 128");
-        logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: NONE");
+        logger.assertEndsWith("Username: cqluserfromfile");
+        logger.assertEndsWith("Password: *suppressed*");
+        logger.assertEndsWith("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE);
+        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL_PREPARED);
+        logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED);
+        logger.assertEndsWith("Auth Provider Class: *not set*");
+        logger.assertEndsWith("Max Pending Per Connection: 128");
+        logger.assertEndsWith("Connections Per Host: 8");
+        logger.assertEndsWith("Compression: NONE");
     }
 
     @Test
@@ -130,15 +130,15 @@ public class SettingsModeTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Username: modeuser");
-        logger.assertContains("Password: *not set*");
-        logger.assertContains("API: "+ConnectionAPI.JAVA_DRIVER_NATIVE);
-        logger.assertContains("Connection Style: "+ConnectionStyle.CQL_PREPARED);
-        logger.assertContains("Protocol Version: "+ProtocolVersion.NEWEST_SUPPORTED);
-        logger.assertContains("Auth Provider Class: *not set*");
-        logger.assertContains("Max Pending Per Connection: 128");
-        logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: NONE");
+        logger.assertEndsWith("Username: modeuser");
+        logger.assertEndsWith("Password: *not set*");
+        logger.assertEndsWith("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE);
+        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL_PREPARED);
+        logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED);
+        logger.assertEndsWith("Auth Provider Class: *not set*");
+        logger.assertEndsWith("Max Pending Per Connection: 128");
+        logger.assertEndsWith("Connections Per Host: 8");
+        logger.assertEndsWith("Compression: NONE");
 
 
         // try with configuration file
@@ -160,15 +160,15 @@ public class SettingsModeTest
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Username: modeuser");
-        logger.assertContains("Password: *suppressed*");
-        logger.assertContains("API: "+ConnectionAPI.JAVA_DRIVER_NATIVE);
-        logger.assertContains("Connection Style: "+ConnectionStyle.CQL_PREPARED);
-        logger.assertContains("Protocol Version: "+ProtocolVersion.NEWEST_SUPPORTED);
-        logger.assertContains("Auth Provider Class: *not set*");
-        logger.assertContains("Max Pending Per Connection: 128");
-        logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: NONE");
+        logger.assertEndsWith("Username: modeuser");
+        logger.assertEndsWith("Password: *suppressed*");
+        logger.assertEndsWith("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE);
+        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL_PREPARED);
+        logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED);
+        logger.assertEndsWith("Auth Provider Class: *not set*");
+        logger.assertEndsWith("Max Pending Per Connection: 128");
+        logger.assertEndsWith("Connections Per Host: 8");
+        logger.assertEndsWith("Compression: NONE");
     }
 
     @Test
@@ -189,15 +189,15 @@ public class SettingsModeTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Username: *not set*");
-        logger.assertContains("Password: *suppressed*");
-        logger.assertContains("API: "+ConnectionAPI.JAVA_DRIVER_NATIVE);
-        logger.assertContains("Connection Style: "+ConnectionStyle.CQL_PREPARED);
-        logger.assertContains("Protocol Version: "+ProtocolVersion.NEWEST_SUPPORTED);
-        logger.assertContains("Auth Provider Class: *not set*");
-        logger.assertContains("Max Pending Per Connection: 128");
-        logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: NONE");
+        logger.assertEndsWith("Username: *not set*");
+        logger.assertEndsWith("Password: *suppressed*");
+        logger.assertEndsWith("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE);
+        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL_PREPARED);
+        logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED);
+        logger.assertEndsWith("Auth Provider Class: *not set*");
+        logger.assertEndsWith("Max Pending Per Connection: 128");
+        logger.assertEndsWith("Connections Per Host: 8");
+        logger.assertEndsWith("Compression: NONE");
 
 
         // try with configuration file
@@ -219,15 +219,15 @@ public class SettingsModeTest
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Username: cqluserfromfile");
-        logger.assertContains("Password: *suppressed*");
-        logger.assertContains("API: "+ConnectionAPI.JAVA_DRIVER_NATIVE);
-        logger.assertContains("Connection Style: "+ConnectionStyle.CQL_PREPARED);
-        logger.assertContains("Protocol Version: "+ProtocolVersion.NEWEST_SUPPORTED);
-        logger.assertContains("Auth Provider Class: *not set*");
-        logger.assertContains("Max Pending Per Connection: 128");
-        logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: NONE");
+        logger.assertEndsWith("Username: cqluserfromfile");
+        logger.assertEndsWith("Password: *suppressed*");
+        logger.assertEndsWith("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE);
+        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL_PREPARED);
+        logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED);
+        logger.assertEndsWith("Auth Provider Class: *not set*");
+        logger.assertEndsWith("Max Pending Per Connection: 128");
+        logger.assertEndsWith("Connections Per Host: 8");
+        logger.assertEndsWith("Compression: NONE");
     }
 
     @Test
@@ -251,15 +251,15 @@ public class SettingsModeTest
 
             TestingResultLogger logger = new TestingResultLogger();
             underTest.printSettings(logger);
-            logger.assertContains("Username: *not set*", ()->ver.name());
-            logger.assertContains("Password: *not set*", ()->ver.name());
-            logger.assertContains("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE, ()->ver.name());
-            logger.assertContains("Connection Style: " + ConnectionStyle.CQL_PREPARED, ()->ver.name());
-            logger.assertContains("Protocol Version: " + ver, ()->ver.name());
-            logger.assertContains("Auth Provider Class: *not set*", ()->ver.name());
-            logger.assertContains("Max Pending Per Connection: 128", ()->ver.name());
-            logger.assertContains("Connections Per Host: 8", ()->ver.name());
-            logger.assertContains("Compression: NONE", ()->ver.name());
+            logger.assertEndsWith("Username: *not set*", ()->ver.name());
+            logger.assertEndsWith("Password: *not set*", ()->ver.name());
+            logger.assertEndsWith("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE, ()->ver.name());
+            logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL_PREPARED, ()->ver.name());
+            logger.assertEndsWith("Protocol Version: " + ver, ()->ver.name());
+            logger.assertEndsWith("Auth Provider Class: *not set*", ()->ver.name());
+            logger.assertEndsWith("Max Pending Per Connection: 128", ()->ver.name());
+            logger.assertEndsWith("Connections Per Host: 8", ()->ver.name());
+            logger.assertEndsWith("Compression: NONE", ()->ver.name());
         }
     }
 
@@ -284,15 +284,15 @@ public class SettingsModeTest
 
             TestingResultLogger logger = new TestingResultLogger();
             underTest.printSettings(logger);
-            logger.assertContains("Username: *not set*", ()->style.name());
-            logger.assertContains("Password: *not set*", ()->style.name());
-            logger.assertContains("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE, ()->style.name());
-            logger.assertContains("Connection Style: " + style, ()->style.name());
-            logger.assertContains("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED, ()->style.name());
-            logger.assertContains("Auth Provider Class: *not set*", ()->style.name());
-            logger.assertContains("Max Pending Per Connection: 128", ()->style.name());
-            logger.assertContains("Connections Per Host: 8", ()->style.name());
-            logger.assertContains("Compression: NONE", ()->style.name());
+            logger.assertEndsWith("Username: *not set*", ()->style.name());
+            logger.assertEndsWith("Password: *not set*", ()->style.name());
+            logger.assertEndsWith("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE, ()->style.name());
+            logger.assertEndsWith("Connection Style: " + style, ()->style.name());
+            logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED, ()->style.name());
+            logger.assertEndsWith("Auth Provider Class: *not set*", ()->style.name());
+            logger.assertEndsWith("Max Pending Per Connection: 128", ()->style.name());
+            logger.assertEndsWith("Connections Per Host: 8", ()->style.name());
+            logger.assertEndsWith("Compression: NONE", ()->style.name());
         }
     }
 
@@ -317,15 +317,15 @@ public class SettingsModeTest
 
             TestingResultLogger logger = new TestingResultLogger();
             underTest.printSettings(logger);
-            logger.assertContains("Username: *not set*", ()->compression.name());
-            logger.assertContains("Password: *not set*", ()->compression.name());
-            logger.assertContains("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE, ()->compression.name());
-            logger.assertContains("Connection Style: " + ConnectionStyle.CQL_PREPARED, ()->compression.name());
-            logger.assertContains("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED, ()->compression.name());
-            logger.assertContains("Auth Provider Class: *not set*", ()->compression.name());
-            logger.assertContains("Max Pending Per Connection: 128", ()->compression.name());
-            logger.assertContains("Connections Per Host: 8", ()->compression.name());
-            logger.assertContains("Compression: "+compression, ()->compression.name());
+            logger.assertEndsWith("Username: *not set*", ()->compression.name());
+            logger.assertEndsWith("Password: *not set*", ()->compression.name());
+            logger.assertEndsWith("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE, ()->compression.name());
+            logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL_PREPARED, ()->compression.name());
+            logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED, ()->compression.name());
+            logger.assertEndsWith("Auth Provider Class: *not set*", ()->compression.name());
+            logger.assertEndsWith("Max Pending Per Connection: 128", ()->compression.name());
+            logger.assertEndsWith("Connections Per Host: 8", ()->compression.name());
+            logger.assertEndsWith("Compression: " + compression, ()->compression.name());
         }
     }
 
@@ -347,15 +347,15 @@ public class SettingsModeTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Username: *not set*");
-        logger.assertContains("Password: *not set*");
-        logger.assertContains("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE);
-        logger.assertContains("Connection Style: " + ConnectionStyle.CQL_PREPARED);
-        logger.assertContains("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED);
-        logger.assertContains("Auth Provider Class: "+TestingAuthProvider.class.getName());
-        logger.assertContains("Max Pending Per Connection: 128");
-        logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: NONE");
+        logger.assertEndsWith("Username: *not set*");
+        logger.assertEndsWith("Password: *not set*");
+        logger.assertEndsWith("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE);
+        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL_PREPARED);
+        logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED);
+        logger.assertEndsWith("Auth Provider Class: " + TestingAuthProvider.class.getName());
+        logger.assertEndsWith("Max Pending Per Connection: 128");
+        logger.assertEndsWith("Connections Per Host: 8");
+        logger.assertEndsWith("Compression: NONE");
 
         try {
             args = new String[] { "-auth-provider", String.class.getName() };
@@ -386,15 +386,15 @@ public class SettingsModeTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Username: *not set*");
-        logger.assertContains("Password: *not set*");
-        logger.assertContains("API: "+ConnectionAPI.JAVA_DRIVER_NATIVE);
-        logger.assertContains("Connection Style: "+ConnectionStyle.CQL_PREPARED);
-        logger.assertContains("Protocol Version: "+ProtocolVersion.NEWEST_SUPPORTED);
-        logger.assertContains("Auth Provider Class: *not set*");
-        logger.assertContains("Max Pending Per Connection: 128");
-        logger.assertContains("Connections Per Host: 3");
-        logger.assertContains("Compression: NONE");
+        logger.assertEndsWith("Username: *not set*");
+        logger.assertEndsWith("Password: *not set*");
+        logger.assertEndsWith("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE);
+        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL_PREPARED);
+        logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED);
+        logger.assertEndsWith("Auth Provider Class: *not set*");
+        logger.assertEndsWith("Max Pending Per Connection: 128");
+        logger.assertEndsWith("Connections Per Host: 3");
+        logger.assertEndsWith("Compression: NONE");
 
         try {
             args = new String[] {"-connections-per-host", "-1"};
@@ -424,15 +424,15 @@ public class SettingsModeTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Username: *not set*");
-        logger.assertContains("Password: *not set*");
-        logger.assertContains("API: "+ConnectionAPI.JAVA_DRIVER_NATIVE);
-        logger.assertContains("Connection Style: "+ConnectionStyle.CQL_PREPARED);
-        logger.assertContains("Protocol Version: "+ProtocolVersion.NEWEST_SUPPORTED);
-        logger.assertContains("Auth Provider Class: *not set*");
-        logger.assertContains("Max Pending Per Connection: 3");
-        logger.assertContains("Connections Per Host: 8");
-        logger.assertContains("Compression: NONE");
+        logger.assertEndsWith("Username: *not set*");
+        logger.assertEndsWith("Password: *not set*");
+        logger.assertEndsWith("API: " + ConnectionAPI.JAVA_DRIVER_NATIVE);
+        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL_PREPARED);
+        logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED);
+        logger.assertEndsWith("Auth Provider Class: *not set*");
+        logger.assertEndsWith("Max Pending Per Connection: 3");
+        logger.assertEndsWith("Connections Per Host: 8");
+        logger.assertEndsWith("Compression: NONE");
 
         try {
             args = new String[] {"-max-pending-connections", "-1"};
@@ -463,15 +463,15 @@ public class SettingsModeTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Username: *not set*");
-        logger.assertContains("Password: *not set*");
-        logger.assertContains("API: "+ConnectionAPI.SIMPLE_NATIVE);
-        logger.assertContains("Connection Style: "+ConnectionStyle.CQL+"\n");
-        logger.assertContains("Protocol Version: "+ProtocolVersion.NEWEST_SUPPORTED);
-        logger.assertContains("Auth Provider Class: *not set*");
-        logger.assertContains("Max Pending Per Connection: *not set*");
-        logger.assertContains("Connections Per Host: *not set*");
-        logger.assertContains("Compression: NONE");
+        logger.assertEndsWith("Username: *not set*");
+        logger.assertEndsWith("Password: *not set*");
+        logger.assertEndsWith("API: " + ConnectionAPI.SIMPLE_NATIVE);
+        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL + "\n");
+        logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED);
+        logger.assertEndsWith("Auth Provider Class: *not set*");
+        logger.assertEndsWith("Max Pending Per Connection: *not set*");
+        logger.assertEndsWith("Connections Per Host: *not set*");
+        logger.assertEndsWith("Compression: NONE");
 
         // test will all args
         args = new String[] {"-simple-native", "-protocol-version", "4", "-cql-style", "CQL_PREPARED", "-use-compression", "lz4", "-user", "commandLineUser", "-password", "commandLinePwd", "-auth-provider",  TestingAuthProvider.class.getName(),
@@ -490,15 +490,15 @@ public class SettingsModeTest
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("Username: *not set*");
-        logger.assertContains("Password: *not set*");
-        logger.assertContains("API: "+ConnectionAPI.SIMPLE_NATIVE);
-        logger.assertContains("Connection Style: "+ConnectionStyle.CQL_PREPARED+"\n");
-        logger.assertContains("Protocol Version: "+ProtocolVersion.NEWEST_SUPPORTED);
-        logger.assertContains("Auth Provider Class: *not set*");
-        logger.assertContains("Max Pending Per Connection: *not set*");
-        logger.assertContains("Connections Per Host: *not set*");
-        logger.assertContains("Compression: NONE");
+        logger.assertEndsWith("Username: *not set*");
+        logger.assertEndsWith("Password: *not set*");
+        logger.assertEndsWith("API: " + ConnectionAPI.SIMPLE_NATIVE);
+        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL_PREPARED + "\n");
+        logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED);
+        logger.assertEndsWith("Auth Provider Class: *not set*");
+        logger.assertEndsWith("Max Pending Per Connection: *not set*");
+        logger.assertEndsWith("Connections Per Host: *not set*");
+        logger.assertEndsWith("Compression: NONE");
     }
 
     public static class TestingAuthProvider implements AuthProvider

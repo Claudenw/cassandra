@@ -52,8 +52,8 @@ public class SettingsJMXTest
         assertNull(underTest.user);
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "Username: *not set*");
-        logger.assertContains( "Password: *not set*");
+        logger.assertEndsWith("Username: *not set*");
+        logger.assertEndsWith("Password: *not set*");
 
 
         // try with configuration file
@@ -68,8 +68,8 @@ public class SettingsJMXTest
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "Username: jmxuserfromfile");
-        logger.assertContains( "Password: *suppressed*");
+        logger.assertEndsWith("Username: jmxuserfromfile");
+        logger.assertEndsWith("Password: *suppressed*");
     }
 
     @Test
@@ -82,8 +82,8 @@ public class SettingsJMXTest
         assertEquals("commandlineuser", underTest.user);
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "Username: commandlineuser");
-        logger.assertContains( "Password: *not set*");
+        logger.assertEndsWith("Username: commandlineuser");
+        logger.assertEndsWith("Password: *not set*");
 
 
         // try with configuration file
@@ -102,8 +102,8 @@ public class SettingsJMXTest
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "Username: commandlineuser");
-        logger.assertContains( "Password: *suppressed*");
+        logger.assertEndsWith("Username: commandlineuser");
+        logger.assertEndsWith("Password: *suppressed*");
     }
 
     @Test
@@ -116,8 +116,8 @@ public class SettingsJMXTest
         assertNull(underTest.user);
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "Username: *not set*");
-        logger.assertContains( "Password: *suppressed*");
+        logger.assertEndsWith("Username: *not set*");
+        logger.assertEndsWith("Password: *suppressed*");
 
 
         // try with configuration file
@@ -136,7 +136,7 @@ public class SettingsJMXTest
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "Username: jmxuserfromfile");
-        logger.assertContains( "Password: *suppressed*");
+        logger.assertEndsWith("Username: jmxuserfromfile");
+        logger.assertEndsWith("Password: *suppressed*");
     }
 }

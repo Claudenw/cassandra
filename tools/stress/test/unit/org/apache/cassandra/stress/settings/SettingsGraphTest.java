@@ -51,10 +51,10 @@ public class SettingsGraphTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "File: outputFile");
-        logger.assertContains( "Revision: unknown");
-        logger.assertContains( "Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date()));
-        logger.assertContains( "Operation: HELP");
+        logger.assertEndsWith("File: outputFile");
+        logger.assertEndsWith("Revision: unknown");
+        logger.assertEndsWith("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date()));
+        logger.assertEndsWith("Operation: HELP");
     }
 
     @Test
@@ -71,10 +71,10 @@ public class SettingsGraphTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "File: outputFile");
-        logger.assertContains( "Revision: revisionString");
-        logger.assertContains( "Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date()));
-        logger.assertContains( "Operation: HELP");
+        logger.assertEndsWith("File: outputFile");
+        logger.assertEndsWith("Revision: revisionString");
+        logger.assertEndsWith("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date()));
+        logger.assertEndsWith("Operation: HELP");
     }
 
     @Test
@@ -92,10 +92,10 @@ public class SettingsGraphTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "File: outputFile");
-        logger.assertContains( "Revision: unknown");
-        logger.assertContains( "Title: titleString");
-        logger.assertContains( "Operation: HELP");
+        logger.assertEndsWith("File: outputFile");
+        logger.assertEndsWith("Revision: unknown");
+        logger.assertEndsWith("Title: titleString");
+        logger.assertEndsWith("Operation: HELP");
     }
 
     @Test
@@ -113,9 +113,9 @@ public class SettingsGraphTest
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains("File: outputFile");
-        logger.assertContains("Revision: unknown");
-        logger.assertContains("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date()));
-        logger.assertContains("Operation: nameString");
+        logger.assertEndsWith("File: outputFile");
+        logger.assertEndsWith("Revision: unknown");
+        logger.assertEndsWith("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date()));
+        logger.assertEndsWith("Operation: nameString");
     }
 }

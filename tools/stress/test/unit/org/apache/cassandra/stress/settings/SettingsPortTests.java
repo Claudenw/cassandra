@@ -39,8 +39,8 @@ public class SettingsPortTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "Native Port: 9042");
-        logger.assertContains( "JMX Port: 7199");
+        logger.assertEndsWith("Native Port: 9042");
+        logger.assertEndsWith("JMX Port: 7199");
     }
 
     @Test
@@ -54,8 +54,8 @@ public class SettingsPortTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "Native Port: 8080");
-        logger.assertContains( "JMX Port: 7199");
+        logger.assertEndsWith("Native Port: 8080");
+        logger.assertEndsWith("JMX Port: 7199");
 
 
         args = new String[] {"-port-native", "65536"};
@@ -90,8 +90,8 @@ public class SettingsPortTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertContains( "Native Port: 9042");
-        logger.assertContains( "JMX Port: 8080");
+        logger.assertEndsWith("Native Port: 9042");
+        logger.assertEndsWith("JMX Port: 8080");
 
 
         args = new String[] {"-port-jmx", "65536"};
