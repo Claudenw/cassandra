@@ -33,6 +33,8 @@ import java.util.function.Supplier;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
+import com.google.common.primitives.Ints;
+
 import static java.lang.String.format;
 
 
@@ -47,6 +49,9 @@ abstract class AbstractSettings {
     public static final Converter<PartitionGenerator.Order, IllegalArgumentException> ORDER_CONVERTER = s -> s==null?PartitionGenerator.Order.ARBITRARY: PartitionGenerator.Order.valueOf(s);
 
     public static final Converter<Long,NumberFormatException> DISTRIBUTION_CONVERTER = OptionDistribution::parseLong;
+
+    public static final Converter<Integer,NumberFormatException> TOKENRANGE_CONVERTER = s -> Ints.checkedCast(OptionDistribution.parseLong(s));
+
     public static final Converter<RatioDistributionFactory,Exception>  RATIO_DISTRIBUTION_FACTORY_CONVERTER = OptionRatioDistribution.BUILDER::apply;
 
     public static final Converter<DurationSpec.IntSecondsBound,Exception> DURATION_CONVERTER = s -> new DurationSpec.IntSecondsBound(s);
@@ -210,6 +215,14 @@ abstract class AbstractSettings {
             return result == null ? defaultValue : result;
         }
 
+        /**
+         * Returns the obtion as the parsed value or the default if provided.
+         * Resulting object must pass the verifier (if any).
+         * @param commandLine the command line to process
+         * @return an instance of the class defined for the option.
+         * @see CommandLine#getParsedOptionValue(Option, Supplier)
+         * @throws RuntimeException wrapping any non-runtime execption.
+         */
         public T extract(CommandLine commandLine)
         {
             try
@@ -224,25 +237,28 @@ abstract class AbstractSettings {
             }
         }
 
-        public List<String> extractOptions(CommandLine commandLine)
-        {
-            List<String> result = Arrays.asList(commandLine.getOptionValues(option));
-            return result.subList(1,result.size());
+        /**
+         * Returns the option values as an array of String.
+         * @param commandLine the command line for input
+         * @return an array of items from this option.  May return null.
+         */
+        public String[] extractArray(CommandLine commandLine) {
+            String[] values = commandLine.getOptionValues(this.option);
+            return  values == null ? (String[]) dfltSupplier().get() : values;
         }
+
+        /**
+         * Returns a map values interpreted as property values..
+         * @param commandLine the command line for input
+         * @return a Map based on the properties from the command line.
+         * @see CommandLine#getOptionProperties(Option)
+         */
         public Map<String,String> extractMap(CommandLine commandLine)
         {
             Map<String,String> result = new HashMap<>();
             Properties p = commandLine.getOptionProperties(option);
             p.forEach( (k,v) -> result.put(k.toString(),v.toString()));
-//            for (String s : extractOptions(commandLine))
-//            {
-//                String[] parts = s.split("=");
-//                if (parts.length == 2 && parts[1].length() > 0 && parts[0].length() > 0)
-//                {
-//                    if (result.put(parts[0], parts[1]) != null)
-//                        throw new IllegalArgumentException(parts[0] + " set twice");
-//                }
-//            }
+
             return result;
         }
     }

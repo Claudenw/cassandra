@@ -32,8 +32,8 @@ public class SettingsTokenRange extends AbstractSettings implements Serializable
     public static final StressOption<String> TOKEN_RANGE_WRAP = new StressOption<>(new Option("token-range-wrap", "Re-use token ranges in order to terminate stress iterations"));
     public static final StressOption<Integer> TOKEN_RANGE_SPLIT_FACTORY = new StressOption<>(()->1,
                                                                                              POSITIVE_VERIFIER,
-                                                                                             Option.builder("token-range-split").hasArg().desc("Split every token range by this factor")
-                                                                                                          .converter(s -> Ints.checkedCast(OptionDistribution.parseLong(s))).build());
+                                                                                             Option.builder("token-range-split").hasArg().desc("Split every token range by this factor. Number may be followd by 'm' or 'k' (e.g. 5m)")
+                                                                                                          .converter(TOKENRANGE_CONVERTER).build());
     public final boolean wrap;
     public final int splitFactor;
     //private final CommandLine options;

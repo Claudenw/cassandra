@@ -62,7 +62,7 @@ public class SettingsCredentialsTest {
         properties.setProperty(CQL_PASSWORD_PROPERTY_KEY, "cqlpasswordfromfile");
         properties.setProperty(JMX_USERNAME_PROPERTY_KEY, "jmxuserfromfile");
         properties.setProperty(JMX_PASSWORD_PROPERTY_KEY, "jmxpasswordfromfile");
-        properties.setProperty(TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY, "keystorestorepasswordfromfile");
+        properties.setProperty(TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY, "keystorepasswordfromfile");
         properties.setProperty(TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY, "truststorepasswordfromfile");
         return properties;
     }
@@ -123,27 +123,12 @@ public class SettingsCredentialsTest {
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCredentials.getOptions(), args);
         SettingsCredentials underTest = new SettingsCredentials(commandLine);
 
-//        Map<String, String[]> args = new HashMap<>();
-//        args.put("write", new String[]{});
-//        args.put("-mode", new String[]{ "cql3", "native", "password=cqlpasswordoncommandline" });
-//        args.put("-transport", new String[]{ "truststore=sometruststore", "keystore=somekeystore" });
-//        args.put("-jmx", new String[]{ "password=jmxpasswordoncommandline" });
-//        args.put("-credentials-file", new String[]{ tempFile.absolutePath() });
-//        StressSettings settings = StressSettings.get(args);
-
         assertEquals("cqluserfromfile", underTest.cqlUsername);
         assertEquals("cqlpasswordfromfile", underTest.cqlPassword);
         assertEquals("jmxuserfromfile", underTest.jmxUsername);
         assertEquals("jmxpasswordfromfile", underTest.jmxPassword);
         assertEquals("keystorestorepasswordfromfile", underTest.transportKeystorePassword);
         assertEquals("truststorepasswordfromfile", underTest.transportTruststorePassword);
-
-//        assertEquals("cqluserfromfile", settings.mode.username);
-//        assertEquals("cqlpasswordoncommandline", settings.mode.password);
-//        assertEquals("jmxuserfromfile", settings.jmx.user);
-//        assertEquals("jmxpasswordoncommandline", settings.jmx.password);
-//        assertEquals("keystorestorepasswordfromfile", settings.transport.getEncryptionOptions().keystore_password);
-//        assertEquals("truststorepasswordfromfile", settings.transport.getEncryptionOptions().truststore_password);
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
