@@ -156,18 +156,6 @@ abstract class AbstractSettings {
         return ex instanceof RuntimeException ?  (RuntimeException) ex :new RuntimeException(ex);
     }
 
-    static <T>  Map<T,Double> ratios(Converter<T,Exception> converter, String[] params) throws Exception {
-        Map<T,Double> result = new HashMap<>();
-        for (String param : params ) {
-            String[] args = param.split("=");
-            if (args.length == 2 && args[1].length() > 0 && args[0].length() > 0) {
-                if (result.put(converter.apply(args[0]), Double.valueOf(args[1])) != null)
-                    throw new IllegalArgumentException(args[0] + " set twice");
-            }
-        }
-        return result;
-    }
-
     public static class StressOption<T> {
 
         private Option option;
@@ -248,17 +236,44 @@ abstract class AbstractSettings {
         }
 
         /**
-         * Returns a map values interpreted as property values..
+         * Returns a map values interpreted as property values.
          * @param commandLine the command line for input
          * @return a Map based on the properties from the command line.
          * @see CommandLine#getOptionProperties(Option)
          */
         public Map<String,String> extractMap(CommandLine commandLine)
         {
-            Map<String,String> result = new HashMap<>();
-            Properties p = commandLine.getOptionProperties(option);
-            p.forEach( (k,v) -> result.put(k.toString(),v.toString()));
+            Map<String,String> result = extractMap(commandLine, k->k, v->v);
+            return result;
+        }
 
+        /**
+         * Returns a map values interpreted as property values converted by the key and value converters.
+         * @param commandLine the command line for input
+         * @param keyConvert the converter for the input string to the key value.
+         * @param valueConvert the converter for the input string to the value converter.
+         * @return a Map based on the properties from the command line.
+         * @see CommandLine#getOptionProperties(Option)
+         */
+        public <K,V> Map<K,V> extractMap(CommandLine commandLine, Converter<K, Exception> keyConvert, Converter<V, Exception> valueConvert)
+        {
+            Map<K,V> result = new HashMap<>();
+            Properties p = commandLine.getOptionProperties(option);
+            for (Map.Entry<Object,Object> entry : p.entrySet())
+            {
+                try
+                {
+                    K key = keyConvert.apply(entry.getKey().toString());
+                    if (result.containsKey(key)) {
+                        throw new IllegalArgumentException(key + " set twice");
+                    }
+                    result.put(key,valueConvert.apply(entry.getValue().toString()));
+                }
+                catch (Exception e)
+                {
+                    throw asRuntimeException(e);
+                }
+            }
             return result;
         }
     }

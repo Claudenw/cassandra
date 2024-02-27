@@ -69,7 +69,7 @@ public class SettingsCommandUser extends SettingsCommand
             //ratios = commandLine.get
 
             if (commandLine.hasOption(SettingsCommand.COMMAND_RATIO.option())) {
-                ratios = ratios(s->s, commandLine.getOptionValues(SettingsCommand.COMMAND_RATIO.option()));
+                ratios = SettingsCommand.COMMAND_RATIO.extractMap(commandLine, k->k, Double::parseDouble);
                 if (ratios.size() == 0)
                     throw new IllegalArgumentException("Must specify at least one command with a non-zero ratio");
             } else {

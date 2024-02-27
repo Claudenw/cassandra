@@ -40,8 +40,8 @@ public class SettingsCommandPreDefinedMixed extends SettingsCommandPreDefined
 {
 
     // Ratios for selecting commands - index for each Command, NaN indicates the command is not requested
-    private final Map<Command, Double> ratios;
-    private final DistributionFactory clustering;
+    final Map<Command, Double> ratios;
+    final DistributionFactory clustering;
 
     private final CommandLine commandLine;
 
@@ -53,7 +53,7 @@ public class SettingsCommandPreDefinedMixed extends SettingsCommandPreDefined
         try {
             clustering = COMMAND_CLUSTERING.extract(commandLine);
             if (commandLine.hasOption(COMMAND_RATIO.option())) {
-                ratios = ratios(s->Command.valueOf(s.toUpperCase()), commandLine.getOptionValues(COMMAND_RATIO.option()));
+                ratios = COMMAND_RATIO.extractMap(commandLine, k->Command.valueOf(k.toUpperCase()), Double::parseDouble);
                 if (ratios.size() == 0)
                     throw new IllegalArgumentException("Must specify at least one command with a non-zero ratio");
             } else {
@@ -87,87 +87,12 @@ public class SettingsCommandPreDefinedMixed extends SettingsCommandPreDefined
                 .addOption(COMMAND_RATIO.option());
     }
 
-//    static class Options extends SettingsCommandPreDefined.Options
-//    {
-//        static List<OptionEnumProbabilities.Opt<Command>> probabilityOptions = new ArrayList<>();
-//        static
-//        {
-//            for (Command command : Command.values())
-//            {
-//                if (command.category == null)
-//                    continue;
-//                String defaultValue;
-//                switch (command)
-//                {
-//                    case MIXED:
-//                        continue;
-//                    case READ:
-//                    case WRITE:
-//                        defaultValue = "1";
-//                        break;
-//                    default:
-//                        defaultValue = null;
-//                }
-//                probabilityOptions.add(new OptionEnumProbabilities.                    <>(command, defaultValue));
-//            }
-//        }
-//
-//        protected Options(SettingsCommand.Options parent)
-//        {
-//            super(parent);
-//        }
-//        final OptionDistribution clustering = new OptionDistribution("clustering=", "GAUSSIAN(1..10)", "Distribution clustering runs of operations of the same kind");
-//        final OptionEnumProbabilities probabilities = new OptionEnumProbabilities<>(probabilityOptions, "ratio", "Specify the ratios for operations to perform; e.g. (read=2,write=1) will perform 2 reads for each write");
-//
-//        @Override
-//        public List<? extends Option> options()
-//        {
-//            return merge(Arrays.asList(clustering, probabilities), super.options());
-//        }
-
-
+    // CLI utility methods
 
     public void printSettings(ResultLogger out)
     {
         super.printSettings(out);
         out.printf("  Command Ratios: %s%n", ratios);
-        out.printf("  Command Clustering Distribution: %s%n", commandLine.getOptionValue(COMMAND_CLUSTERING.option()));
+        out.printf("  Command Clustering Distribution: %s%n", clustering.getConfigAsString());
     }
-
-    // CLI utility methods
-
-//    public static SettingsCommandPreDefinedMixed build(String[] params)
-//    {
-//        GroupedOptions options = GroupedOptions.select(params,
-//                new Options(new SettingsCommand.Uncertainty()),
-//                new Options(new SettingsCommand.Count()),
-//                new Options(new SettingsCommand.Duration()));
-//        if (options == null)
-//        {
-//            printHelp();
-//            System.out.println("Invalid MIXED options provided, see output for valid options");
-//            System.exit(1);
-//        }
-//        return new SettingsCommandPreDefinedMixed((Options) options);
-//    }
-
-//    public static void printHelp()
-//    {
-//        GroupedOptions.printOptions(System.out, "mixed",
-//                                    new Options(new SettingsCommand.Uncertainty()),
-//                                    new Options(new SettingsCommand.Count()),
-//                                    new Options(new SettingsCommand.Duration()));
-//    }
-
-//    public static Runnable helpPrinter()
-//    {
-//        return new Runnable()
-//        {
-//            @Override
-//            public void run()
-//            {
-//                printHelp();
-//            }
-//        };
-//    }
 }
