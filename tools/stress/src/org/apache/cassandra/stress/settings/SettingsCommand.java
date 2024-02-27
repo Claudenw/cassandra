@@ -79,14 +79,24 @@ public abstract class SettingsCommand extends AbstractSettings
                                                                             .type(Long.class).converter(DISTRIBUTION_CONVERTER).required(true).build());
 
 
-    public static final StressOption<String> COMMAND_PROFILE = new StressOption<>(Option.builder("command-profile").desc("Specify the path to a yaml cql3 profile. Multiple comma separated files can be added.").hasArgs().required().build());
-    public static final StressOption<String> COMMAND_RATIO = new StressOption<>(Option.builder("command-ratio").hasArgs().desc("Specify the ratios for operations to perform. (e.g. (read=2 write=1) will perform 2 reads for each write)").build());
-    public static final StressOption<Integer> COMMAND_KEYSIZE = new StressOption<>(()->10, POSITIVE_VERIFIER, Option.builder("comamnd-keysize").hasArg().desc("Key size in bytes. (Default 10)").type(Integer.class).build());
+    public static final StressOption<String> COMMAND_PROFILE = new StressOption<>(Option.builder("command-profile").hasArgs().required()
+                                                                                        .desc("Specify the path to a yaml cql3 profile. Multiple comma separated files can be added.").build());
+    public static final StressOption<String> COMMAND_RATIO = new StressOption<>(Option.builder("command-ratio").hasArgs()
+                                                                                      .desc("Specify the ratios for operations to perform. (e.g. (read=2 write=1) will perform 2 reads for each write)").build());
     private static final String COMMAND_CLUSTERING_DEFAULT = "GAUSSIAN(1..10)";
-    public static final StressOption<DistributionFactory> COMMAND_CLUSTERING = new StressOption<>(()->OptionDistribution.get(COMMAND_CLUSTERING_DEFAULT), Option.builder("command-clustering").hasArg().desc(format("Distribution clustering runs of operations of the same kind. (Default %s)", COMMAND_CLUSTERING_DEFAULT))
-                                                                                                                                                                .type(DistributionFactory.class).build());
+    public static final StressOption<DistributionFactory> COMMAND_CLUSTERING = new StressOption<>(()->OptionDistribution.get(COMMAND_CLUSTERING_DEFAULT),
+                                                                                                  Option.builder("command-clustering").hasArg().type(DistributionFactory.class)
+                                                                                                        .desc(format("Distribution clustering runs of operations of the same kind. (Default %s)", COMMAND_CLUSTERING_DEFAULT)).build());
     private static final String COMMAND_ADD_DEFAULT = "FIXED(1)";
-    public static final StressOption<DistributionFactory> COMMAND_ADD = new StressOption<>(()->OptionDistribution.get(COMMAND_ADD_DEFAULT), Option.builder("command-add").hasArg().type(DistributionFactory.class).desc(format("Distribution of value of counter increments. (Default %s)", COMMAND_ADD_DEFAULT)).build());
+    // predefined options
+    public static final StressOption<Integer> COMMAND_KEYSIZE = new StressOption<>(()->10,
+                                                                                   POSITIVE_VERIFIER,
+                                                                                   Option.builder("command-keysize").hasArg().type(Integer.class).desc("Key size in bytes. (Default 10)").build());
+
+    public static final StressOption<DistributionFactory> COMMAND_ADD = new StressOption<>(()->OptionDistribution.get(COMMAND_ADD_DEFAULT),
+                                                                                           Option.builder("command-add").hasArg().type(DistributionFactory.class)
+                                                                                                 .desc(format("Distribution of value of counter increments. (Default %s)", COMMAND_ADD_DEFAULT)).build());
+
 
     public final Command type;
     public final long count;

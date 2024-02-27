@@ -100,33 +100,6 @@ public class SettingsCommandPreDefined extends SettingsCommand
     }
 
     // Option Declarations
-
-//    static class Options extends GroupedOptions
-//    {
-//        final SettingsCommand.Options parent;
-//        protected Options(SettingsCommand.Options parent)
-//        {
-//            this.parent = parent;
-//        }
-//        final OptionDistribution add = new OptionDistribution("add=", "fixed(1)", "Distribution of value of counter increments");
-//        final OptionSimple keysize = new OptionSimple("keysize=", "[0-9]+", "10", "Key size in bytes", false);
-//
-//        @Override
-//        public List<? extends Option> options()
-//        {
-//            return merge(parent.options(), Arrays.asList(add, keysize));
-//        }
-//
-//    }
-//
-//    private static final String  COMMAND_ADD = "command-add";
-//    private static final String  COMMAND_ADD_DEFAULT_STR = "FIXED(1)";
-//
-//    private static final String COMMAND_KEYSIZE = "command-keysize";
-//
-//    private static final int COMMAND_KEYSIZE_DEFAULT = 10;
-//
-
     public static Options getOptions() {
         return SettingsCommand.getOptions()
                 .addOption(COMMAND_ADD.option())
@@ -145,7 +118,7 @@ public class SettingsCommandPreDefined extends SettingsCommand
     {
         super.printSettings(out);
         out.printf("  Key Size (bytes): %d%n", keySize);
-        out.printf("  Counter Increment Distibution: %s%n", commandLine.getOptionValue(COMMAND_ADD.option()));
+        out.printf("  Counter Increment Distibution: %s%n", add.getConfigAsString());
     }
 
 //    public static SettingsCommandPreDefined build(Command type, String[] params)

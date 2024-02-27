@@ -319,7 +319,6 @@ public class SettingsCommandTests
         assertEquals( -1, underTest.maximumUncertaintyMeasurements);
         assertEquals(ConsistencyLevel.LOCAL_ONE, underTest.consistencyLevel);
         assertEquals(SettingsCommand.TruncateWhen.NEVER, underTest.truncate);
-
     }
 
     @Test
@@ -456,6 +455,10 @@ public class SettingsCommandTests
         assertEquals( -1, underTest.maximumUncertaintyMeasurements);
         assertEquals(ConsistencyLevel.THREE, underTest.consistencyLevel);
         assertEquals(SettingsCommand.TruncateWhen.NEVER, underTest.truncate);
+    }
 
+    @Test
+    public void testTruncateTables() {
+        fail("not implemented");
     }
 }
