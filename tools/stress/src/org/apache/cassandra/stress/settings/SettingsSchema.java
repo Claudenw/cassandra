@@ -226,20 +226,6 @@ public class SettingsSchema extends AbstractSettings implements Serializable
                .addOption(SCHEMA_KEYSPACE.option());
     }
 
-//    private static final class Options extends GroupedOptions
-//    {
-//        final OptionReplication replication = new OptionReplication();
-//        final OptionCompaction compaction = new OptionCompaction();
-//        final OptionSimple keyspace = new OptionSimple("keyspace=", ".*", "keyspace1", "The keyspace name to use", false);
-//        final OptionSimple compression = new OptionSimple("compression=", ".*", null, "Specify the compression to use for sstable, default:no compression", false);
-//
-//        @Override
-//        public List<? extends Option> options()
-//        {
-//            return Arrays.asList(replication, keyspace, compaction, compression);
-//        }
-//    }
-
     private String optionsAsString(Map<String,String> options) {
         return String.join(", ", options.entrySet().stream().map( e -> String.format("'%s' : '%s'", e.getKey(), e.getValue())).collect(Collectors.toSet()));
     }
@@ -255,42 +241,5 @@ public class SettingsSchema extends AbstractSettings implements Serializable
         out.println("  Table Compaction Strategy: " + compactionStrategy);
         out.println("  Table Compaction Strategy Options: " + optionsAsString(compactionStrategyOptions));
     }
-
-//
-//    public static SettingsSchema get(Map<String, String[]> clArgs, SettingsCommand command)
-//    {
-//        String[] params = clArgs.remove("-schema");
-//        if (params == null)
-//            return new SettingsSchema(new Options(), command);
-//
-//        if (command instanceof SettingsCommandUser)
-//            throw new IllegalArgumentException("-schema can only be provided with predefined operations insert, read, etc.; the 'user' command requires a schema yaml instead");
-//
-//        GroupedOptions options = GroupedOptions.select(params, new Options());
-//        if (options == null)
-//        {
-//            printHelp();
-//            System.out.println("Invalid -schema options provided, see output for valid options");
-//            System.exit(1);
-//        }
-//        return new SettingsSchema((Options) options, command);
-//    }
-
-//    public static void printHelp()
-//    {
-//        GroupedOptions.printOptions(System.out, "-schema", new Options());
-//    }
-//
-//    public static Runnable helpPrinter()
-//    {
-//        return new Runnable()
-//        {
-//            @Override
-//            public void run()
-//            {
-//                printHelp();
-//            }
-//        };
-//    }
 
 }

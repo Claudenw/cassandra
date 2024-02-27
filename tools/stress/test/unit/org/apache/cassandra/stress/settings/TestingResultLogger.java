@@ -19,6 +19,7 @@
 package org.apache.cassandra.stress.settings;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -33,11 +34,11 @@ public class TestingResultLogger implements ResultLogger
     List<String> results = new ArrayList<>();
 
     public void assertEndsWith(String s) {
-        assertTrue(String.format("Missing '%s'", s), results.stream().filter( str -> str.endsWith(s) ).findFirst().isPresent());
+        assertContains(str -> str.endsWith(s), ()->String.format("Missing: '%s'", s));
     }
 
     public void assertEndsWith(String s, Supplier<String> msg) {
-        assertTrue(String.format("%s: Missing '%s'", msg.get(), s), results.stream().filter( str -> str.endsWith(s) ).findFirst().isPresent());
+        assertContains(str -> str.endsWith(s), ()->String.format("%s: Missing '%s'", msg.get(), s));
     }
 
     public void assertContainsRegex(String regex) {
@@ -47,10 +48,21 @@ public class TestingResultLogger implements ResultLogger
     private void assertContains(Predicate<String> predicate, Supplier<String> msg) {
         assertTrue(msg.get(), results.stream().filter( predicate ).findFirst().isPresent());
     }
+
+    private static String fixup(String s)
+    {
+        List<Character> stripChars = List.of('\n', '\r');
+        int pos = s.length() - 1;
+        while (pos > 0 && stripChars.contains(s.charAt(pos)))
+            pos--;
+        String result = s.substring(0,pos+1);
+        return result;
+    }
+
     @Override
     public void println(String line)
     {
-        results.add(line);
+        results.add(fixup(line));
     }
 
     @Override

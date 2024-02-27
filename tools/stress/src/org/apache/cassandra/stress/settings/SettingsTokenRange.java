@@ -30,7 +30,9 @@ import org.apache.cassandra.stress.util.ResultLogger;
 public class SettingsTokenRange extends AbstractSettings implements Serializable
 {
     public static final StressOption<String> TOKEN_RANGE_WRAP = new StressOption<>(new Option("token-range-wrap", "Re-use token ranges in order to terminate stress iterations"));
-    public static final StressOption<Integer> TOKEN_RANGE_SPLIT_FACTORY = new StressOption<>(()->1, Option.builder("token-range-split").hasArg().desc("Split every token range by this factor")
+    public static final StressOption<Integer> TOKEN_RANGE_SPLIT_FACTORY = new StressOption<>(()->1,
+                                                                                             POSITIVE_VERIFIER,
+                                                                                             Option.builder("token-range-split").hasArg().desc("Split every token range by this factor")
                                                                                                           .converter(s -> Ints.checkedCast(OptionDistribution.parseLong(s))).build());
     public final boolean wrap;
     public final int splitFactor;
@@ -38,7 +40,6 @@ public class SettingsTokenRange extends AbstractSettings implements Serializable
 
     public SettingsTokenRange(CommandLine commandLine)
     {
-       // this.options = commandLine;
         this.wrap = commandLine.hasOption(TOKEN_RANGE_WRAP.option());
         this.splitFactor = TOKEN_RANGE_SPLIT_FACTORY.extract(commandLine);
     }
