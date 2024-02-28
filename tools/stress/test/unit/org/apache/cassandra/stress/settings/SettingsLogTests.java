@@ -19,6 +19,7 @@
 package org.apache.cassandra.stress.settings;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.cli.CommandLine;
@@ -26,10 +27,13 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
+import org.apache.cassandra.stress.util.MultiResultLogger;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class SettingsLogTests
 {
@@ -204,5 +208,21 @@ public class SettingsLogTests
         assertNull(underTest.hdrFile);
         assertEquals(1, underTest.interval.quantity());
         assertEquals(TimeUnit.SECONDS, underTest.interval.unit());
+    }
+
+    @Test
+    public void getOutputTest() throws ParseException, FileNotFoundException
+    {
+        String[] args = {};
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsLog.getOptions(), args);
+        SettingsLog underTest = new SettingsLog(commandLine);
+        MultiResultLogger logger = underTest.getOutput();
+        assertEquals( 1, logger.getStreamCount());
+
+        args = new String[] { "-log-file", "logFile" };
+        commandLine = DefaultParser.builder().build().parse(SettingsLog.getOptions(), args);
+        underTest = new SettingsLog(commandLine);
+        logger = underTest.getOutput();
+        assertEquals( 2, logger.getStreamCount());
     }
 }

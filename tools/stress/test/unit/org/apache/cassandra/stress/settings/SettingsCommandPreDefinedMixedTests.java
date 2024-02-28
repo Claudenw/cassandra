@@ -59,7 +59,8 @@ public class SettingsCommandPreDefinedMixedTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertEndsWith("Command Ratios: {READ=1.0, WRITE=1.0}");
+        logger.assertContainsRegex("Command Ratios: \\{.*READ=1\\.0");
+        logger.assertContainsRegex("Command Ratios: \\{.*WRITE=1\\.0");
         logger.assertEndsWith("Command Clustering Distribution: Gaussian:  min=1,max=10,mean=5.500000,stdev=1.500000");
     }
 
@@ -78,7 +79,8 @@ public class SettingsCommandPreDefinedMixedTests
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertEndsWith("Command Ratios: {READ=4.3, WRITE=1.2}");
+        logger.assertContainsRegex("Command Ratios: \\{.*READ=4\\.3");
+        logger.assertContainsRegex("Command Ratios: \\{.*WRITE=1\\.2");
         logger.assertEndsWith("Command Clustering Distribution: Gaussian:  min=1,max=10,mean=5.500000,stdev=1.500000");
     }
 
@@ -93,11 +95,19 @@ public class SettingsCommandPreDefinedMixedTests
         assertEquals( 2, underTest.ratios.size());
         assertEquals(1.0, underTest.ratios.get(Command.READ), 0.000001);
         assertEquals(1.0, underTest.ratios.get(Command.WRITE), 0.000001);
-        assertEquals( "Gaussian:  min=1,max=10,mean=5.500000,stdev=1.500000", underTest.clustering.getConfigAsString());
+        assertEquals( "Fixed:  key=5", underTest.clustering.getConfigAsString());
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
-        logger.assertEndsWith("Command Ratios: {READ=1.0, WRITE=1.0}");
+        logger.assertContainsRegex("Command Ratios: \\{.*READ=1\\.0");
+        logger.assertContainsRegex("Command Ratios: \\{.*WRITE=1\\.0");
         logger.assertEndsWith("Command Clustering Distribution: Fixed:  key=5");
     }
+
+
+    @Test
+    public void getFactoryTest() {
+        fail("not implemented");
+    }
+
 }

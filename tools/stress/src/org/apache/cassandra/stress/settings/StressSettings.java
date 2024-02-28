@@ -321,24 +321,25 @@ public class StressSettings implements Serializable
 
     public static Options getOptions() {
         return new Options()
-        .addOptions(SettingsCommand.getOptions())
-        .addOptions(SettingsRate.getOptions())
-        .addOptions(SettingsPopulation.getOptions())
-        .addOptions(SettingsInsert.getOptions())
         .addOptions(SettingsColumn.getOptions())
-        .addOptions(SettingsErrors.getOptions())
-        .addOptions(SettingsLog.getOptions())
+        .addOptions(SettingsCommand.getAllOptions())
         .addOptions(SettingsCredentials.getOptions())
+        .addOptions(SettingsErrors.getOptions())
+        .addOptions(SettingsGraph.getOptions())
+        .addOptions(SettingsInsert.getOptions())
+        .addOptions(SettingsJMX.getOptions())
+        .addOptions(SettingsLog.getOptions())
+        .addOptions(SettingsMisc.getOptions())
         .addOptions(SettingsMode.getOptions())
         .addOptions(SettingsNode.getOptions())
-        .addOptions(SettingsSchema.getOptions())
-        .addOptions(SettingsTransport.getOptions())
+        .addOptions(SettingsPopulation.getOptions())
         .addOptions(SettingsPort.getOptions())
-        .addOptions(SettingsJMX.getOptions())
-        .addOptions(SettingsGraph.getOptions())
+        .addOptions(SettingsRate.getOptions())
+        .addOptions(SettingsReporting.getOptions())
+        .addOptions(SettingsSchema.getOptions())
         .addOptions(SettingsTokenRange.getOptions())
-        .addOptions(SettingsReporting.getOptions());
-
+        .addOptions(SettingsTransport.getOptions())
+        ;
     }
     public static void printHelp()
     {

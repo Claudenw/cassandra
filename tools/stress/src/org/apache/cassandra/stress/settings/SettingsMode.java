@@ -161,7 +161,7 @@ public class SettingsMode extends AbstractSettings
         out.printf("  Protocol Version: %s%n", protocolVersion);
         out.printf("  Username: %s%n", PrintUtils.printNull(username));
         out.printf("  Password: %s%n", PrintUtils.printSensitive(password));
-        out.printf("  Auth Provider Class: %s%n", PrintUtils.printNull(authProvider));
+        out.printf("  Auth Provider Class: %s%n", PrintUtils.printNull(authProvider==null?null:authProvider.getClass().getName()));
         out.printf("  Max Pending Per Connection: %s%n", PrintUtils.printNull(maxPendingPerConnection));
         out.printf("  Connections Per Host: %s%n", PrintUtils.printNull(connectionsPerHost));
         out.printf("  Compression: %s%n", compression == ProtocolOptions.Compression.NONE ? "NONE" : compression);

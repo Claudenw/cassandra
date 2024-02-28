@@ -32,7 +32,9 @@ import org.apache.cassandra.io.util.FileUtils;
 
 import static org.apache.cassandra.io.util.File.WriteMode.OVERWRITE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
+import static org.psjava.util.AssertStatus.assertTrue;
 
 public class SettingsCommandUserTest
 {
@@ -78,6 +80,7 @@ public class SettingsCommandUserTest
         assertEquals(2.0, underTest.ratios.get("insert"), 0.000001);
         assertEquals(1.0, underTest.ratios.get("simple1"), 0.000001);
         assertEquals( "Gaussian:  min=1,max=10,mean=5.500000,stdev=1.500000", underTest.clustering.getConfigAsString());
+        assertFalse(underTest.hasInsertOnly());
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
@@ -101,6 +104,7 @@ public class SettingsCommandUserTest
         assertEquals(2.0, underTest.ratios.get("insert"), 0.000001);
         assertEquals(1.0, underTest.ratios.get("simple1"), 0.000001);
         assertEquals( "Fixed:  key=5", underTest.clustering.getConfigAsString());
+        assertFalse(underTest.hasInsertOnly());
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
@@ -108,4 +112,39 @@ public class SettingsCommandUserTest
         logger.assertContainsRegex("Command Ratios: \\{.*simple1=1\\.0");
         logger.assertEndsWith("Command Clustering Distribution: Fixed:  key=5");
     }
+
+    @Test
+    public void hasInsertOnlyTest() throws IOException, ParseException
+    {
+        File tempFile = FileUtils.createTempFile("cassandra-stress-command-user-test", "yaml");
+        writeYaml(tempFile);
+
+        String args[] = { "-n", "5", "-command-profile", tempFile.absolutePath(), "-command-ratio", "INSERT=2"};
+
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCommandUser.getOptions(), args);
+        SettingsCommandUser underTest = new SettingsCommandUser(commandLine);
+
+        assertEquals( 1, underTest.ratios.size());
+        assertEquals(2.0, underTest.ratios.get("INSERT"), 0.000001);
+        assertEquals( "Gaussian:  min=1,max=10,mean=5.500000,stdev=1.500000", underTest.clustering.getConfigAsString());
+        assertTrue(underTest.hasInsertOnly());
+
+        TestingResultLogger logger = new TestingResultLogger();
+        underTest.printSettings(logger);
+        logger.assertEndsWith("Command Ratios: {INSERT=2.0}");
+        logger.assertEndsWith("Command Clustering Distribution: Gaussian:  min=1,max=10,mean=5.500000,stdev=1.500000");
+    }
+
+    @Test
+    public void truncateTablesTest()
+    {
+        fail("not implemented");
+    }
+
+    @Test
+    public void factoryTest()
+    {
+        fail("not implemented");
+    }
+
 }

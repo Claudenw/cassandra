@@ -325,7 +325,7 @@ public class SettingsModeTest
             logger.assertEndsWith("Auth Provider Class: *not set*", ()->compression.name());
             logger.assertEndsWith("Max Pending Per Connection: 128", ()->compression.name());
             logger.assertEndsWith("Connections Per Host: 8", ()->compression.name());
-            logger.assertEndsWith("Compression: " + compression, ()->compression.name());
+            logger.assertEndsWith("Compression: " + (compression == ProtocolOptions.Compression.NONE ? "NONE" : compression), ()->compression.name());
         }
     }
 
@@ -466,7 +466,7 @@ public class SettingsModeTest
         logger.assertEndsWith("Username: *not set*");
         logger.assertEndsWith("Password: *not set*");
         logger.assertEndsWith("API: " + ConnectionAPI.SIMPLE_NATIVE);
-        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL + "\n");
+        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL);
         logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED);
         logger.assertEndsWith("Auth Provider Class: *not set*");
         logger.assertEndsWith("Max Pending Per Connection: *not set*");
@@ -493,7 +493,7 @@ public class SettingsModeTest
         logger.assertEndsWith("Username: *not set*");
         logger.assertEndsWith("Password: *not set*");
         logger.assertEndsWith("API: " + ConnectionAPI.SIMPLE_NATIVE);
-        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL_PREPARED + "\n");
+        logger.assertEndsWith("Connection Style: " + ConnectionStyle.CQL_PREPARED);
         logger.assertEndsWith("Protocol Version: " + ProtocolVersion.NEWEST_SUPPORTED);
         logger.assertEndsWith("Auth Provider Class: *not set*");
         logger.assertEndsWith("Max Pending Per Connection: *not set*");

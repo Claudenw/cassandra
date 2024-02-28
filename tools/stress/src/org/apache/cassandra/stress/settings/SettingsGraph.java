@@ -47,7 +47,7 @@ public class SettingsGraph extends AbstractSettings
                                                                               new org.apache.commons.cli.Option("graph-title", true, "Title for chart. (Default: current date)"));
     public static final StressOption<String> GRAPH_NAME = new StressOption<>(new Option("graph-name", true, "Alternative name for current operation (Default: stress op name)"));
 
-    public SettingsGraph(CommandLine commandLine, SettingsCommand stressCommand)
+    SettingsGraph(CommandLine commandLine, SettingsCommand stressCommand)
     {
         file = GRAPH_FILE.extract(commandLine);
         revision = GRAPH_REVISION.extract(commandLine);

@@ -458,7 +458,18 @@ public class SettingsCommandTests
     }
 
     @Test
-    public void testTruncateTables() {
+    public void truncateTablesTest() {
         fail("not implemented");
     }
+
+    @Test
+    public void getTest() {
+        fail("not implemented");
+    }
+
+    @Test
+    public void getFactoryTest() {
+        fail("not implemented");
+    }
+
 }

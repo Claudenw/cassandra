@@ -49,8 +49,6 @@ public class SettingsCommandPreDefined extends SettingsCommand
     public final DistributionFactory add;
     public final int keySize;
 
-    private final CommandLine commandLine;
-
 
     public OpDistributionFactory getFactory(final StressSettings settings)
     {
@@ -96,7 +94,6 @@ public class SettingsCommandPreDefined extends SettingsCommand
 
         add = COMMAND_ADD.extract(commandLine);
         keySize = COMMAND_KEYSIZE.extract(commandLine);
-        this.commandLine = commandLine;
     }
 
     // Option Declarations
@@ -136,7 +133,4 @@ public class SettingsCommandPreDefined extends SettingsCommand
 //        return new SettingsCommandPreDefined(type, (Options) options);
 //    }
 
-    public static SettingsCommandPreDefined build(Command type, CommandLine commandLine) {
-        return new SettingsCommandPreDefined(type, commandLine);
-    }
 }

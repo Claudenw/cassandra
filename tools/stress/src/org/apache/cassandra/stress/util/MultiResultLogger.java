@@ -20,6 +20,7 @@ package org.apache.cassandra.stress.util;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class MultiResultLogger implements ResultLogger
@@ -74,5 +75,13 @@ public class MultiResultLogger implements ResultLogger
     public void addStream(PrintStream additionalPrintStream)
     {
         streams.add(additionalPrintStream);
+    }
+
+    /**
+     * Used for testing.
+     * @return the internal streams.
+     */
+    public int getStreamCount() {
+        return streams.size();
     }
 }

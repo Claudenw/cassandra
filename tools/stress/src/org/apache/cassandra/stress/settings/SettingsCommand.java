@@ -22,6 +22,7 @@ package org.apache.cassandra.stress.settings;
 
 
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -91,8 +92,8 @@ public abstract class SettingsCommand extends AbstractSettings
 
     // predefined mixed and user shared options
 
-    public static final StressOption<String> COMMAND_RATIO = new StressOption<>(Option.builder("command-ratio").hasArgs().valueSeparator()
-                                                                                      .desc("Specify the ratios for operations to perform. (e.g. 'read=2 write=1' will perform 2 reads for each write)").build());
+    public static final StressOption<String> COMMAND_RATIO = new StressOption<>(Option.builder("command-ratio").hasArgs().valueSeparator().argName("ratio")
+                                                                                      .desc("Specify the ratios for operations to perform. (see argument type notes below)").build());
 
     private static final String COMMAND_CLUSTERING_DEFAULT = "GAUSSIAN(1..10)";
     public static final StressOption<DistributionFactory> COMMAND_CLUSTERING = new StressOption<>(()->OptionDistribution.get(COMMAND_CLUSTERING_DEFAULT),
@@ -101,8 +102,8 @@ public abstract class SettingsCommand extends AbstractSettings
 
    // user command options
 
-    public static final StressOption<String> COMMAND_PROFILE = new StressOption<>(Option.builder("command-profile").hasArgs().required()
-                                                                                        .desc("Specify the path to a yaml cql3 profile. Multiple files can be added.").build());
+    public static final StressOption<String> COMMAND_PROFILE = new StressOption<>(Option.builder("command-profile").hasArgs().required().argName("file")
+                                                                                      .desc("Specify the path to a yaml cql3 profile. Multiple files can be added.").build());
 
     public final Command type;
     public final long count;
@@ -116,7 +117,7 @@ public abstract class SettingsCommand extends AbstractSettings
 
     public abstract OpDistributionFactory getFactory(StressSettings settings);
 
-    public SettingsCommand(Command type, CommandLine commandLine) {
+    SettingsCommand(Command type, CommandLine commandLine) {
         try {
             this.type = type;
             this.consistencyLevel = CONSISTENCY.extract(commandLine);
@@ -205,6 +206,11 @@ public abstract class SettingsCommand extends AbstractSettings
     //final OptionSimple noWarmup = new OptionSimple("no-warmup", "", null, "Do not warmup the process", false);
     //        final OptionSimple truncate = new OptionSimple("truncate=", "never|once|always", "never", "Truncate the table: never, before performing any work, or before each iteration", false);
 //        final OptionSimple consistencyLevel = new OptionSimple("cl=", "ONE|QUORUM|LOCAL_QUORUM|EACH_QUORUM|ALL|ANY|TWO|THREE|LOCAL_ONE|SERIAL|LOCAL_SERIAL", "LOCAL_ONE", "Consistency level to use", false);
+
+    /**
+     * Gets the shard options.  These are the options for all the settings command implementations.
+     * @return the shared Options.
+     */
     public static Options getOptions() {
 
         OptionGroup req = new OptionGroup()
@@ -251,6 +257,19 @@ public abstract class SettingsCommand extends AbstractSettings
                 .addOption(UNCERT_MIN.option())
                 .addOption(UNCERT_MAX.option())
                 ;
+    }
+
+    /**
+     * Returns all the possible options for command settings.
+     * @return The complete set of options.
+     */
+    public static Options getAllOptions() {
+        return  getOptions()
+                         .addOption(COMMAND_KEYSIZE.option())
+                         .addOption(COMMAND_ADD.option())
+                         .addOption(COMMAND_RATIO.option())
+                         .addOption(COMMAND_CLUSTERING.option())
+                         .addOption(COMMAND_PROFILE.option());
     }
 //    static abstract class Options extends GroupedOptions
 //    {
@@ -332,6 +351,10 @@ public abstract class SettingsCommand extends AbstractSettings
 
     static SettingsCommand get(Command cmd, CommandLine commandLine)
     {
+        if (cmd.category == null) {
+            return null;
+        }
+
         switch (cmd.category)
         {
             case BASIC:

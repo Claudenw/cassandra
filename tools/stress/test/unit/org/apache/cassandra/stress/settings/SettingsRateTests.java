@@ -439,6 +439,11 @@ public class SettingsRateTests
         } catch (RuntimeException expected) {
             assertEquals(ParseException.class, expected.getCause().getClass());
         }
+    }
 
+    @Test
+    public void overrideThreadCounterTest()
+    {
+        fail("not implemented");
     }
 }

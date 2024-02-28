@@ -80,6 +80,11 @@ abstract class AbstractSettings {
 
         sa = new StressArgument("partition_order", PartitionGenerator.Order.class, ORDER_CONVERTER);
         sa.notes.add("Valid options are: "+enumOptionString(PartitionGenerator.Order.ARBITRARY));
+
+        sa = new StressArgument("ratio", null, null);
+        sa.notes.add("Ratios are specified by listing the operation number of times it should be executed in the form 'operation=rate'." );
+        sa.notes.add("For example the patterns 'read=2' and 'write=1' will perform 2 reads for each write.");
+        sa.notes.add("You may specify user defined queries by name.  For example 'insert=2' and 'query1=1' will perform 2 inserts for each query1, where 'query1' is defined in the yaml file.");
     }
 
 
@@ -278,12 +283,31 @@ abstract class AbstractSettings {
         }
     }
 
+    /**
+     * Definitions for various argument types based on the name of the argument.
+     * @param <T>
+     */
     public static class StressArgument<T>
     {
+        /**
+         * The name of the argument.
+         */
         final String name;
+        /**
+         * The result type for the argument
+         */
         final Class<T> resultType;
+        /**
+         * The converter that converts from a string to the Argument.
+         */
         final Converter<T,?> converter;
+        /**
+         * Options used to print the argument and notes.
+         */
         final Options options;
+        /**
+         * The list of strings that comprise the notes for the argument type.
+         */
         final List<String> notes;
 
         StressArgument(String name, Class<T> resultType, Converter<T,?> converter ) {

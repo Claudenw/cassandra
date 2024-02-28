@@ -81,7 +81,6 @@ public class SettingsCommandUser extends SettingsCommand
             profiles = new LinkedHashMap<>();
 
             for (String yamlPath : commandLine.getOptionValues(SettingsCommand.COMMAND_PROFILE.option())) {
-
                 File yamlFile = new File(yamlPath);
                 URI yamlURI;
                 if (yamlFile.exists()) {
@@ -111,7 +110,7 @@ public class SettingsCommandUser extends SettingsCommand
 
     public boolean hasInsertOnly()
     {
-        return ratios.size() == 1 && ratios.containsKey("insert");
+        return ratios.size() == 1 && ratios.keySet().iterator().next().equalsIgnoreCase("insert");
     }
 
     public OpDistributionFactory getFactory(final StressSettings settings)

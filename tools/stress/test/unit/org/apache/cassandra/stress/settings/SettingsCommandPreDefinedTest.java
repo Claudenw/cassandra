@@ -30,7 +30,7 @@ import static org.junit.Assert.fail;
 public class SettingsCommandPreDefinedTest
 {
     @Test
-    public void defatulTest() throws ParseException
+    public void defaultTest() throws ParseException
     {
         String args[] = {};
         try
@@ -98,8 +98,17 @@ public class SettingsCommandPreDefinedTest
     }
 
     @Test
-    public void testTruncateTables() {
+    public void truncateTablesTest() {
         fail("not implemented");
     }
 
+    @Test
+    public void getFactoryTest() {
+        fail("not implemented");
+    }
+
+    @Test
+    public void newGeneratorTest() {
+        fail("not implemented");
+    }
 }

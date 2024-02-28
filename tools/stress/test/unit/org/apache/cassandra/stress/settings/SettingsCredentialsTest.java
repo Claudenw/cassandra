@@ -127,7 +127,7 @@ public class SettingsCredentialsTest {
         assertEquals("cqlpasswordfromfile", underTest.cqlPassword);
         assertEquals("jmxuserfromfile", underTest.jmxUsername);
         assertEquals("jmxpasswordfromfile", underTest.jmxPassword);
-        assertEquals("keystorestorepasswordfromfile", underTest.transportKeystorePassword);
+        assertEquals("keystorepasswordfromfile", underTest.transportKeystorePassword);
         assertEquals("truststorepasswordfromfile", underTest.transportTruststorePassword);
 
         TestingResultLogger logger = new TestingResultLogger();

@@ -217,4 +217,25 @@ public class SettingsSchemaTests
     public void schemaOptionsWithUserCommandTest() {
         fail("not implemented");
     }
+
+    @Test
+    public void createrKeyspacesTest() {
+        fail("not implemented");
+    }
+
+    @Test
+    public void createrKeyspaceStatementCQL3Test() {
+        fail("not implemented");
+    }
+
+    @Test
+    public void createrStandard1StatementCQL3Test() {
+        fail("not implemented");
+    }
+
+    @Test
+    public void createrCounter1StatementCQL3Test() {
+        fail("not implemented");
+    }
+
 }

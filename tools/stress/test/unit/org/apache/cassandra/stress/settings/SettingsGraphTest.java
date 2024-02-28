@@ -28,7 +28,9 @@ import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class SettingsGraphTest
 {
@@ -48,6 +50,7 @@ public class SettingsGraphTest
         assertEquals("unknown", underTest.revision);
         assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date())));
         assertEquals(Command.HELP.name(), underTest.operation);
+        assertTrue(underTest.inGraphMode());
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
@@ -73,7 +76,7 @@ public class SettingsGraphTest
         underTest.printSettings(logger);
         logger.assertEndsWith("File: outputFile");
         logger.assertEndsWith("Revision: revisionString");
-        logger.assertEndsWith("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date()));
+        logger.assertContainsRegex("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date()));
         logger.assertEndsWith("Operation: HELP");
     }
 
@@ -117,5 +120,10 @@ public class SettingsGraphTest
         logger.assertEndsWith("Revision: unknown");
         logger.assertEndsWith("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date()));
         logger.assertEndsWith("Operation: nameString");
+    }
+
+    @Test
+    public void inGraphModeTest() {
+        fail("not implemented");
     }
 }
