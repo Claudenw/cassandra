@@ -43,8 +43,6 @@ public class SettingsCommandPreDefinedMixed extends SettingsCommandPreDefined
     final Map<Command, Double> ratios;
     final DistributionFactory clustering;
 
-    private final CommandLine commandLine;
-
 
     public SettingsCommandPreDefinedMixed(CommandLine commandLine)
     {
@@ -61,7 +59,6 @@ public class SettingsCommandPreDefinedMixed extends SettingsCommandPreDefined
                 ratios.put(Command.WRITE, 1.0);
                 ratios.put(Command.READ, 1.0);
             }
-            this.commandLine = commandLine;
         } catch (Exception e) {
             throw asRuntimeException(e);
         }

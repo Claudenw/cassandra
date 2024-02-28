@@ -18,7 +18,6 @@
 
 package org.apache.cassandra.stress.settings;
 
-import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;

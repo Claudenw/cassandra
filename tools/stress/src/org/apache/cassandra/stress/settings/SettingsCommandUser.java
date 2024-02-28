@@ -46,10 +46,10 @@ public class SettingsCommandUser extends SettingsCommand
 {
 
     // Ratios for selecting commands - index for each Command, NaN indicates the command is not requested
-    private final Map<String, Double> ratios;
-    private final DistributionFactory clustering;
+    final Map<String, Double> ratios;
+    final DistributionFactory clustering;
     public final Map<String,  StressProfile> profiles;
-    private final CommandLine commandLine;
+
     private String default_profile_name;
     private static final Pattern EXTRACT_SPEC_CMD = Pattern.compile("(.+)\\.(.+)");
 
@@ -58,7 +58,6 @@ public class SettingsCommandUser extends SettingsCommand
     {
         super(Command.USER, commandLine);
 
-        this.commandLine = commandLine;
         try {
             clustering = SettingsCommand.COMMAND_CLUSTERING.extract(commandLine);
         /*
@@ -66,7 +65,7 @@ public class SettingsCommandUser extends SettingsCommand
                 .addOption(StressOption.COMMAND_PROFILE.option())
                 .addOption(StressOption.COMMAND_RATIO.option());
          */
-            //ratios = commandLine.get
+
 
             if (commandLine.hasOption(SettingsCommand.COMMAND_RATIO.option())) {
                 ratios = SettingsCommand.COMMAND_RATIO.extractMap(commandLine, k->k, Double::parseDouble);
@@ -189,6 +188,7 @@ public class SettingsCommandUser extends SettingsCommand
     // CLI utility methods
 
     public static Options getOptions() {
+        SettingsCommand.COMMAND_RATIO.option().setRequired(true);
         return SettingsCommand.getOptions()
                 .addOption(SettingsCommand.COMMAND_CLUSTERING.option())
                 .addOption(SettingsCommand.COMMAND_PROFILE.option())
@@ -199,8 +199,8 @@ public class SettingsCommandUser extends SettingsCommand
     {
         super.printSettings(out);
         out.printf("  Command Ratios: %s%n", ratios);
-        out.printf("  Command Clustering Distribution: %s%n", commandLine.getOptionValue(SettingsCommand.COMMAND_CLUSTERING.option()));
-        out.printf("  Profile File(s): %s%n", String.join(", ", commandLine.getOptionValues(SettingsCommand.COMMAND_PROFILE.option())));
+        out.printf("  Command Clustering Distribution: %s%n", clustering.getConfigAsString());
+        out.printf("  Profile File(s): %s%n", String.join(", ", profiles.keySet()));
     }
 
 
