@@ -21,12 +21,30 @@ package org.apache.cassandra.stress.settings;
 import java.util.Collections;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
+import static java.lang.String.format;
 import static org.junit.Assert.*;
 
 public class SettingsMiscTest
 {
+    @Test
+    public void testHelp() throws ParseException
+    {
+        String[] args = { "help" };
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsMisc.getOptions(), args);
+        String[] cmds = commandLine.getArgs();
+        if (cmds.length==0)
+            throw new IllegalArgumentException("No command specified");
+        if (cmds.length>1)
+            throw new IllegalArgumentException(format("Too many commands specified: %s", String.join(",", cmds)));
+        Command cmd = Command.valueOf(cmds[0].toUpperCase());
+        SettingsMisc.printHelp(cmd);
+
+    }
 //    @Test
 //    public void versionTriggersSpecialOption() throws Exception
 //    {

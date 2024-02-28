@@ -27,6 +27,7 @@ import org.apache.cassandra.stress.generate.RatioDistributionFactory;
 import org.apache.commons.cli.*;
 import org.apache.commons.cli.Option;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -38,7 +39,8 @@ import com.google.common.primitives.Ints;
 import static java.lang.String.format;
 
 
-abstract class AbstractSettings {
+abstract class AbstractSettings implements Serializable
+{
 
     /* converters */
 

@@ -40,7 +40,7 @@ public class SettingsGraph extends AbstractSettings
     public final File temporaryLogFile;
 
     public static final StressOption<File> GRAPH_FILE = new StressOption<>(org.apache.commons.cli.Option.builder("graph-file")
-                                                                                                        .type(File.class).required().hasArg().desc("HTML file to create or append to.").build());
+                                                                                                        .type(File.class).hasArg().desc("HTML file to create or append to.").build());
     public static final StressOption<String> GRAPH_REVISION = new StressOption<>(()->"unknown",
                                                                                  new org.apache.commons.cli.Option("graph-revision", true, "Unique name to assign to the current configuration being stressed."));
     public static final StressOption<String> GRAPH_TITLE = new StressOption<>(()-> "cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm:ss").format(new Date()),
@@ -80,7 +80,7 @@ public class SettingsGraph extends AbstractSettings
     }
     public void printSettings(ResultLogger out)
     {
-        out.println("  File: " + file);
+        out.println("  File: " + PrintUtils.printNull(file));
         out.println("  Revision: " + revision);
         out.println("  Title: " + title);
         out.println("  Operation: " + operation);

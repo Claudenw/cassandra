@@ -20,9 +20,6 @@ package org.apache.cassandra.stress.settings;
  * 
  */
 
-
-
-import java.io.File;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +33,7 @@ import org.apache.cassandra.stress.util.JavaDriverClient;
 import org.apache.cassandra.stress.util.ResultLogger;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.MissingOptionException;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
@@ -79,6 +77,41 @@ public abstract class SettingsCommand extends AbstractSettings
                                                                             .desc("Number of operations to perform. Number may be followd by 'm' or 'k' (e.g. 5m). Not valid with -duration or -uncert-err options.")
                                                                             .type(Long.class).converter(DISTRIBUTION_CONVERTER).required(true).build());
 
+    private static final OptionGroup REQUIRED = new OptionGroup()
+    {
+        @Override
+        public String toString()
+        {
+            StringBuilder buff = new StringBuilder();
+            Iterator<Option> iter = this.getOptions().iterator();
+            buff.append("One of the following options is required: ");
+
+            while (iter.hasNext())
+            {
+                Option option = (Option) iter.next();
+                if (option.getOpt() != null)
+                {
+                    buff.append("-");
+                    buff.append(option.getOpt());
+                }
+                else
+                {
+                    buff.append("--");
+                    buff.append(option.getLongOpt());
+                }
+
+                if (iter.hasNext())
+                {
+                    buff.append(", ");
+                }
+            }
+            buff.append(".");
+            return buff.toString();
+        }
+    }
+                      .addOption(COUNT.option())
+                      .addOption(DURATION.option())
+                      .addOption(UNCERT_ERR.option());
 
     // predefined options
     public static final StressOption<Integer> COMMAND_KEYSIZE = new StressOption<>(()->10,
@@ -102,7 +135,7 @@ public abstract class SettingsCommand extends AbstractSettings
 
    // user command options
 
-    public static final StressOption<String> COMMAND_PROFILE = new StressOption<>(Option.builder("command-profile").hasArgs().required().argName("file")
+    public static final StressOption<String> COMMAND_PROFILE = new StressOption<>(Option.builder("command-profile").hasArgs().argName("file")
                                                                                       .desc("Specify the path to a yaml cql3 profile. Multiple files can be added.").build());
 
     public final Command type;
@@ -213,47 +246,12 @@ public abstract class SettingsCommand extends AbstractSettings
      */
     public static Options getOptions() {
 
-        OptionGroup req = new OptionGroup()
-        {
-            @Override
-            public String toString()
-            {
-                StringBuilder buff = new StringBuilder();
-                Iterator<Option> iter = this.getOptions().iterator();
-                buff.append("One of the following options is required: ");
 
-                while (iter.hasNext())
-                {
-                    Option option = (Option) iter.next();
-                    if (option.getOpt() != null)
-                    {
-                        buff.append("-");
-                        buff.append(option.getOpt());
-                    }
-                    else
-                    {
-                        buff.append("--");
-                        buff.append(option.getLongOpt());
-                    }
-
-                    if (iter.hasNext())
-                    {
-                        buff.append(", ");
-                    }
-                }
-                buff.append(".");
-                return buff.toString();
-            }
-        }
-                          .addOption(COUNT.option())
-                          .addOption(DURATION.option())
-                          .addOption(UNCERT_ERR.option());
-        req.setRequired(true);
         return new Options()
                 .addOption(NO_WARMUP.option())
                 .addOption(TRUNCATE.option())
                 .addOption(CONSISTENCY.option())
-                .addOptionGroup(req)
+                .addOptionGroup(REQUIRED)
                 .addOption(UNCERT_MIN.option())
                 .addOption(UNCERT_MAX.option())
                 ;
@@ -351,9 +349,12 @@ public abstract class SettingsCommand extends AbstractSettings
 
     static SettingsCommand get(Command cmd, CommandLine commandLine)
     {
-        if (cmd.category == null) {
+        if (cmd.category == CommandCategory.HELP) {
             return null;
         }
+
+        if (REQUIRED.getSelected() == null)
+            asRuntimeException( new MissingOptionException( REQUIRED.toString()));
 
         switch (cmd.category)
         {

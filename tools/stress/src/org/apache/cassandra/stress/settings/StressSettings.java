@@ -29,7 +29,6 @@ import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
@@ -50,6 +49,7 @@ public class StressSettings implements Serializable
     public final SettingsErrors errors;
     public final SettingsLog log;
     public final SettingsCredentials credentials;
+    public final SettingsMisc misc;
     public final SettingsMode mode;
     public final SettingsNode node;
     public final SettingsSchema schema;
@@ -61,41 +61,86 @@ public class StressSettings implements Serializable
     public final SettingsReporting reporting;
 
 
-    public StressSettings(SettingsCommand command,
-                          SettingsRate rate,
-                          SettingsPopulation generate,
-                          SettingsInsert insert,
-                          SettingsColumn columns,
-                          SettingsErrors errors,
-                          SettingsLog log,
-                          SettingsCredentials credentials,
-                          SettingsMode mode,
-                          SettingsNode node,
-                          SettingsSchema schema,
-                          SettingsTransport transport,
-                          SettingsPort port,
-                          SettingsJMX jmx,
-                          SettingsGraph graph,
-                          SettingsTokenRange tokenRange,
-                          SettingsReporting reporting)
+//    private StressSettings(SettingsCommand command,
+//                          SettingsRate rate,
+//                          SettingsPopulation generate,
+//                          SettingsInsert insert,
+//                          SettingsColumn columns,
+//                          SettingsErrors errors,
+//                          SettingsLog log,
+//                          SettingsCredentials credentials,
+//                          SettingsMode mode,
+//                          SettingsNode node,
+//                          SettingsSchema schema,
+//                          SettingsTransport transport,
+//                          SettingsPort port,
+//                          SettingsJMX jmx,
+//                          SettingsGraph graph,
+//                          SettingsTokenRange tokenRange,
+//                          SettingsReporting reporting)
+//    {
+//        this.command = command;
+//        this.rate = rate;
+//        this.insert = insert;
+//        this.generate = generate;
+//        this.columns = columns;
+//        this.errors = errors;
+//        this.log = log;
+//        this.credentials = credentials;
+//        this.mode = mode;
+//        this.node = node;
+//        this.schema = schema;
+//        this.transport = transport;
+//        this.port = port;
+//        this.jmx = jmx;
+//        this.graph = graph;
+//        this.tokenRange = tokenRange;
+//        this.reporting = reporting;
+//    }
+
+    public StressSettings(String[] args) throws ParseException
     {
-        this.command = command;
-        this.rate = rate;
-        this.insert = insert;
-        this.generate = generate;
-        this.columns = columns;
-        this.errors = errors;
-        this.log = log;
-        this.credentials = credentials;
-        this.mode = mode;
-        this.node = node;
-        this.schema = schema;
-        this.transport = transport;
-        this.port = port;
-        this.jmx = jmx;
-        this.graph = graph;
-        this.tokenRange = tokenRange;
-        this.reporting = reporting;
+        CommandLine commandLine = DefaultParser.builder().build().parse(getOptions(), args);
+        String[] cmds = commandLine.getArgs();
+        if (cmds.length==0)
+            throw new IllegalArgumentException("No command specified");
+        if (cmds.length>1)
+            throw new IllegalArgumentException(format("Too many commands specified: %s", String.join(",", cmds)));
+
+        Command cmd = Command.valueOf(cmds[0].toUpperCase());
+        this.misc = new SettingsMisc(commandLine, cmd);
+        this.command = SettingsCommand.get(cmd, commandLine);
+        if (command == null)
+        {
+            this.rate = null;
+            this.schema = null;
+            this.graph = null;
+            this.generate = null;
+        } else {
+            this.rate = new SettingsRate(commandLine, command);
+            this.schema = new SettingsSchema(commandLine, command);
+            this.graph = new SettingsGraph(commandLine, command);
+            this.generate = new SettingsPopulation(commandLine, command);
+        }
+        this.credentials =  new SettingsCredentials(commandLine);
+        this.insert = new SettingsInsert(commandLine);
+        this.columns = new SettingsColumn(commandLine);
+        this.errors = new SettingsErrors(commandLine);
+        this.log = new SettingsLog(commandLine);
+        this.mode = new SettingsMode(commandLine, credentials);
+        this.node = new SettingsNode(commandLine);
+        this.transport =  new SettingsTransport(commandLine, credentials);
+        this.port = new SettingsPort(commandLine);
+        this.jmx = new SettingsJMX(commandLine, credentials);
+        this.tokenRange = new SettingsTokenRange(commandLine);
+        this.reporting = new SettingsReporting(commandLine);
+
+/*
+        //args = repairParams(args);
+        final Map<String, String[]> clArgs = parseMap(args);
+        if (SettingsMisc.maybeDoSpecial(clArgs))
+            return null;
+*/
     }
 
     public SimpleClient getSimpleNativeClient()
@@ -183,42 +228,7 @@ public class StressSettings implements Serializable
     }
     public static StressSettings parse(String[] args) throws ParseException
     {
-        CommandLine commandLine = DefaultParser.builder().build().parse(getOptions(), args);
-        String[] cmds = commandLine.getArgs();
-        if (cmds.length==0)
-            throw new IllegalArgumentException("No command specified");
-        if (cmds.length>1)
-            throw new IllegalArgumentException(format("Too many commands specified: %s", String.join(",", cmds)));
-
-        Command cmd = Command.valueOf(cmds[0].toUpperCase());
-        SettingsCommand settingsCommand = SettingsCommand.get(cmd, commandLine);
-        SettingsCredentials credentials = new SettingsCredentials(commandLine);
-
-        StressSettings settings = new StressSettings(
-        settingsCommand,
-        new SettingsRate(commandLine, settingsCommand),
-        new SettingsPopulation(commandLine, settingsCommand),
-        new SettingsInsert(commandLine),
-        new SettingsColumn(commandLine),
-        new SettingsErrors(commandLine),
-        new SettingsLog(commandLine),
-        credentials,
-        new SettingsMode(commandLine, credentials),
-        new SettingsNode(commandLine),
-        new SettingsSchema(commandLine, settingsCommand),
-        new SettingsTransport(commandLine, credentials),
-        new SettingsPort(commandLine),
-        new SettingsJMX(commandLine, credentials),
-        new SettingsGraph(commandLine, settingsCommand),
-        new SettingsTokenRange(commandLine),
-        new SettingsReporting(commandLine));
-/*
-        //args = repairParams(args);
-        final Map<String, String[]> clArgs = parseMap(args);
-        if (SettingsMisc.maybeDoSpecial(clArgs))
-            return null;
-*/
-        return settings;
+        return new StressSettings(args);
     }
 
 //    private static String[] repairParams(String[] args)
@@ -319,33 +329,36 @@ public class StressSettings implements Serializable
 //            throw new IllegalArgumentException(key + " is defined multiple times. Each option/command can be specified at most once.");
 //    }
 
-    public static Options getOptions() {
+    public static Options getSharedOptions() {
         return new Options()
-        .addOptions(SettingsColumn.getOptions())
+               .addOptions(SettingsColumn.getOptions())
+               .addOptions(SettingsCredentials.getOptions())
+               .addOptions(SettingsErrors.getOptions())
+               .addOptions(SettingsGraph.getOptions())
+               .addOptions(SettingsInsert.getOptions())
+               .addOptions(SettingsJMX.getOptions())
+               .addOptions(SettingsLog.getOptions())
+               .addOptions(SettingsMisc.getOptions())
+               .addOptions(SettingsMode.getOptions())
+               .addOptions(SettingsNode.getOptions())
+               .addOptions(SettingsPopulation.getOptions())
+               .addOptions(SettingsPort.getOptions())
+               .addOptions(SettingsRate.getOptions())
+               .addOptions(SettingsReporting.getOptions())
+               .addOptions(SettingsSchema.getOptions())
+               .addOptions(SettingsTokenRange.getOptions())
+               .addOptions(SettingsTransport.getOptions())
+        ;
+    }
+
+    public static Options getOptions() {
+        return getSharedOptions()
         .addOptions(SettingsCommand.getAllOptions())
-        .addOptions(SettingsCredentials.getOptions())
-        .addOptions(SettingsErrors.getOptions())
-        .addOptions(SettingsGraph.getOptions())
-        .addOptions(SettingsInsert.getOptions())
-        .addOptions(SettingsJMX.getOptions())
-        .addOptions(SettingsLog.getOptions())
-        .addOptions(SettingsMisc.getOptions())
-        .addOptions(SettingsMode.getOptions())
-        .addOptions(SettingsNode.getOptions())
-        .addOptions(SettingsPopulation.getOptions())
-        .addOptions(SettingsPort.getOptions())
-        .addOptions(SettingsRate.getOptions())
-        .addOptions(SettingsReporting.getOptions())
-        .addOptions(SettingsSchema.getOptions())
-        .addOptions(SettingsTokenRange.getOptions())
-        .addOptions(SettingsTransport.getOptions())
         ;
     }
     public static void printHelp()
     {
-        HelpFormatter formatter = new HelpFormatter();
-
-        formatter.printHelp("myapp", "HEADER", getOptions(), "FOOTER", true);
+        SettingsMisc.printHelp(Command.HELP);
     }
 
     public void printSettings(ResultLogger out)

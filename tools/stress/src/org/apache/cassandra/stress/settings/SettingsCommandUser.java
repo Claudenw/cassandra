@@ -57,8 +57,10 @@ public class SettingsCommandUser extends SettingsCommand
     public SettingsCommandUser(CommandLine commandLine)
     {
         super(Command.USER, commandLine);
-
         try {
+            if (!commandLine.hasOption(COMMAND_PROFILE.option())) {
+                throw new IllegalArgumentException(String.format("argument -%s is required for USER commands", COMMAND_PROFILE.option().getKey()));
+            }
             clustering = SettingsCommand.COMMAND_CLUSTERING.extract(commandLine);
         /*
            .addOption(StressOption.COMMAND_CLUSTERING.option())

@@ -25,5 +25,6 @@ public enum CommandCategory
 {
     BASIC,
     MIXED,
-    USER
+    USER,
+    HELP
 }

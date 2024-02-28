@@ -19,7 +19,6 @@
 package org.apache.cassandra.stress.settings;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -32,6 +31,14 @@ import static org.junit.Assert.assertTrue;
 public class TestingResultLogger implements ResultLogger
 {
     List<String> results = new ArrayList<>();
+
+    public void assertStartsWith(String s) {
+        assertContains(str -> str.startsWith(s), ()->String.format("Missing: '%s'", s));
+    }
+
+    public void assertStartsWith(String s, Supplier<String> msg) {
+        assertContains(str -> str.startsWith(s), ()->String.format("%s: Missing '%s'", msg.get(), s));
+    }
 
     public void assertEndsWith(String s) {
         assertContains(str -> str.endsWith(s), ()->String.format("Missing: '%s'", s));

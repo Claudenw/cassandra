@@ -28,7 +28,6 @@ import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -46,9 +45,11 @@ public class SettingsGraphTest
 
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsGraph.getOptions(), args);
         SettingsGraph underTest = new SettingsGraph(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        Date date = new Date();
+
         assertEquals(new File("outputFile"), underTest.file);
         assertEquals("unknown", underTest.revision);
-        assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date())));
+        assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(date)));
         assertEquals(Command.HELP.name(), underTest.operation);
         assertTrue(underTest.inGraphMode());
 
@@ -56,7 +57,7 @@ public class SettingsGraphTest
         underTest.printSettings(logger);
         logger.assertEndsWith("File: outputFile");
         logger.assertEndsWith("Revision: unknown");
-        logger.assertEndsWith("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date()));
+        logger.assertContainsRegex("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm:..").format(date));
         logger.assertEndsWith("Operation: HELP");
     }
 
@@ -67,16 +68,17 @@ public class SettingsGraphTest
 
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsGraph.getOptions(), args);
         SettingsGraph underTest = new SettingsGraph(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        Date date = new Date();
         assertEquals(new File("outputFile"), underTest.file);
         assertEquals("revisionString", underTest.revision);
-        assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date())));
+        assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(date)));
         assertEquals(Command.HELP.name(), underTest.operation);
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
         logger.assertEndsWith("File: outputFile");
         logger.assertEndsWith("Revision: revisionString");
-        logger.assertContainsRegex("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date()));
+        logger.assertContainsRegex("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm:..").format(date));
         logger.assertEndsWith("Operation: HELP");
     }
 
@@ -109,16 +111,17 @@ public class SettingsGraphTest
 
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsGraph.getOptions(), args);
         SettingsGraph underTest = new SettingsGraph(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        Date date = new Date();
         assertEquals(new File("outputFile"), underTest.file);
         assertEquals("unknown", underTest.revision);
-        assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date())));
+        assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(date)));
         assertEquals("nameString", underTest.operation);
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
         logger.assertEndsWith("File: outputFile");
         logger.assertEndsWith("Revision: unknown");
-        logger.assertEndsWith("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(new Date()));
+        logger.assertContainsRegex("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm:..").format(date));
         logger.assertEndsWith("Operation: nameString");
     }
 

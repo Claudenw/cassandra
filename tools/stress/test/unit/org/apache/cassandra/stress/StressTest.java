@@ -16,12 +16,39 @@
  * limitations under the License.
  */
 
-package org.apache.cassandra.stress.settings;
+package org.apache.cassandra.stress;
 
-public class OptionsTests {
+import org.junit.Test;
 
+public class StressTest
+{
+    @Test
+    public void helpTest() {
+        String[] args = {"help"};
+        Stress.run(args);
 
-    public static void main(String[] args) {
-        SettingsMisc.printHelp(Command.WRITE);
+        args = new String[] {"write", "-?"};
+        Stress.run(args);
+
+        args = new String[] {"user", "-?"};
+        Stress.run(args);
+
+        args = new String[] {"mixed", "-?"};
+        Stress.run(args);
+    }
+
+    @Test
+    public void distributionTest() {
+        String[] args = {"help", "-print-dist", "FIXED(5)"};
+        Stress.run(args);
+
+//        args = new String[] {"write", "-?"};
+//        Stress.run(args);
+//
+//        args = new String[] {"user", "-?"};
+//        Stress.run(args);
+//
+//        args = new String[] {"mixed", "-?"};
+//        Stress.run(args);
     }
 }

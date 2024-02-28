@@ -39,7 +39,7 @@ public class StressSettingsTest
     {
        // Map<String, String[]> args = new HashMap<>();
        // args.put("write", new String[] {});
-        StressSettings settings = StressSettings.parse( new String[] {"write"});
+        StressSettings settings = new StressSettings( new String[] {"write", "-n", "5"});
         // Will throw if not all settings are Serializable
         new ObjectOutputStream(new ByteArrayOutputStream()).writeObject(settings);
     }
@@ -49,5 +49,45 @@ public class StressSettingsTest
     {
         Set<String> jmxNodes = StressMetrics.toJmxNodes(new HashSet<String>(Arrays.asList("127.0.0.1:9042", "127.0.0.1")));
         assertEquals(0, jmxNodes.stream().filter(n -> n.contains(":")).count());
+    }
+
+    @Test
+    public void printSettingsTest() throws Exception
+    {
+        // Map<String, String[]> args = new HashMap<>();
+        // args.put("write", new String[] {});
+        StressSettings settings = new StressSettings( new String[] {"write", "-n", "5"});
+        TestingResultLogger logger = new TestingResultLogger();
+        settings.printSettings(logger);
+        // just check for the headings each Settings class verifies its own output.
+        logger.assertStartsWith("******************** Stress Settings ********************");
+        logger.assertStartsWith("Command:");
+        logger.assertStartsWith("Rate:");
+        logger.assertStartsWith("Population:");
+        logger.assertStartsWith("Insert:");
+        logger.assertStartsWith("Columns:");
+        logger.assertStartsWith("Errors:");
+        logger.assertStartsWith("Log:");
+        logger.assertStartsWith("Mode:");
+        logger.assertStartsWith("Node:");
+        logger.assertStartsWith("Schema:");
+        logger.assertStartsWith("Transport:");
+        logger.assertStartsWith("Port:");
+        logger.assertStartsWith("JMX:");
+        logger.assertStartsWith("Graph:");
+        logger.assertStartsWith("TokenRange:");
+        logger.assertStartsWith("Credentials file:");
+        logger.assertStartsWith("Reporting:");
+    }
+
+    @Test
+    public void printHelpTest() throws Exception
+    {
+        // Map<String, String[]> args = new HashMap<>();
+        // args.put("write", new String[] {});
+        StressSettings settings = new StressSettings( new String[] {"write", "--help"});
+        TestingResultLogger logger = new TestingResultLogger();
+        settings.printHelp();
+
     }
 }

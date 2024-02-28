@@ -59,9 +59,9 @@ public enum Command
           CommandCategory.USER
     ),
 
-    HELP(false, null, "-?", "Print help for a command or option", null),
-    PRINT(false, null, "Inspect the output of a distribution definition", null),
-    VERSION(false, null, "Print the version of cassandra stress", null)
+    HELP(false, null, "-?", "Prints complete help.", CommandCategory.HELP),
+    PRINT(false, null, "Inspect the output of a distribution definition", CommandCategory.HELP),
+    VERSION(false, null, "Print the version of cassandra stress", CommandCategory.HELP)
     ;
 
     private static final Map<String, Command> LOOKUP;
@@ -107,28 +107,6 @@ public enum Command
         }
         this.names = ImmutableList.copyOf(names);
         this.description = description;
-    }
-
-    public void printHelp()
-    {
-        /*switch (this)
-        {
-            case PRINT:
-            case HELP:*/
-                SettingsMisc.printHelp();
-                /*
-                break;
-        }
-        switch (category)
-        {
-            case USER:
-                return SettingsCommandUser.printHelp();
-            case BASIC:
-                return SettingsCommandPreDefined.helpPrinter(this);
-            case MIXED:
-                return SettingsCommandPreDefinedMixed.helpPrinter();
-        }
-        throw new AssertionError();*/
     }
 
 }

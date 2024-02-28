@@ -20,6 +20,8 @@ package org.apache.cassandra.stress;
 import java.io.*;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.stress.settings.Command;
+import org.apache.cassandra.stress.settings.SettingsMisc;
 import org.apache.cassandra.stress.settings.StressSettings;
 import org.apache.cassandra.stress.util.MultiResultLogger;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -54,7 +56,7 @@ public final class Stress
         System.exit(run(arguments));
     }
 
-    private static int run(String[] arguments)
+    static int run(String[] arguments)
     {
         try
         {
@@ -63,14 +65,14 @@ public final class Stress
             final StressSettings settings;
             try
             {
-                settings = StressSettings.parse(arguments);
-                if (settings == null)
+                settings = new StressSettings(arguments);
+                if (settings.misc.maybeDoSpecial())
                     return 0; // special settings action
             }
             catch (IllegalArgumentException e)
             {
                 System.out.printf("%s%n", e.getMessage());
-                printHelpMessage();
+                SettingsMisc.printHelp(Command.HELP);
                 return 1;
             }
             catch (Throwable e)
@@ -79,7 +81,7 @@ public final class Stress
             	if (rc instanceof FileNotFoundException)
             	{
                     System.out.printf("File '%s' doesn't exist!%n", rc.getMessage());
-                    printHelpMessage();
+                    SettingsMisc.printHelp(Command.HELP);
                     return 1;
             	}
             	throw e;
@@ -110,13 +112,5 @@ public final class Stress
         }
 
         return 0;
-    }
-
-    /**
-     * Printing out help message
-     */
-    public static void printHelpMessage()
-    {
-        StressSettings.printHelp();
     }
 }
