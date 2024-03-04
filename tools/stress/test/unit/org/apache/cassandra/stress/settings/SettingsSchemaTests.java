@@ -219,22 +219,22 @@ public class SettingsSchemaTests
     }
 
     @Test
-    public void createrKeyspacesTest() {
+    public void createKeyspacesTest() {
         fail("not implemented");
     }
 
     @Test
-    public void createrKeyspaceStatementCQL3Test() {
+    public void createKeyspaceStatementCQL3Test() {
         fail("not implemented");
     }
 
     @Test
-    public void createrStandard1StatementCQL3Test() {
+    public void createStandard1StatementCQL3Test() {
         fail("not implemented");
     }
 
     @Test
-    public void createrCounter1StatementCQL3Test() {
+    public void createCounter1StatementCQL3Test() {
         fail("not implemented");
     }
 

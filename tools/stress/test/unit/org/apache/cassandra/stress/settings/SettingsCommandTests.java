@@ -89,13 +89,17 @@ public class SettingsCommandTests
     @Test
     public void defaultTest() throws ParseException
     {
-        try
-        {
-            SettingsCommand underTest = getInstance(Command.HELP, SettingsCommand.getOptions(), new String[]{});
-            fail("Should have thrown MissingOptionException");
-        } catch (MissingOptionException expected) {
-            // do nothing
-        }
+        // try default HELP command
+        SettingsCommand underTest = getInstance(Command.HELP, SettingsCommand.getOptions(), new String[]{});
+        assertEquals(Command.HELP, underTest.type);
+        assertFalse(underTest.noWarmup);
+        assertNull(underTest.duration);
+        assertEquals(-1L, underTest.count);
+        assertEquals( 0.2, underTest.targetUncertainty, 0.00001);
+        assertEquals( 30, underTest.minimumUncertaintyMeasurements);
+        assertEquals( 200, underTest.maximumUncertaintyMeasurements);
+        assertEquals(ConsistencyLevel.LOCAL_ONE, underTest.consistencyLevel);
+        assertEquals(SettingsCommand.TruncateWhen.NEVER, underTest.truncate);
     }
 
     @Test

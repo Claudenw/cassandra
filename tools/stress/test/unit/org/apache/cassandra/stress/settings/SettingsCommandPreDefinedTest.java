@@ -20,7 +20,6 @@ package org.apache.cassandra.stress.settings;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.MissingOptionException;
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
@@ -33,13 +32,10 @@ public class SettingsCommandPreDefinedTest
     public void defaultTest() throws ParseException
     {
         String args[] = {};
-        try
-        {
-            DefaultParser.builder().build().parse(SettingsCommandPreDefined.getOptions(), args);
-            fail("Should have thrown MissingOptionException");
-        } catch (MissingOptionException expected) {
-            // do nothing
-        }
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCommandPreDefined.getOptions(), args);
+        SettingsCommandPreDefined underTest = new SettingsCommandPreDefined(Command.HELP, commandLine);
+        assertEquals(10, underTest.keySize);
+        assertEquals("Fixed:  key=1", underTest.add.getConfigAsString());
     }
 
     @Test

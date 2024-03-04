@@ -35,13 +35,13 @@ public class SettingsCommandPreDefinedMixedTests
     public void defatulTest() throws ParseException
     {
         String args[] = {};
-        try
-        {
-            DefaultParser.builder().build().parse(SettingsCommandPreDefinedMixed.getOptions(), args);
-            fail("Should have thrown MissingOptionException");
-        } catch (MissingOptionException expected) {
-            // do nothing
-        }
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCommandPreDefinedMixed.getOptions(), args);
+        DefaultParser.builder().build().parse(SettingsCommandPreDefinedMixed.getOptions(), args);
+        SettingsCommandPreDefinedMixed underTest = new SettingsCommandPreDefinedMixed(commandLine);
+        assertEquals( 2, underTest.ratios.size());
+        assertEquals(1.0, underTest.ratios.get(Command.READ), 0.000001);
+        assertEquals(1.0, underTest.ratios.get(Command.WRITE), 0.000001);
+        assertEquals( "Gaussian:  min=1,max=10,mean=5.500000,stdev=1.500000", underTest.clustering.getConfigAsString());
     }
 
     @Test
