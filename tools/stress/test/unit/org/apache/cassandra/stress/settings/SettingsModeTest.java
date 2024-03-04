@@ -44,20 +44,12 @@ import static org.junit.Assert.fail;
 public class SettingsModeTest
 {
 
-    SettingsCredentials getSettingsCredentials(String... args) throws ParseException
-    {
-        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCredentials.getOptions(), args);
-        return new SettingsCredentials(commandLine);
-    }
-    
-    //private Options SettingsMode.getOptions() = new Options().addOptions(SettingsMode.getOptions()).addOptions(SettingsCredentials.getOptions());
-
     @Test
     public void defaultTest() throws ParseException, IOException
     {
         String[] args = {};
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-        SettingsMode underTest = new SettingsMode(commandLine, getSettingsCredentials());
+        SettingsMode underTest = new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials());
         assertNull(underTest.password);
         assertNull(underTest.username);
         assertNull(underTest.authProvider);
@@ -88,7 +80,7 @@ public class SettingsModeTest
             SettingsCredentialsTest.getFullProperties().store(w, null);
         }
         commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-        underTest = new SettingsMode(commandLine, getSettingsCredentials("-credential-file", tempFile.absolutePath()));
+        underTest = new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials("-credential-file", tempFile.absolutePath()));
         assertEquals("cqlpasswordfromfile", underTest.password);
         assertEquals("cqluserfromfile", underTest.username);
         assertNull(underTest.authProvider);
@@ -117,7 +109,7 @@ public class SettingsModeTest
     {
         String[] args = { "-user", "modeuser"};
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-        SettingsMode underTest = new SettingsMode(commandLine, getSettingsCredentials());
+        SettingsMode underTest = new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials());
         assertNull(underTest.password);
         assertEquals("modeuser", underTest.username);
         assertNull(underTest.authProvider);
@@ -147,7 +139,7 @@ public class SettingsModeTest
         {
             SettingsCredentialsTest.getFullProperties().store(w, null);
         }
-        underTest = new SettingsMode(commandLine, getSettingsCredentials("-credential-file", tempFile.absolutePath()));
+        underTest = new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials("-credential-file", tempFile.absolutePath()));
         assertEquals("cqlpasswordfromfile", underTest.password);
         assertEquals("modeuser", underTest.username);
         assertNull(underTest.authProvider);
@@ -176,7 +168,7 @@ public class SettingsModeTest
     {
         String[] args = {"-password", "modepassword"};
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-        SettingsMode underTest = new SettingsMode(commandLine, getSettingsCredentials());
+        SettingsMode underTest = new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials());
         assertEquals("modepassword", underTest.password);
         assertNull(underTest.username);
         assertNull(underTest.authProvider);
@@ -206,7 +198,7 @@ public class SettingsModeTest
         {
             SettingsCredentialsTest.getFullProperties().store(w, null);
         }
-        underTest = new SettingsMode(commandLine, getSettingsCredentials("-credential-file", tempFile.absolutePath()));
+        underTest = new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials("-credential-file", tempFile.absolutePath()));
         assertEquals("modepassword", underTest.password);
         assertEquals("cqluserfromfile", underTest.username);
         assertNull(underTest.authProvider);
@@ -238,7 +230,7 @@ public class SettingsModeTest
         {
             args[1] = String.format("%s", ver.toInt());
             CommandLine commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-            SettingsMode underTest = new SettingsMode(commandLine, getSettingsCredentials());
+            SettingsMode underTest = new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials());
             assertNull(ver.name(), underTest.password);
             assertNull(ver.name(), underTest.username);
             assertNull(ver.name(), underTest.authProvider);
@@ -271,7 +263,7 @@ public class SettingsModeTest
         {
             args[1] = String.format("%s", style.name());
             CommandLine commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-            SettingsMode underTest = new SettingsMode(commandLine, getSettingsCredentials());
+            SettingsMode underTest = new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials());
             assertNull(style.name(), underTest.password);
             assertNull(style.name(), underTest.username);
             assertNull(style.name(), underTest.authProvider);
@@ -304,7 +296,7 @@ public class SettingsModeTest
         {
             args[1] = String.format("%s", compression.name());
             CommandLine commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-            SettingsMode underTest = new SettingsMode(commandLine, getSettingsCredentials());
+            SettingsMode underTest = new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials());
             assertNull(compression.name(), underTest.password);
             assertNull(compression.name(), underTest.username);
             assertNull(compression.name(), underTest.authProvider);
@@ -334,7 +326,7 @@ public class SettingsModeTest
     {
         String[] args = { "-auth-provider", TestingAuthProvider.class.getName() };
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-        SettingsMode underTest = new SettingsMode(commandLine, getSettingsCredentials());
+        SettingsMode underTest = new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials());
         assertNull(underTest.password);
         assertNull(underTest.username);
         assertEquals(TestingAuthProvider.class, underTest.authProvider.getClass());
@@ -360,7 +352,7 @@ public class SettingsModeTest
         try {
             args = new String[] { "-auth-provider", String.class.getName() };
             commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-            new SettingsMode(commandLine, getSettingsCredentials());
+            new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials());
             fail("Should throw IllegalArgumentException");
         } catch (IllegalArgumentException expected) {
             // do nothing.
@@ -373,7 +365,7 @@ public class SettingsModeTest
     {
         String[] args = {"-connections-per-host", "3"};
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-        SettingsMode underTest = new SettingsMode(commandLine, getSettingsCredentials());
+        SettingsMode underTest = new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials());
         assertNull(underTest.password);
         assertNull(underTest.username);
         assertNull(underTest.authProvider);
@@ -399,7 +391,7 @@ public class SettingsModeTest
         try {
             args = new String[] {"-connections-per-host", "-1"};
             commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-            new SettingsMode(commandLine, getSettingsCredentials());
+            new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials());
             fail("Should throw ParseException");
         } catch (RuntimeException expected) {
             assertEquals(ParseException.class, expected.getCause().getClass());
@@ -411,7 +403,7 @@ public class SettingsModeTest
     {
         String[] args = {"-max-pending-connections", "3"};
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-        SettingsMode underTest = new SettingsMode(commandLine, getSettingsCredentials());
+        SettingsMode underTest = new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials());
         assertNull(underTest.password);
         assertNull(underTest.username);
         assertNull(underTest.authProvider);
@@ -437,7 +429,7 @@ public class SettingsModeTest
         try {
             args = new String[] {"-max-pending-connections", "-1"};
             commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-            new SettingsMode(commandLine, getSettingsCredentials());
+            new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials());
             fail("Should throw ParseException");
         } catch (RuntimeException expected) {
             assertEquals(ParseException.class, expected.getCause().getClass());
@@ -450,7 +442,7 @@ public class SettingsModeTest
     {
         String[] args = {"-simple-native"};
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-        SettingsMode underTest = new SettingsMode(commandLine, getSettingsCredentials());
+        SettingsMode underTest = new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials());
         assertNull(underTest.password);
         assertNull(underTest.username);
         assertNull(underTest.authProvider);
@@ -477,7 +469,7 @@ public class SettingsModeTest
         args = new String[] {"-simple-native", "-protocol-version", "4", "-cql-style", "CQL_PREPARED", "-use-compression", "lz4", "-user", "commandLineUser", "-password", "commandLinePwd", "-auth-provider",  TestingAuthProvider.class.getName(),
                          "-max-pending-connections", "500", "-connections-per-host", "10"};
         commandLine = DefaultParser.builder().build().parse(SettingsMode.getOptions(), args);
-        underTest = new SettingsMode(commandLine, getSettingsCredentials());
+        underTest = new SettingsMode(commandLine, SettingsCredentialsTest.getSettingsCredentials());
         assertNull(underTest.password);
         assertNull(underTest.username);
         assertNull(underTest.authProvider);

@@ -31,8 +31,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.Uninterruptibles;
+
+import org.apache.commons.cli.Converter;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
@@ -492,9 +493,9 @@ public class StressProfile implements Serializable
             insert = new HashMap<>();
         lowerCase(insert);
 
-        partitions = select(settings.insert.batchsize, "partitions", "fixed(1)", insert, OptionDistribution.BUILDER);
-        selectchance = select(settings.insert.selectRatio, "select", "fixed(1)/1", insert, OptionRatioDistribution.BUILDER);
-        rowPopulation = select(settings.insert.rowPopulationRatio, "row-population", "fixed(1)/1", insert, OptionRatioDistribution.BUILDER);
+        partitions = select(settings.insert.batchsize, "partitions", "fixed(1)", insert, AbstractSettings.DISTRIBUTION_FACTORY_CONVERTER);
+        selectchance = select(settings.insert.selectRatio, "select", "fixed(1)/1", insert, AbstractSettings.RATIO_DISTRIBUTION_FACTORY_CONVERTER);
+        rowPopulation = select(settings.insert.rowPopulationRatio, "row-population", "fixed(1)/1", insert, AbstractSettings.RATIO_DISTRIBUTION_FACTORY_CONVERTER);
 
         if (generator.maxRowCount > 100 * 1000 * 1000)
             System.err.printf("WARNING: You have defined a schema that permits very large partitions (%.0f max rows (>100M))%n", generator.maxRowCount);
@@ -606,9 +607,9 @@ public class StressProfile implements Serializable
                         sb.append(") ").append("values(").append(value).append(')');
                     }
 
-                    partitions = select(settings.insert.batchsize, "partitions", "fixed(1)", insert, OptionDistribution.BUILDER);
-                    selectchance = select(settings.insert.selectRatio, "select", "fixed(1)/1", insert, OptionRatioDistribution.BUILDER);
-                    rowPopulation = select(settings.insert.rowPopulationRatio, "row-population", "fixed(1)/1", insert, OptionRatioDistribution.BUILDER);
+                    partitions = select(settings.insert.batchsize, "partitions", "fixed(1)", insert, AbstractSettings.DISTRIBUTION_FACTORY_CONVERTER);
+                    selectchance = select(settings.insert.selectRatio, "select", "fixed(1)/1", insert, AbstractSettings.RATIO_DISTRIBUTION_FACTORY_CONVERTER);
+                    rowPopulation = select(settings.insert.rowPopulationRatio, "row-population", "fixed(1)/1", insert, AbstractSettings.RATIO_DISTRIBUTION_FACTORY_CONVERTER);
                     batchType = settings.insert.batchType != null
                                 ? settings.insert.batchType
                                 : !insert.containsKey("batchtype")
@@ -668,16 +669,21 @@ public class StressProfile implements Serializable
         return queries;
     }
 
-    private static <E> E select(E first, String key, String defValue, Map<String, String> map, Function<String, E> builder)
+    private static <E> E select(E first, String key, String defValue, Map<String, String> map, Converter<E, Exception> builder)
     {
         String val = map.remove(key);
 
         if (first != null)
             return first;
-        if (val != null && val.trim().length() > 0)
-            return builder.apply(val);
+        try
+        {
+            if (val != null && val.trim().length() > 0)
+                return builder.apply(val);
 
-        return builder.apply(defValue);
+            return builder.apply(defValue);
+        } catch (Exception e) {
+            throw AbstractSettings.asRuntimeException(e);
+        }
     }
 
     public PartitionGenerator newGenerator(StressSettings settings)

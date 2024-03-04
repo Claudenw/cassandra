@@ -39,7 +39,7 @@ import com.google.common.primitives.Ints;
 import static java.lang.String.format;
 
 
-abstract class AbstractSettings implements Serializable
+public abstract class AbstractSettings implements Serializable
 {
 
     /* converters */
@@ -54,9 +54,11 @@ abstract class AbstractSettings implements Serializable
 
     public static final Converter<Integer,NumberFormatException> TOKENRANGE_CONVERTER = s -> Ints.checkedCast(OptionDistribution.parseLong(s));
 
-    public static final Converter<RatioDistributionFactory,Exception>  RATIO_DISTRIBUTION_FACTORY_CONVERTER = OptionRatioDistribution.BUILDER::apply;
+    public static final Converter<RatioDistributionFactory,Exception>  RATIO_DISTRIBUTION_FACTORY_CONVERTER = OptionRatioDistribution::get;
 
     public static final Converter<DurationSpec.IntSecondsBound,Exception> DURATION_CONVERTER = s -> new DurationSpec.IntSecondsBound(s);
+
+    public static final Converter<DistributionFactory,Exception> DISTRIBUTION_FACTORY_CONVERTER =  OptionDistribution::get;
 
     public static Map<String,StressArgument> argumentMap;
 
@@ -67,11 +69,11 @@ abstract class AbstractSettings implements Serializable
     static void initializeArguments() {
         argumentMap =  new TreeMap<>();
 
-        StressArgument sa = new StressArgument("distribution", DistributionFactory.class, OptionDistribution::get);
+        StressArgument sa = new StressArgument("distribution", DistributionFactory.class, DISTRIBUTION_FACTORY_CONVERTER);
         OptionDistribution.argumentOptions().getOptions().forEach(sa.options::addOption);
         sa.notes.addAll(OptionDistribution.argumentNotes());
 
-        sa = new StressArgument("distribution_ratio", RatioDistributionFactory.class, OptionRatioDistribution::get);
+        sa = new StressArgument("distribution_ratio", RatioDistributionFactory.class, RATIO_DISTRIBUTION_FACTORY_CONVERTER);
         OptionRatioDistribution.argumentOptions().getOptions().forEach(sa.options::addOption);
         sa.notes.addAll(OptionRatioDistribution.argumentNotes());
 
@@ -158,7 +160,7 @@ abstract class AbstractSettings implements Serializable
                 .map(Enum::name).collect(Collectors.toList()));
     }
 
-    static RuntimeException asRuntimeException(Exception ex)
+    public static RuntimeException asRuntimeException(Exception ex)
     {
         return ex instanceof RuntimeException ?  (RuntimeException) ex :new RuntimeException(ex);
     }

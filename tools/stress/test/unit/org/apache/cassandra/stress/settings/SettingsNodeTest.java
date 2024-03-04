@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 import org.apache.commons.cli.AlreadySelectedException;
@@ -37,14 +38,20 @@ import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.Metadata;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileUtils;
+import org.apache.cassandra.stress.util.JavaDriverClient;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class SettingsNodeTest
 {
@@ -159,7 +166,49 @@ public class SettingsNodeTest
     @Test
     public void resolveAllPermittedTest() throws ParseException
     {
-        fail("not implemented");
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsNode.getOptions(), new String[0]);
+        SettingsNode underTest = new SettingsNode(commandLine);
+
+        Set<String> expected = underTest.resolveAllSpecified().stream().map(InetAddress::getHostName).collect(Collectors.toSet());
+
+        // test simple native driver.
+        StressSettings stressSettings = new StressSettings(new String[] {"READ", "-simple-native"});
+        assertEquals(expected, underTest.resolveAllPermitted(stressSettings));
+
+
+        // test java driver - is not whitelist.
+        StressSettingsMockJavaDriver mockedStress = new StressSettingsMockJavaDriver( "READ");
+        Cluster mockCluster = mock(Cluster.class);
+        Metadata mockMetadata = mock(Metadata.class);
+        Host mockHost = mock(Host.class);
+        InetSocketAddress address = InetSocketAddress.createUnresolved("localhost", 1234);
+        when(mockedStress.mockDriver.getCluster()).thenReturn(mockCluster);
+        when(mockCluster.getMetadata()).thenReturn(mockMetadata);
+        when(mockMetadata.getAllHosts()).thenReturn(Set.of(mockHost));
+        when(mockHost.getSocketAddress()).thenReturn(address);
+
+        assertEquals(Set.of("localhost:1234"), underTest.resolveAllPermitted(mockedStress));
+
+
+        // test java driver -- is whitelist
+        commandLine = DefaultParser.builder().build().parse(SettingsNode.getOptions(), new String[]{"-whitelist"});
+        underTest = new SettingsNode(commandLine);
+        assertEquals(expected, underTest.resolveAllPermitted(mockedStress));
+    }
+
+    private class StressSettingsMockJavaDriver extends StressSettings
+    {
+        public JavaDriverClient mockDriver = mock(JavaDriverClient.class);
+        public StressSettingsMockJavaDriver(String... args) throws ParseException
+        {
+            super(args);
+        }
+
+        @Override
+        public JavaDriverClient getJavaDriverClient(String keyspace)
+        {
+            return mockDriver;
+        }
     }
 //
 //        // default settings

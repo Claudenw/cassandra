@@ -27,6 +27,7 @@ import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
 import org.apache.cassandra.io.util.File;
@@ -46,6 +47,12 @@ import static org.junit.Assert.fail;
 public class SettingsCredentialsTest {
 
     File tempFile = FileUtils.createTempFile("cassandra-stress-credentials-test", "properties");
+
+    static SettingsCredentials getSettingsCredentials(String... args) throws ParseException
+    {
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCredentials.getOptions(), args);
+        return new SettingsCredentials(commandLine);
+    }
 
 
     private void writeProperties( Properties properties ) throws IOException

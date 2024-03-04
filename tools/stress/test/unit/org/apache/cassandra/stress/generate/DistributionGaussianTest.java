@@ -20,6 +20,7 @@ package org.apache.cassandra.stress.generate;
 
 import org.junit.Test;
 
+import org.apache.cassandra.stress.settings.AbstractSettings;
 import org.apache.cassandra.stress.settings.OptionDistribution;
 
 import static java.lang.Math.toIntExact;
@@ -28,9 +29,9 @@ import static org.junit.Assert.*;
 public class DistributionGaussianTest
 {
     @Test
-    public void simpleGaussian()
+    public void simpleGaussian() throws Exception
     {
-        Distribution dist = OptionDistribution.get("gaussian(1..10)").get();
+        Distribution dist = AbstractSettings.DISTRIBUTION_FACTORY_CONVERTER.apply("gaussian(1..10)").get();
         assertTrue(dist instanceof DistributionBoundApache);
 
         assertEquals(1, dist.minValue());

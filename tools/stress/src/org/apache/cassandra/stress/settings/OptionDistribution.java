@@ -42,14 +42,6 @@ import org.apache.cassandra.stress.generate.*;
 public class OptionDistribution
 {
 
-    public static final Function<String, DistributionFactory> BUILDER = new Function<String, DistributionFactory>()
-    {
-        public DistributionFactory apply(String s)
-        {
-            return get(s);
-        }
-    };
-
     private static final Pattern FULL = Pattern.compile("(~?)([A-Z]+)\\((.+)\\)", Pattern.CASE_INSENSITIVE);
     private static final Pattern ARGS = Pattern.compile("[^,]+");
 
