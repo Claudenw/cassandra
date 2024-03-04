@@ -172,12 +172,12 @@ public class SettingsNodeTest
         Set<String> expected = underTest.resolveAllSpecified().stream().map(InetAddress::getHostName).collect(Collectors.toSet());
 
         // test simple native driver.
-        StressSettings stressSettings = new StressSettings(new String[] {"READ", "-simple-native"});
+        StressSettings stressSettings = new StressSettings(new String[] {"READ", "-simple-native", "-n", "5"});
         assertEquals(expected, underTest.resolveAllPermitted(stressSettings));
 
 
         // test java driver - is not whitelist.
-        StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver("READ");
+        StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver("READ", "-n", "5");
         Cluster mockCluster = mock(Cluster.class);
         Metadata mockMetadata = mock(Metadata.class);
         Host mockHost = mock(Host.class);

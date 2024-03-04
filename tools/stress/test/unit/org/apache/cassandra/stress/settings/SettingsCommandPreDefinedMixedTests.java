@@ -124,7 +124,7 @@ public class SettingsCommandPreDefinedMixedTests
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCommandPreDefinedMixed.getOptions(), args);
         DefaultParser.builder().build().parse(SettingsCommandPreDefinedMixed.getOptions(), args);
         SettingsCommand underTest =  new SettingsCommandPreDefinedMixed(commandLine);
-        StressSettings stressSettings = new StressSettings("READ");
+        StressSettings stressSettings = new StressSettings("READ", "-n", "5");
         OpDistributionFactory factory = underTest.getFactory(stressSettings);
         assertNotNull(factory);
         assertEquals("[WRITE, READ]", factory.desc());
@@ -134,7 +134,7 @@ public class SettingsCommandPreDefinedMixedTests
     public void truncateTablesTest() throws ParseException, IOException
     {
         List<String> expected = List.of("TRUNCATE keyspace1.standard1", "TRUNCATE keyspace1.counter1", "TRUNCATE keyspace1.counter3");
-        StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver("READ", "-truncate", "always");
+        StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver("READ", "-truncate", "always", "-n", "5");
 
         String args[] = {};
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCommandPreDefinedMixed.getOptions(), args);

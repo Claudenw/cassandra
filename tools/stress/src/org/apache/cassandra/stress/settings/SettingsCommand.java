@@ -352,7 +352,7 @@ public abstract class SettingsCommand extends AbstractSettings
 
     static SettingsCommand get(Command cmd, CommandLine commandLine, Options options)
     {
-        if (cmd.category == CommandCategory.HELP) {
+        if (cmd.category == CommandCategory.HELP || commandLine.hasOption(SettingsMisc.MISC_HELP.option())) {
             return null;
         }
 

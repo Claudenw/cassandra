@@ -49,7 +49,7 @@ public class SettingsCommandPreDefinedTest
         String args[] = {};
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCommandPreDefined.getOptions(), args);
         SettingsCommand underTest = new SettingsCommandPreDefined(Command.READ, commandLine);
-        StressSettings stressSettings = new StressSettings("READ");
+        StressSettings stressSettings = new StressSettings("READ", "-n", "5");
         OpDistributionFactory factory = underTest.getFactory(stressSettings);
         assertNotNull(factory);
         assertEquals("READ", factory.desc());
@@ -59,7 +59,7 @@ public class SettingsCommandPreDefinedTest
     public final void truncateTablesTest() throws ParseException, IOException
     {
         List<String> expected = List.of("TRUNCATE keyspace1.standard1", "TRUNCATE keyspace1.counter1", "TRUNCATE keyspace1.counter3");
-        StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver("READ", "-truncate", "always");
+        StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver("READ", "-truncate", "always", "-n", "5");
 
         String args[] = {};
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCommandPreDefined.getOptions(), args);

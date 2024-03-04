@@ -91,7 +91,6 @@ public class StressSettingsTest
         StressSettings settings = new StressSettings( new String[] {"write", "--help"});
         TestingResultLogger logger = new TestingResultLogger();
         settings.printHelp();
-
     }
 
     public static class StressSettingsMockJavaDriver extends StressSettings
