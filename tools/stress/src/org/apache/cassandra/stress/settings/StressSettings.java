@@ -98,9 +98,10 @@ public class StressSettings implements Serializable
 //        this.reporting = reporting;
 //    }
 
-    public StressSettings(String[] args) throws ParseException
+    public StressSettings(String... args) throws ParseException
     {
-        CommandLine commandLine = DefaultParser.builder().build().parse(getOptions(), args);
+        Options options = getOptions();
+        CommandLine commandLine = DefaultParser.builder().build().parse(options, args);
         String[] cmds = commandLine.getArgs();
         if (cmds.length==0)
             throw new IllegalArgumentException("No command specified");
@@ -109,7 +110,7 @@ public class StressSettings implements Serializable
 
         Command cmd = Command.valueOf(cmds[0].toUpperCase());
         this.misc = new SettingsMisc(commandLine, cmd);
-        this.command = SettingsCommand.get(cmd, commandLine);
+        this.command = SettingsCommand.get(cmd, commandLine, options);
         if (command == null)
         {
             this.rate = null;

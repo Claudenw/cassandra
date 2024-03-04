@@ -26,11 +26,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
 import org.apache.cassandra.stress.report.StressMetrics;
+import org.apache.cassandra.stress.util.JavaDriverClient;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 
 public class StressSettingsTest
 {
@@ -88,6 +91,41 @@ public class StressSettingsTest
         StressSettings settings = new StressSettings( new String[] {"write", "--help"});
         TestingResultLogger logger = new TestingResultLogger();
         settings.printHelp();
+
+    }
+
+    public static class StressSettingsMockJavaDriver extends StressSettings
+    {
+        public JavaDriverClient mockDriver;
+        public StressSettingsMockJavaDriver(String... args) throws ParseException
+        {
+            super(args);
+             mockDriver = mock(JavaDriverClient.class);
+        }
+
+        @Override
+        public JavaDriverClient getJavaDriverClient()
+        {
+            return mockDriver;
+        }
+
+        @Override
+        public JavaDriverClient getJavaDriverClient(boolean setKeyspace)
+        {
+            if (setKeyspace)
+                return getJavaDriverClient(schema.keyspace);
+
+            return mockDriver;
+        }
+
+        @Override
+        public JavaDriverClient getJavaDriverClient(String keyspace)
+        {
+            if (keyspace != null)
+                mockDriver.execute("USE \"" + keyspace + "\";", org.apache.cassandra.db.ConsistencyLevel.ONE);
+            return mockDriver;
+        }
+
 
     }
 }

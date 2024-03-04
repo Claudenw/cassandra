@@ -20,24 +20,38 @@ package org.apache.cassandra.stress.settings;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.MissingOptionException;
 import org.apache.commons.cli.ParseException;
+import org.junit.Assert;
 import org.junit.Test;
 
+import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileUtils;
+import org.apache.cassandra.stress.operations.OpDistributionFactory;
+import org.mockito.ArgumentCaptor;
 
 import static org.apache.cassandra.io.util.File.WriteMode.OVERWRITE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.psjava.util.AssertStatus.assertTrue;
 
 public class SettingsCommandUserTest
 {
+
+
+
+
     @Test
     public void defatulTest() throws ParseException
     {
@@ -51,7 +65,7 @@ public class SettingsCommandUserTest
         }
     }
 
-    private static void writeYaml( File tempFile ) throws IOException
+    static void writeYaml(File tempFile) throws IOException
     {
         try (Writer w = tempFile.newWriter(OVERWRITE))
         {
@@ -136,15 +150,43 @@ public class SettingsCommandUserTest
     }
 
     @Test
-    public void truncateTablesTest()
+    public void truncateTablesTest() throws ParseException, IOException
     {
-        fail("not implemented");
+        List<String> expected = List.of("TRUNCATE yaml1keyspace.yaml1table");
+        StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver("READ", "-truncate", "always", "-command-ratio", "insert=2", "simple1=1", "-n", "5");
+
+        File tempFile = FileUtils.createTempFile("cassandra-stress-command-user-test", "yaml");
+        writeYaml(tempFile);
+
+        String args[] = { "-n", "5", "-command-profile", tempFile.absolutePath(), "-command-ratio", "insert=2", "simple1=1"};
+
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCommandUser.getOptions(), args);
+        SettingsCommandUser underTest = new SettingsCommandUser(commandLine);
+        underTest.truncateTables(mockedStress);
+
+        ArgumentCaptor<String > cmdCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ConsistencyLevel> levelCaptor = ArgumentCaptor.forClass(ConsistencyLevel.class);
+        verify(mockedStress.mockDriver, times(1)).execute(cmdCaptor.capture(), levelCaptor.capture());
+        assertEquals( expected, cmdCaptor.getAllValues());
+        Set<ConsistencyLevel> set = new HashSet<>();
+        set.addAll(levelCaptor.getAllValues());
+        assertEquals(1, set.size());
+        assertEquals(ConsistencyLevel.ONE, set.iterator().next());
     }
 
     @Test
-    public void factoryTest()
+    public void getFactoryTest() throws ParseException, IOException
     {
-        fail("not implemented");
-    }
+        File tempFile = FileUtils.createTempFile("cassandra-stress-command-user-test", "yaml");
+        writeYaml(tempFile);
 
+        String args[] = { "-n", "5", "-command-profile", tempFile.absolutePath(), "-command-ratio", "insert=2", "simple1=1"};
+
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCommandUser.getOptions(), args);
+        SettingsCommandUser underTest = new SettingsCommandUser(commandLine);
+        StressSettings stressSettings = new StressSettings("READ","-command-ratio", "insert=2", "simple1=1", "-n", "5");
+        OpDistributionFactory factory = underTest.getFactory(stressSettings);
+        assertNotNull(factory);
+        Assert.assertEquals("[simple1, insert]", factory.desc());
+    }
 }

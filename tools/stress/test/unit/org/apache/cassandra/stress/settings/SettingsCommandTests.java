@@ -18,6 +18,7 @@
 
 package org.apache.cassandra.stress.settings;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.cli.CommandLine;
@@ -28,6 +29,8 @@ import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
 import org.apache.cassandra.db.ConsistencyLevel;
+import org.apache.cassandra.io.util.File;
+import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.stress.operations.OpDistributionFactory;
 
 import static org.junit.Assert.assertEquals;
@@ -462,18 +465,56 @@ public class SettingsCommandTests
     }
 
     @Test
-    public void truncateTablesTest() {
-        fail("not implemented");
-    }
+    public void getTest() throws ParseException, IOException
+    {
+        /* options an command line have to be paird for this test.  if any values are parsed then we need to retrieve the options again */
+        Options options = SettingsCommand.getOptions();
+        CommandLine emptyCommandLine = DefaultParser.builder().build().parse(options, new String[]{});
 
-    @Test
-    public void getTest() {
-        fail("not implemented");
-    }
+        // HELP commands alwasy return null.
+        assertNull(SettingsCommand.get(Command.HELP, emptyCommandLine, options));
+        assertNull(SettingsCommand.get(Command.PRINT, emptyCommandLine, options));
+        assertNull(SettingsCommand.get(Command.VERSION, emptyCommandLine, options));
 
-    @Test
-    public void getFactoryTest() {
-        fail("not implemented");
-    }
+        // test BASIC command
+        try {
+            SettingsCommand.get(Command.READ, emptyCommandLine, options );
+            fail("Should have thrown MissingOptionException");
+        } catch (RuntimeException e) {
+            assertEquals(MissingOptionException.class, e.getCause().getClass());
+        }
+        CommandLine commandLine = DefaultParser.builder().build().parse(options, new String[] {"-n", "4"});
+        assertEquals(SettingsCommandPreDefined.class, SettingsCommand.get(Command.READ, commandLine, options ).getClass());
 
+
+        // test MIXED command
+        try {
+            options = SettingsCommand.getOptions();
+            emptyCommandLine = DefaultParser.builder().build().parse(options, new String[]{});
+            SettingsCommand.get(Command.MIXED, emptyCommandLine, options );
+            fail("Should have thrown MissingOptionException");
+        } catch (RuntimeException e) {
+            assertEquals(MissingOptionException.class, e.getCause().getClass());
+        }
+        commandLine = DefaultParser.builder().build().parse(options, new String[] {"-n", "4"});
+        assertEquals(SettingsCommandPreDefinedMixed.class, SettingsCommand.get(Command.MIXED, commandLine, options ).getClass());
+
+        // test USER command
+        File tempFile = FileUtils.createTempFile("cassandra-stress-command-user-test", "yaml");
+        SettingsCommandUserTest.writeYaml(tempFile);
+
+        try {
+            options = SettingsCommandUser.getOptions();
+            emptyCommandLine = DefaultParser.builder().build().parse(options, new String[]{"-command-profile", tempFile.absolutePath(), "-command-ratio", "insert=2", "simple1=1"});
+            SettingsCommand.get(Command.USER, emptyCommandLine, options );
+            fail("Should have thrown MissingOptionException");
+        } catch (RuntimeException e) {
+            assertEquals(MissingOptionException.class, e.getCause().getClass());
+        }
+
+        String args[] = { "-n", "5", "-command-profile", tempFile.absolutePath(), "-command-ratio", "insert=2", "simple1=1"};
+        commandLine = DefaultParser.builder().build().parse(options, args);
+        assertEquals(SettingsCommandUser.class, SettingsCommand.get(Command.USER, commandLine, options ).getClass());
+
+    }
 }

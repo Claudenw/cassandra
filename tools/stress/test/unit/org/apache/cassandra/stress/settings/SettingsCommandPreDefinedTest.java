@@ -18,16 +18,63 @@
 
 package org.apache.cassandra.stress.settings;
 
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
+import org.apache.cassandra.stress.operations.OpDistributionFactory;
+import org.mockito.ArgumentCaptor;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 
 public class SettingsCommandPreDefinedTest
 {
+
+    @Test
+    public void getFactoryTest() throws ParseException, IOException
+    {
+        String args[] = {};
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCommandPreDefined.getOptions(), args);
+        SettingsCommand underTest = new SettingsCommandPreDefined(Command.READ, commandLine);
+        StressSettings stressSettings = new StressSettings("READ");
+        OpDistributionFactory factory = underTest.getFactory(stressSettings);
+        assertNotNull(factory);
+        assertEquals("READ", factory.desc());
+    }
+
+    @Test
+    public final void truncateTablesTest() throws ParseException, IOException
+    {
+        List<String> expected = List.of("TRUNCATE keyspace1.standard1", "TRUNCATE keyspace1.counter1", "TRUNCATE keyspace1.counter3");
+        StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver("READ", "-truncate", "always");
+
+        String args[] = {};
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCommandPreDefined.getOptions(), args);
+        SettingsCommand underTest = new SettingsCommandPreDefined(Command.READ, commandLine);
+        underTest.truncateTables(mockedStress);
+
+        ArgumentCaptor<String > cmdCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ConsistencyLevel> levelCaptor = ArgumentCaptor.forClass(ConsistencyLevel.class);
+        verify(mockedStress.mockDriver, times(3)).execute(cmdCaptor.capture(), levelCaptor.capture());
+        assertEquals( expected, cmdCaptor.getAllValues());
+        Set<ConsistencyLevel> set = new HashSet<>();
+        set.addAll(levelCaptor.getAllValues());
+        assertEquals(1, set.size());
+        assertEquals(ConsistencyLevel.ONE, set.iterator().next());
+    }
     @Test
     public void defaultTest() throws ParseException
     {
@@ -93,18 +140,4 @@ public class SettingsCommandPreDefinedTest
         logger.assertEndsWith( "Counter Increment Distibution: Fixed:  key=1");
     }
 
-    @Test
-    public void truncateTablesTest() {
-        fail("not implemented");
-    }
-
-    @Test
-    public void getFactoryTest() {
-        fail("not implemented");
-    }
-
-    @Test
-    public void newGeneratorTest() {
-        fail("not implemented");
-    }
 }

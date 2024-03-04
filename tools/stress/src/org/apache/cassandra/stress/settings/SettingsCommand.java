@@ -71,47 +71,52 @@ public abstract class SettingsCommand extends AbstractSettings
     public static final StressOption<TruncateWhen> TRUNCATE = new StressOption<>(()->TruncateWhen.NEVER,
                                                                                  Option.builder("truncate").hasArg()
                                                                                        .desc(format("When to truncate the table Valid values are %s. (Default %s)", enumOptionString(TruncateWhen.NEVER), TruncateWhen.NEVER))
-                                                                                       .converter(TruncateWhen::valueOf).build());
+                                                                                       .converter(s->TruncateWhen.valueOf(s.toUpperCase())).build());
 
     public static final StressOption<Long> COUNT = new StressOption<>(LONG_POSITIVE_VERIFIER, Option.builder("n").hasArg()
                                                                             .desc("Number of operations to perform. Number may be followd by 'm' or 'k' (e.g. 5m). Not valid with -duration or -uncert-err options.")
                                                                             .type(Long.class).converter(DISTRIBUTION_CONVERTER).required(true).build());
 
-    private static final OptionGroup REQUIRED = new OptionGroup()
+
+    private static final OptionGroup requiredGroup()
     {
-        @Override
-        public String toString()
+        return new OptionGroup()
         {
-            StringBuilder buff = new StringBuilder();
-            Iterator<Option> iter = this.getOptions().iterator();
-            buff.append("One of the following options is required: ");
-
-            while (iter.hasNext())
+            @Override
+            public String toString()
             {
-                Option option = (Option) iter.next();
-                if (option.getOpt() != null)
-                {
-                    buff.append("-");
-                    buff.append(option.getOpt());
-                }
-                else
-                {
-                    buff.append("--");
-                    buff.append(option.getLongOpt());
-                }
+                StringBuilder buff = new StringBuilder();
+                Iterator<Option> iter = this.getOptions().iterator();
+                buff.append("One of the following options is required: ");
 
-                if (iter.hasNext())
+                while (iter.hasNext())
                 {
-                    buff.append(", ");
+                    Option option = (Option) iter.next();
+                    if (option.getOpt() != null)
+                    {
+                        buff.append("-");
+                        buff.append(option.getOpt());
+                    }
+                    else
+                    {
+                        buff.append("--");
+                        buff.append(option.getLongOpt());
+                    }
+
+                    if (iter.hasNext())
+                    {
+                        buff.append(", ");
+                    }
                 }
+                buff.append(".");
+                return buff.toString();
             }
-            buff.append(".");
-            return buff.toString();
         }
+
+               .addOption(COUNT.option())
+               .addOption(DURATION.option())
+               .addOption(UNCERT_ERR.option());
     }
-                      .addOption(COUNT.option())
-                      .addOption(DURATION.option())
-                      .addOption(UNCERT_ERR.option());
 
     // predefined options
     public static final StressOption<Integer> COMMAND_KEYSIZE = new StressOption<>(()->10,
@@ -245,13 +250,11 @@ public abstract class SettingsCommand extends AbstractSettings
      * @return the shared Options.
      */
     public static Options getOptions() {
-
-
         return new Options()
                 .addOption(NO_WARMUP.option())
                 .addOption(TRUNCATE.option())
                 .addOption(CONSISTENCY.option())
-                .addOptionGroup(REQUIRED)
+                .addOptionGroup(requiredGroup())
                 .addOption(UNCERT_MIN.option())
                 .addOption(UNCERT_MAX.option())
                 ;
@@ -347,14 +350,16 @@ public abstract class SettingsCommand extends AbstractSettings
     }
 
 
-    static SettingsCommand get(Command cmd, CommandLine commandLine)
+    static SettingsCommand get(Command cmd, CommandLine commandLine, Options options)
     {
         if (cmd.category == CommandCategory.HELP) {
             return null;
         }
 
-        if (REQUIRED.getSelected() == null)
-            asRuntimeException( new MissingOptionException( REQUIRED.toString()));
+
+        OptionGroup required = options.getOptionGroup(COUNT.option());
+        if (required.getSelected() == null)
+            throw asRuntimeException( new MissingOptionException(required.toString()));
 
         switch (cmd.category)
         {
@@ -367,30 +372,6 @@ public abstract class SettingsCommand extends AbstractSettings
             default:
                 return null;
         }
-
-//        for (Command cmd : Command.values())
-//        {
-//            if (cmd.category == null)
-//                continue;
-//
-//            for (String name : cmd.names)
-//            {
-//                final String[] params = clArgs.remove(name);
-//                if (params == null)
-//                    continue;
-//
-//                switch (cmd.category)
-//                {
-//                    case BASIC:
-//                        return SettingsCommandPreDefined.build(cmd, params);
-//                    case MIXED:
-//                        return SettingsCommandPreDefinedMixed.build(params);
-//                    case USER:
-//                        return SettingsCommandUser.build(params);
-//                }
-//            }
-//        }
-//        return null;
     }
 
     public enum TruncateWhen

@@ -177,7 +177,7 @@ public class SettingsNodeTest
 
 
         // test java driver - is not whitelist.
-        StressSettingsMockJavaDriver mockedStress = new StressSettingsMockJavaDriver( "READ");
+        StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver("READ");
         Cluster mockCluster = mock(Cluster.class);
         Metadata mockMetadata = mock(Metadata.class);
         Host mockHost = mock(Host.class);
@@ -196,20 +196,7 @@ public class SettingsNodeTest
         assertEquals(expected, underTest.resolveAllPermitted(mockedStress));
     }
 
-    private class StressSettingsMockJavaDriver extends StressSettings
-    {
-        public JavaDriverClient mockDriver = mock(JavaDriverClient.class);
-        public StressSettingsMockJavaDriver(String... args) throws ParseException
-        {
-            super(args);
-        }
 
-        @Override
-        public JavaDriverClient getJavaDriverClient(String keyspace)
-        {
-            return mockDriver;
-        }
-    }
 //
 //        // default settings
 //        String[] args = {};
