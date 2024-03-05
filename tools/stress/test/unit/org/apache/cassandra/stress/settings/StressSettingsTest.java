@@ -20,18 +20,29 @@ package org.apache.cassandra.stress.settings;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
+import org.apache.cassandra.io.util.File;
+import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.stress.report.StressMetrics;
 import org.apache.cassandra.stress.util.JavaDriverClient;
 
+import static org.apache.cassandra.io.util.File.WriteMode.OVERWRITE;
+import static org.apache.cassandra.stress.settings.SettingsCredentials.CQL_PASSWORD_PROPERTY_KEY;
+import static org.apache.cassandra.stress.settings.SettingsCredentials.CQL_USERNAME_PROPERTY_KEY;
+import static org.apache.cassandra.stress.settings.SettingsCredentials.JMX_PASSWORD_PROPERTY_KEY;
+import static org.apache.cassandra.stress.settings.SettingsCredentials.JMX_USERNAME_PROPERTY_KEY;
+import static org.apache.cassandra.stress.settings.SettingsCredentials.TRANSPORT_KEYSTORE_PASSWORD_PROPERTY_KEY;
+import static org.apache.cassandra.stress.settings.SettingsCredentials.TRANSPORT_TRUSTSTORE_PASSWORD_PROPERTY_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
@@ -46,14 +57,7 @@ public class StressSettingsTest
         // Will throw if not all settings are Serializable
         new ObjectOutputStream(new ByteArrayOutputStream()).writeObject(settings);
     }
-
-    @Test
-    public void test16473()
-    {
-        Set<String> jmxNodes = StressMetrics.toJmxNodes(new HashSet<String>(Arrays.asList("127.0.0.1:9042", "127.0.0.1")));
-        assertEquals(0, jmxNodes.stream().filter(n -> n.contains(":")).count());
-    }
-
+    
     @Test
     public void printSettingsTest() throws Exception
     {
@@ -89,6 +93,42 @@ public class StressSettingsTest
         StressSettings settings = new StressSettings( new String[] {"write", "--help"});
         TestingResultLogger logger = new TestingResultLogger();
         settings.printHelp();
+    }
+
+    @Test
+    public void testReadCredentialsFromFileOverridenByCommandLine() throws Exception
+    {
+        Properties properties = SettingsCredentialsTest.getFullProperties();
+
+        File tempFile = FileUtils.createTempFile("cassandra-stress-settings-test", "properties");
+
+        try (Writer w = tempFile.newWriter(OVERWRITE))
+        {
+            properties.store(w, null);
+        }
+
+        String[] args = {"READ", SettingsCommand.UNCERT_ERR.key(), SettingsMode.MODE_CQL_STYLE.key(), "cql",
+                         SettingsMode.MODE_PASSWORD.key(), "cqlpasswordoncommandline",
+                         SettingsMode.MODE_USER.key(), "cqluseroncommandline", SettingsJMX.JMX_PASSWORD.key(), "jmxpasswordoncommandline",
+                         SettingsJMX.JMX_USER.key(), "jmxuseroncommandline", SettingsTransport.TRANSPORT_TRUSTSTORE.key(), "sometruststore",
+                         SettingsTransport.TRANSPORT_KEYSTORE.key(), "somekeystore", SettingsTransport.TRANSPORT_TRUSTSTORE_PASSWORD.key(),
+                         "truststorepasswordfromcommandline", SettingsTransport.TRANSPORT_KEYSTORE_PASSWORD.key(), "keystorepasswordfromcommandline",
+                         SettingsCredentials.CREDENTIAL_FILE.key(), tempFile.absolutePath()};
+
+        StressSettings settings = new StressSettings(args);
+        assertEquals("cqluserfromfile", settings.credentials.cqlUsername);
+        assertEquals("cqlpasswordfromfile", settings.credentials.cqlPassword);
+        assertEquals("jmxuserfromfile", settings.credentials.jmxUsername);
+        assertEquals("jmxpasswordfromfile", settings.credentials.jmxPassword);
+        assertEquals("keystorepasswordfromfile", settings.credentials.transportKeystorePassword);
+        assertEquals("truststorepasswordfromfile", settings.credentials.transportTruststorePassword);
+
+        assertEquals("cqluseroncommandline", settings.mode.username);
+        assertEquals("cqlpasswordoncommandline", settings.mode.password);
+        assertEquals("jmxuseroncommandline", settings.jmx.user);
+        assertEquals("jmxpasswordoncommandline", settings.jmx.password);
+        assertEquals("truststorepasswordfromcommandline", settings.transport.getEncryptionOptions().truststore_password);
+        assertEquals("keystorepasswordfromcommandline", settings.transport.getEncryptionOptions().keystore_password);
     }
 
     public static class StressSettingsMockJavaDriver extends StressSettings

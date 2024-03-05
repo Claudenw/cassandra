@@ -355,5 +355,4 @@ public class SettingsSchemaTests
         expected = String.format(expectedFmt, "'class' : 'foo'", " AND compaction = {'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'}");
         assertEquals(expected, underTest.createCounter1StatementCQL3(mockedStress));
     }
-
 }
