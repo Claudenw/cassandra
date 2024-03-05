@@ -28,6 +28,8 @@ import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -40,6 +42,93 @@ public class SettingsGraphTest
 
     @Test
     public void defaultTest() throws ParseException
+    {
+        String[] args = {};
+
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsGraph.getOptions(), args);
+        SettingsGraph underTest = new SettingsGraph(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        Date date = new Date();
+
+        assertNull(underTest.file);
+        assertEquals("unknown", underTest.revision);
+        assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(date)));
+        assertEquals(Command.HELP.name(), underTest.operation);
+        assertFalse(underTest.inGraphMode());
+
+        TestingResultLogger logger = new TestingResultLogger();
+        underTest.printSettings(logger);
+        logger.assertEndsWith("File: *not set*");
+        logger.assertEndsWith("Revision: unknown");
+        logger.assertContainsRegex("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm:..").format(date));
+        logger.assertEndsWith("Operation: HELP");
+    }
+
+    @Test
+    public void revisionTest() throws ParseException
+    {
+        String[] args = {"-graph-revision", "revisionString"};
+
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsGraph.getOptions(), args);
+        SettingsGraph underTest = new SettingsGraph(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        Date date = new Date();
+        assertNull(underTest.file);
+        assertEquals("revisionString", underTest.revision);
+        assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(date)));
+        assertEquals(Command.HELP.name(), underTest.operation);
+
+        TestingResultLogger logger = new TestingResultLogger();
+        underTest.printSettings(logger);
+        logger.assertEndsWith("File: *not set*");
+        logger.assertEndsWith("Revision: revisionString");
+        logger.assertContainsRegex("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm:..").format(date));
+        logger.assertEndsWith("Operation: HELP");
+    }
+
+    @Test
+    public void titleTest() throws ParseException
+    {
+
+        String[] args = { "-graph-title", "titleString"};
+
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsGraph.getOptions(), args);
+        SettingsGraph underTest = new SettingsGraph(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        assertNull(underTest.file);
+        assertEquals("unknown", underTest.revision);
+        assertEquals("titleString", underTest.title);
+        assertEquals(Command.HELP.name(), underTest.operation);
+
+        TestingResultLogger logger = new TestingResultLogger();
+        underTest.printSettings(logger);
+        logger.assertEndsWith("Revision: unknown");
+        logger.assertEndsWith("Title: titleString");
+        logger.assertEndsWith("Operation: HELP");
+    }
+
+    @Test
+    public void nameTest() throws ParseException
+    {
+
+        String[] args = { "-graph-name", "nameString" };
+
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsGraph.getOptions(), args);
+        SettingsGraph underTest = new SettingsGraph(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+
+        assertNull(underTest.file);
+        Date date = new Date();
+        assertEquals("unknown", underTest.revision);
+        assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(date)));
+        assertEquals("nameString", underTest.operation);
+
+        TestingResultLogger logger = new TestingResultLogger();
+        underTest.printSettings(logger);
+        logger.assertEndsWith("File: *not set*");
+        logger.assertEndsWith("Revision: unknown");
+        logger.assertContainsRegex("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm:..").format(date));
+        logger.assertEndsWith("Operation: nameString");
+    }
+
+    @Test
+    public void fileTest() throws ParseException
     {
         String[] args = {"-graph-file", "outputFile"};
 
@@ -59,74 +148,5 @@ public class SettingsGraphTest
         logger.assertEndsWith("Revision: unknown");
         logger.assertContainsRegex("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm:..").format(date));
         logger.assertEndsWith("Operation: HELP");
-    }
-
-    @Test
-    public void revisionTest() throws ParseException
-    {
-        String[] args = {"-graph-file", "outputFile", "-graph-revision", "revisionString"};
-
-        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsGraph.getOptions(), args);
-        SettingsGraph underTest = new SettingsGraph(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
-        Date date = new Date();
-        assertEquals(new File("outputFile"), underTest.file);
-        assertEquals("revisionString", underTest.revision);
-        assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(date)));
-        assertEquals(Command.HELP.name(), underTest.operation);
-
-        TestingResultLogger logger = new TestingResultLogger();
-        underTest.printSettings(logger);
-        logger.assertEndsWith("File: outputFile");
-        logger.assertEndsWith("Revision: revisionString");
-        logger.assertContainsRegex("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm:..").format(date));
-        logger.assertEndsWith("Operation: HELP");
-    }
-
-    @Test
-    public void titleTest() throws ParseException
-    {
-
-        String[] args = {"-graph-file", "outputFile", "-graph-title", "titleString"};
-
-        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsGraph.getOptions(), args);
-        SettingsGraph underTest = new SettingsGraph(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
-        assertEquals(new File("outputFile"), underTest.file);
-        assertEquals("unknown", underTest.revision);
-        assertEquals("titleString", underTest.title);
-        assertEquals(Command.HELP.name(), underTest.operation);
-
-        TestingResultLogger logger = new TestingResultLogger();
-        underTest.printSettings(logger);
-        logger.assertEndsWith("File: outputFile");
-        logger.assertEndsWith("Revision: unknown");
-        logger.assertEndsWith("Title: titleString");
-        logger.assertEndsWith("Operation: HELP");
-    }
-
-    @Test
-    public void nameTest() throws ParseException
-    {
-
-        String[] args = { "-graph-file", "outputFile", "-graph-name", "nameString" };
-
-        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsGraph.getOptions(), args);
-        SettingsGraph underTest = new SettingsGraph(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
-        Date date = new Date();
-        assertEquals(new File("outputFile"), underTest.file);
-        assertEquals("unknown", underTest.revision);
-        assertTrue(underTest.title.startsWith("cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm").format(date)));
-        assertEquals("nameString", underTest.operation);
-
-        TestingResultLogger logger = new TestingResultLogger();
-        underTest.printSettings(logger);
-        logger.assertEndsWith("File: outputFile");
-        logger.assertEndsWith("Revision: unknown");
-        logger.assertContainsRegex("Title: cassandra-stress - " + new SimpleDateFormat("yyyy-mm-dd hh:mm:..").format(date));
-        logger.assertEndsWith("Operation: nameString");
-    }
-
-    @Test
-    public void inGraphModeTest() {
-        fail("not implemented");
     }
 }
