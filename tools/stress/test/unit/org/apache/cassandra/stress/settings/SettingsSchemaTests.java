@@ -260,37 +260,22 @@ public class SettingsSchemaTests
     @Test
     public void createKeyspacesTest() throws ParseException
     {
-//        List<String> expected = List.of("TRUNCATE keyspace1.standard1", "TRUNCATE keyspace1.counter1", "TRUNCATE keyspace1.counter3");
-//        client.execute(createKeyspaceStatementCQL3(), org.apache.cassandra.db.ConsistencyLevel.LOCAL_ONE);
-//
-//        client.execute("USE \""+keyspace+"\"", org.apache.cassandra.db.ConsistencyLevel.LOCAL_ONE);
-//
-//        //Add standard1 and counter1
-//        client.execute(createStandard1StatementCQL3(settings), org.apache.cassandra.db.ConsistencyLevel.LOCAL_ONE);
-//        client.execute(createCounter1StatementCQL3(settings), org.apache.cassandra.db.ConsistencyLevel.LOCAL_ONE);
-//
-//        String[] args = {};
-//        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
-//        SettingsSchema underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
-//        StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver();
-//        //StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver("READ", "-truncate", "always", "-n", "5");
-//
-//        underTest.createKeySpaces(mockedStress);
-//
-//
-//        String args[] = {};
-//        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCommandPreDefined.getOptions(), args);
-//        SettingsCommand underTest = new SettingsCommandPreDefined(Command.READ, commandLine);
-//        underTest.truncateTables(mockedStress);
-//
-//        ArgumentCaptor<String > cmdCaptor = ArgumentCaptor.forClass(String.class);
-//        ArgumentCaptor<ConsistencyLevel> levelCaptor = ArgumentCaptor.forClass(ConsistencyLevel.class);
-//        verify(mockedStress.mockDriver, times(3)).execute(cmdCaptor.capture(), levelCaptor.capture());
-//        assertEquals( expected, cmdCaptor.getAllValues());
-//        Set<ConsistencyLevel> set = new HashSet<>();
-//        set.addAll(levelCaptor.getAllValues());
-//        assertEquals(1, set.size());
-//        assertEquals(ConsistencyLevel.ONE, set.iterator().next());
+        String[] args = {};
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
+        SettingsSchema underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver("HELP");
+        List<String> expected = List.of(underTest.createKeyspaceStatementCQL3(),  "USE \"keyspace1\"", underTest.createStandard1StatementCQL3(mockedStress), underTest.createCounter1StatementCQL3(mockedStress));
+
+        underTest.createKeySpaces(mockedStress);
+
+        ArgumentCaptor<String > cmdCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ConsistencyLevel> levelCaptor = ArgumentCaptor.forClass(ConsistencyLevel.class);
+        verify(mockedStress.mockDriver, times(4)).execute(cmdCaptor.capture(), levelCaptor.capture());
+        assertEquals( expected, cmdCaptor.getAllValues());
+        Set<ConsistencyLevel> set = new HashSet<>();
+        set.addAll(levelCaptor.getAllValues());
+        assertEquals(1, set.size());
+        assertEquals(ConsistencyLevel.LOCAL_ONE, set.iterator().next());
     }
 
     @Test
@@ -309,7 +294,6 @@ public class SettingsSchemaTests
         underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
         expected = String.format(expectedFmt, "myKeyspace", LocalStrategy.class.getName(), "'fu' : 'baz', 'replication_factor' : '1', 'foo' : 'bar'" );
         assertEquals( expected, underTest.createKeyspaceStatementCQL3());
-        
     }
 
     @Test
@@ -370,8 +354,6 @@ public class SettingsSchemaTests
         underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
         expected = String.format(expectedFmt, "'class' : 'foo'", " AND compaction = {'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'}");
         assertEquals(expected, underTest.createCounter1StatementCQL3(mockedStress));
-
-
     }
 
 }

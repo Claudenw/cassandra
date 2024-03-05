@@ -249,5 +249,4 @@ public class SettingsSchema extends AbstractSettings implements Serializable
         out.println("  Table Compaction Strategy: " + compactionStrategy);
         out.println("  Table Compaction Strategy Options: " + optionsAsString(compactionStrategyOptions));
     }
-
 }
