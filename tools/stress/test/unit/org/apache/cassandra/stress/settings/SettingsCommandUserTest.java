@@ -48,10 +48,6 @@ import static org.psjava.util.AssertStatus.assertTrue;
 
 public class SettingsCommandUserTest
 {
-
-
-
-
     @Test
     public void defatulTest() throws ParseException
     {
@@ -79,8 +75,7 @@ public class SettingsCommandUserTest
         }
     }
 
-    @Test
-    public void minimalTest() throws ParseException, IOException
+    static SettingsCommandUser getMinimalConfig() throws IOException, ParseException
     {
         File tempFile = FileUtils.createTempFile("cassandra-stress-command-user-test", "yaml");
         writeYaml(tempFile);
@@ -88,7 +83,13 @@ public class SettingsCommandUserTest
         String args[] = { "-n", "5", "-command-profile", tempFile.absolutePath(), "-command-ratio", "insert=2", "simple1=1"};
 
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCommandUser.getOptions(), args);
-        SettingsCommandUser underTest = new SettingsCommandUser(commandLine);
+        return  new SettingsCommandUser(commandLine);
+    }
+
+    @Test
+    public void minimalTest() throws ParseException, IOException
+    {
+        SettingsCommandUser underTest = getMinimalConfig();
 
         assertEquals( 2, underTest.ratios.size());
         assertEquals(2.0, underTest.ratios.get("insert"), 0.000001);

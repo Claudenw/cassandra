@@ -18,17 +18,28 @@
 
 package org.apache.cassandra.stress.settings;
 
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
+import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.compaction.LeveledCompactionStrategy;
+import org.apache.cassandra.locator.LocalStrategy;
+import org.apache.cassandra.locator.SimpleStrategy;
+import org.mockito.ArgumentCaptor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class SettingsSchemaTests
 {
@@ -64,14 +75,14 @@ public class SettingsSchemaTests
     @Test
     public void replicationStrategyTest() throws ParseException
     {
-        String[] args = {"-schema-replication", "LocalStrategy"};
+        String[] args = {SettingsSchema.SCHEMA_REP_STRATEGY.key(), "LocalStrategy"};
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
         SettingsSchema underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
         assertEquals( "keyspace1", underTest.keyspace);
         assertNull(underTest.compactionStrategy);
         assertTrue(underTest.compactionStrategyOptions.isEmpty());
         assertNull(underTest.compression);
-        assertEquals(org.apache.cassandra.locator.LocalStrategy.class, underTest.replicationStrategy);
+        assertEquals(LocalStrategy.class, underTest.replicationStrategy);
         assertEquals(1, underTest.replicationStrategyOptions.size());
         assertEquals("1", underTest.replicationStrategyOptions.get("replication_factor"));
 
@@ -88,7 +99,7 @@ public class SettingsSchemaTests
     @Test
     public void replicationArgumentsTest() throws ParseException
     {
-        String[] args = {"-schema-replication-args", "foo=bar", "fu=baz"};
+        String[] args = {SettingsSchema.SCHEMA_REP_ARGS.key(), "foo=bar", "fu=baz"};
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
         SettingsSchema underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
         assertEquals( "keyspace1", underTest.keyspace);
@@ -116,7 +127,7 @@ public class SettingsSchemaTests
     @Test
     public void compactionStrategyTest() throws ParseException
     {
-        String[] args = {"-schema-compaction", "LeveledCompactionStrategy"};
+        String[] args = {SettingsSchema.SCHEMA_COMPACTION_STRATEGY.key(), "LeveledCompactionStrategy"};
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
         SettingsSchema underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
         assertEquals( "keyspace1", underTest.keyspace);
@@ -139,28 +150,37 @@ public class SettingsSchemaTests
     @Test
     public void compactionArgumentsTest() throws ParseException
     {
-        String[] args = {"-schema-compaction-args", "foo=bar", "fu=baz"};
+        try
+        {
+            String[] args = {SettingsSchema.SCHEMA_COMPACTION_ARGS.key(), "foo=bar", "fu=baz" };
+            CommandLine commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
+            SettingsSchema underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+            fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
+            // do nothing;
+        }
+
+        String[] args = {SettingsSchema.SCHEMA_COMPACTION_STRATEGY.key(), "LeveledCompactionStrategy", SettingsSchema.SCHEMA_COMPACTION_ARGS.key(), "foo=bar", "fu=baz" };
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
         SettingsSchema underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
         assertEquals( "keyspace1", underTest.keyspace);
-        assertNull(underTest.compactionStrategy);
-        assertEquals(org.apache.cassandra.locator.SimpleStrategy.class, underTest.replicationStrategy);
+        assertEquals(LeveledCompactionStrategy.class, underTest.compactionStrategy);
+        assertEquals(SimpleStrategy.class, underTest.replicationStrategy);
         assertEquals(2, underTest.compactionStrategyOptions.size());
         assertEquals("bar", underTest.compactionStrategyOptions.get("foo"));
         assertEquals("baz", underTest.compactionStrategyOptions.get("fu"));
         assertNull(underTest.compression);
-        assertEquals(org.apache.cassandra.locator.SimpleStrategy.class, underTest.replicationStrategy);
+        assertEquals(SimpleStrategy.class, underTest.replicationStrategy);
         assertEquals(1, underTest.replicationStrategyOptions.size());
         assertEquals("1", underTest.replicationStrategyOptions.get("replication_factor"));
 
         TestingResultLogger logger = new TestingResultLogger();
         underTest.printSettings(logger);
         logger.assertEndsWith("Keyspace: keyspace1");
-        logger.assertEndsWith("Replication Strategy: class org.apache.cassandra.locator.SimpleStrategy");
+        logger.assertEndsWith("Replication Strategy: "+SimpleStrategy.class);
         logger.assertEndsWith("Replication Strategy Options: 'replication_factor' : '1'");
         logger.assertEndsWith("Table Compression: null");
-        logger.assertEndsWith("Table Compaction Strategy: null");
-        logger.assertEndsWith("Table Compaction Strategy: null");
+        logger.assertEndsWith("Table Compaction Strategy: "+LeveledCompactionStrategy.class);
         logger.assertContainsRegex("Table Compaction Strategy Options:.+'fu' : 'baz'");
         logger.assertContainsRegex("Table Compaction Strategy Options:.+'foo' : 'bar'");
     }
@@ -168,7 +188,7 @@ public class SettingsSchemaTests
     @Test
     public void keyspaceTest() throws ParseException
     {
-        String[] args = {"-schema-keyspace", "ks1"};
+        String[] args = {SettingsSchema.SCHEMA_KEYSPACE.key(), "ks1"};
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
         SettingsSchema underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
         assertEquals( "ks1", underTest.keyspace);
@@ -192,7 +212,7 @@ public class SettingsSchemaTests
     @Test
     public void compressionTest() throws ParseException
     {
-        String[] args = {"-schema-compression", "foo"};
+        String[] args = {SettingsSchema.SCHEMA_COMPRESSION.key(), "foo"};
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
         SettingsSchema underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
         assertEquals( "keyspace1", underTest.keyspace);
@@ -214,28 +234,144 @@ public class SettingsSchemaTests
     }
 
     @Test
-    public void schemaOptionsWithUserCommandTest() {
-        fail("not implemented");
+    public void schemaOptionsWithUserCommandTest() throws ParseException, IOException
+    {
+        String[] args = {};
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
+        SettingsSchema underTest = new SettingsSchema(commandLine, SettingsCommandUserTest.getMinimalConfig());
+        assertNull(underTest.keyspace);
+        assertNull(underTest.compactionStrategy);
+        assertTrue(underTest.compactionStrategyOptions.isEmpty());
+        assertNull(underTest.compression);
+        assertEquals(org.apache.cassandra.locator.SimpleStrategy.class, underTest.replicationStrategy);
+        assertEquals(1, underTest.replicationStrategyOptions.size());
+        assertEquals("1", underTest.replicationStrategyOptions.get("replication_factor"));
+
+        TestingResultLogger logger = new TestingResultLogger();
+        underTest.printSettings(logger);
+        logger.assertEndsWith("Keyspace: *not set*");
+        logger.assertEndsWith("Replication Strategy: class org.apache.cassandra.locator.SimpleStrategy");
+        logger.assertEndsWith("Replication Strategy Options: 'replication_factor' : '1'");
+        logger.assertEndsWith("Table Compression: null");
+        logger.assertEndsWith("Table Compaction Strategy: null");
+        logger.assertEndsWith("Table Compaction Strategy Options: ");
     }
 
     @Test
-    public void createKeyspacesTest() {
-        fail("not implemented");
+    public void createKeyspacesTest() throws ParseException
+    {
+//        List<String> expected = List.of("TRUNCATE keyspace1.standard1", "TRUNCATE keyspace1.counter1", "TRUNCATE keyspace1.counter3");
+//        client.execute(createKeyspaceStatementCQL3(), org.apache.cassandra.db.ConsistencyLevel.LOCAL_ONE);
+//
+//        client.execute("USE \""+keyspace+"\"", org.apache.cassandra.db.ConsistencyLevel.LOCAL_ONE);
+//
+//        //Add standard1 and counter1
+//        client.execute(createStandard1StatementCQL3(settings), org.apache.cassandra.db.ConsistencyLevel.LOCAL_ONE);
+//        client.execute(createCounter1StatementCQL3(settings), org.apache.cassandra.db.ConsistencyLevel.LOCAL_ONE);
+//
+//        String[] args = {};
+//        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
+//        SettingsSchema underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+//        StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver();
+//        //StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver("READ", "-truncate", "always", "-n", "5");
+//
+//        underTest.createKeySpaces(mockedStress);
+//
+//
+//        String args[] = {};
+//        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsCommandPreDefined.getOptions(), args);
+//        SettingsCommand underTest = new SettingsCommandPreDefined(Command.READ, commandLine);
+//        underTest.truncateTables(mockedStress);
+//
+//        ArgumentCaptor<String > cmdCaptor = ArgumentCaptor.forClass(String.class);
+//        ArgumentCaptor<ConsistencyLevel> levelCaptor = ArgumentCaptor.forClass(ConsistencyLevel.class);
+//        verify(mockedStress.mockDriver, times(3)).execute(cmdCaptor.capture(), levelCaptor.capture());
+//        assertEquals( expected, cmdCaptor.getAllValues());
+//        Set<ConsistencyLevel> set = new HashSet<>();
+//        set.addAll(levelCaptor.getAllValues());
+//        assertEquals(1, set.size());
+//        assertEquals(ConsistencyLevel.ONE, set.iterator().next());
     }
 
     @Test
-    public void createKeyspaceStatementCQL3Test() {
-        fail("not implemented");
+    public void createKeyspaceStatementCQL3Test() throws ParseException
+    {
+        String expectedFmt = "CREATE KEYSPACE IF NOT EXISTS \"%s\" WITH replication = {'class' : '%s', %s}  AND durable_writes = true;\n";
+        
+        String[] args = {};
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
+        SettingsSchema underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        String expected = String.format(expectedFmt, "keyspace1", SimpleStrategy.class.getName(), "'replication_factor' : '1'" );
+        assertEquals( expected, underTest.createKeyspaceStatementCQL3());
+
+        args = new String[] {SettingsSchema.SCHEMA_KEYSPACE.key(), "myKeyspace", SettingsSchema.SCHEMA_REP_STRATEGY.key(), "LocalStrategy", SettingsSchema.SCHEMA_REP_ARGS.key(),  "foo=bar", "fu=baz"};
+        commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
+        underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        expected = String.format(expectedFmt, "myKeyspace", LocalStrategy.class.getName(), "'fu' : 'baz', 'replication_factor' : '1', 'foo' : 'bar'" );
+        assertEquals( expected, underTest.createKeyspaceStatementCQL3());
+        
     }
 
     @Test
-    public void createStandard1StatementCQL3Test() {
-        fail("not implemented");
+    public void createStandard1StatementCQL3Test() throws ParseException
+    {
+        String expectedFmt = "CREATE TABLE IF NOT EXISTS standard1 (key blob PRIMARY KEY \n"+ ", \"C0\" blob\n" +
+                             ", \"C1\" blob\n" +
+                             ", \"C2\" blob\n" +
+                             ", \"C3\" blob\n" +
+                             ", \"C4\" blob) WITH compression = {%s}%s;\n";
+        String[] args = {};
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
+        SettingsSchema underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver("READ", "-n", "5");
+
+        String expected = String.format(expectedFmt, "", "");
+        assertEquals(expected, underTest.createStandard1StatementCQL3(mockedStress));
+
+
+        args = new String[] {SettingsSchema.SCHEMA_COMPRESSION.key(), "foo", SettingsSchema.SCHEMA_COMPACTION_STRATEGY.key(), "LeveledCompactionStrategy", SettingsSchema.SCHEMA_COMPACTION_ARGS.key(), "foo=bar", "fu=baz"};
+        commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
+        underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        expected = String.format(expectedFmt, "'class' : 'foo'", " AND compaction = {'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'fu' : 'baz', 'foo' : 'bar'}");
+        assertEquals(expected, underTest.createStandard1StatementCQL3(mockedStress));
+
+        args = new String[] {SettingsSchema.SCHEMA_COMPRESSION.key(), "foo", SettingsSchema.SCHEMA_COMPACTION_STRATEGY.key(), "LeveledCompactionStrategy"};
+        commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
+        underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        expected = String.format(expectedFmt, "'class' : 'foo'", " AND compaction = {'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'}");
+        assertEquals(expected, underTest.createStandard1StatementCQL3(mockedStress));
     }
 
     @Test
-    public void createCounter1StatementCQL3Test() {
-        fail("not implemented");
+    public void createCounter1StatementCQL3Test() throws ParseException
+    {
+        String expectedFmt = "CREATE TABLE IF NOT EXISTS counter1 (key blob PRIMARY KEY \n"+ ", \"C0\" counter\n" +
+                             ", \"C1\" counter\n" +
+                             ", \"C2\" counter\n" +
+                             ", \"C3\" counter\n" +
+                             ", \"C4\" counter) WITH compression = {%s}%s;\n";
+        String[] args = {};
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
+        SettingsSchema underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        StressSettingsTest.StressSettingsMockJavaDriver mockedStress = new StressSettingsTest.StressSettingsMockJavaDriver("READ", "-n", "5");
+
+        String expected = String.format(expectedFmt, "", "");
+        assertEquals(expected, underTest.createCounter1StatementCQL3(mockedStress));
+
+
+        args = new String[] {SettingsSchema.SCHEMA_COMPRESSION.key(), "foo", SettingsSchema.SCHEMA_COMPACTION_STRATEGY.key(), "LeveledCompactionStrategy", SettingsSchema.SCHEMA_COMPACTION_ARGS.key(), "foo=bar", "fu=baz"};
+        commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
+        underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        expected = String.format(expectedFmt, "'class' : 'foo'", " AND compaction = {'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'fu' : 'baz', 'foo' : 'bar'}");
+        assertEquals(expected, underTest.createCounter1StatementCQL3(mockedStress));
+
+        args = new String[] {SettingsSchema.SCHEMA_COMPRESSION.key(), "foo", SettingsSchema.SCHEMA_COMPACTION_STRATEGY.key(), "LeveledCompactionStrategy"};
+        commandLine = DefaultParser.builder().build().parse(SettingsSchema.getOptions(), args);
+        underTest = new SettingsSchema(commandLine, getSettingsCommand(Command.HELP, "-uncert-err"));
+        expected = String.format(expectedFmt, "'class' : 'foo'", " AND compaction = {'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'}");
+        assertEquals(expected, underTest.createCounter1StatementCQL3(mockedStress));
+
+
     }
 
 }

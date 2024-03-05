@@ -118,7 +118,7 @@ public class StressSettings implements Serializable
             this.graph = null;
             this.generate = null;
         } else {
-            this.rate = new SettingsRate(commandLine, command);
+            this.rate = new SettingsRate(commandLine, options, command);
             this.schema = new SettingsSchema(commandLine, command);
             this.graph = new SettingsGraph(commandLine, command);
             this.generate = new SettingsPopulation(commandLine, command);

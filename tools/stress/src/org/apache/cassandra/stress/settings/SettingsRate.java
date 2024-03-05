@@ -22,6 +22,7 @@ package org.apache.cassandra.stress.settings;
 
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import org.apache.cassandra.stress.util.ResultLogger;
 import org.apache.commons.cli.*;
@@ -58,16 +59,10 @@ public class SettingsRate extends AbstractSettings implements Serializable
                                                                                        .desc(format("Throttle operations per second across all clients to a maximum rate (or less) with no implied schedule. (Not valid with -%s or -%s) (Default: %s).",
                                                                                                     RATE_FIXED.key(), RATE_AUTO.key(), RATE_THROTTLE_DEFAULT)).build());
 
-    private static final int RATE_CLIENTS_DEFAULT = 0;
-    public static final StressOption<Integer> RATE_CLIENTS = new StressOption<>(()->RATE_CLIENTS_DEFAULT,
-                                                                                POSITIVE_VERIFIER,
-                                                                                Option.builder("rate-clients").hasArg().type(Integer.class)
-                                                                                      .desc(format("Run this many clients concurrently.  (Only valid with -%s or -%s) (Default: %s)", RATE_FIXED.key(), RATE_THROTTLE.key(), RATE_CLIENTS_DEFAULT)).build());
-
-    private static OptionGroup AUTO_OR_THREADS = new OptionGroup()
-                                                 .addOption(RATE_AUTO.option())
-                                                 .addOption(RATE_FIXED.option())
-                                                 .addOption(RATE_THROTTLE.option());
+    private static final int RATE_THREADS_DEFAULT = 0;
+    public static final StressOption<Integer> RATE_THREADS = new StressOption<>(isNullOr(POSITIVE_VERIFIER),
+                                                                                Option.builder("rate-threads").hasArg().type(Integer.class)
+                                                                                      .desc(format("Run this many threads concurrently.  (Only valid with -%s or -%s) (Default: %s)", RATE_FIXED.key(), RATE_THROTTLE.key(), RATE_THREADS_DEFAULT)).build());
     public final boolean auto;
     public final int minThreads;
     public final int maxThreads;
@@ -75,8 +70,8 @@ public class SettingsRate extends AbstractSettings implements Serializable
     public final int opsPerSecond;
     public final boolean isFixed;
 
-    private static boolean overrideThreadCount(SettingsCommand command) {
-        if (AUTO_OR_THREADS.getSelected() == null)
+    private static boolean overrideThreadCount(SettingsCommand command, Options options) {
+        if (options.getOptionGroup(RATE_AUTO.option()).getSelected() != null)
         {
             switch (command.type)
             {
@@ -88,7 +83,7 @@ public class SettingsRate extends AbstractSettings implements Serializable
         return false;
     }
 
-    public SettingsRate(CommandLine cmdLine, SettingsCommand command)
+    public SettingsRate(CommandLine cmdLine, Options options, SettingsCommand command)
     {
         this.auto = cmdLine.hasOption(RATE_AUTO.option());
         this.isFixed = cmdLine.hasOption(RATE_FIXED.option());
@@ -101,7 +96,7 @@ public class SettingsRate extends AbstractSettings implements Serializable
         }
         else
         {
-            this.threadCount = overrideThreadCount(command) ? 200 :RATE_CLIENTS.extract(cmdLine);
+            this.threadCount = RATE_THREADS.extract(cmdLine, overrideThreadCount(command, options) ? 200 : RATE_THREADS_DEFAULT );
             this.opsPerSecond = isFixed ? RATE_FIXED.extract(cmdLine) : RATE_THROTTLE.extract(cmdLine);
             this.minThreads = IGNORE;
             this.maxThreads = IGNORE;
@@ -110,10 +105,13 @@ public class SettingsRate extends AbstractSettings implements Serializable
 
     public static Options getOptions() {
         return new Options()
-               .addOptionGroup(AUTO_OR_THREADS)
+               .addOptionGroup(new OptionGroup()
+                               .addOption(RATE_AUTO.option())
+                               .addOption(RATE_FIXED.option())
+                               .addOption(RATE_THROTTLE.option()))
                .addOption(RATE_MAX_CLIENTS.option())
                .addOption(RATE_MIN_CLIENTS.option())
-               .addOption(RATE_CLIENTS.option());
+               .addOption(RATE_THREADS.option());
     }
 
     // CLI Utility Methods

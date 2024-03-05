@@ -118,6 +118,12 @@ public abstract class AbstractSettings implements Serializable
         };
     }
 
+    public static <T>  Predicate<T> isNullOr(Predicate<T> p)
+    {
+        Predicate<T> outer = s -> Objects.isNull(s);
+        return outer.or(p);
+    }
+
     /**
      * Accepts values from 0 to Long.MAX_VALUE inclusive
      */
@@ -336,6 +342,42 @@ public abstract class AbstractSettings implements Serializable
 
         public static Object printNull(Object value) {
             return value == null ? "*not set*" : value;
+        }
+    }
+
+    /**
+     * An option group with a simplified message when group option is not selected or too many are selected.
+     */
+    public static class SimpleOptionGroup extends OptionGroup
+    {
+        @Override
+        public String toString()
+        {
+            StringBuilder buff = new StringBuilder();
+            Iterator<Option> iter = this.getOptions().iterator();
+            buff.append("One of the following options is required: ");
+
+            while (iter.hasNext())
+            {
+                Option option = (Option) iter.next();
+                if (option.getOpt() != null)
+                {
+                    buff.append("-");
+                    buff.append(option.getOpt());
+                }
+                else
+                {
+                    buff.append("--");
+                    buff.append(option.getLongOpt());
+                }
+
+                if (iter.hasNext())
+                {
+                    buff.append(", ");
+                }
+            }
+            buff.append(".");
+            return buff.toString();
         }
     }
 }

@@ -21,7 +21,6 @@ package org.apache.cassandra.stress.settings;
  */
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -78,45 +77,9 @@ public abstract class SettingsCommand extends AbstractSettings
                                                                             .type(Long.class).converter(DISTRIBUTION_CONVERTER).required(true).build());
 
 
-    private static final OptionGroup requiredGroup()
-    {
-        return new OptionGroup()
-        {
-            @Override
-            public String toString()
-            {
-                StringBuilder buff = new StringBuilder();
-                Iterator<Option> iter = this.getOptions().iterator();
-                buff.append("One of the following options is required: ");
 
-                while (iter.hasNext())
-                {
-                    Option option = (Option) iter.next();
-                    if (option.getOpt() != null)
-                    {
-                        buff.append("-");
-                        buff.append(option.getOpt());
-                    }
-                    else
-                    {
-                        buff.append("--");
-                        buff.append(option.getLongOpt());
-                    }
 
-                    if (iter.hasNext())
-                    {
-                        buff.append(", ");
-                    }
-                }
-                buff.append(".");
-                return buff.toString();
-            }
-        }
 
-               .addOption(COUNT.option())
-               .addOption(DURATION.option())
-               .addOption(UNCERT_ERR.option());
-    }
 
     // predefined options
     public static final StressOption<Integer> COMMAND_KEYSIZE = new StressOption<>(()->10,
@@ -254,7 +217,10 @@ public abstract class SettingsCommand extends AbstractSettings
                 .addOption(NO_WARMUP.option())
                 .addOption(TRUNCATE.option())
                 .addOption(CONSISTENCY.option())
-                .addOptionGroup(requiredGroup())
+                .addOptionGroup(new SimpleOptionGroup()
+                                .addOption(COUNT.option())
+                                .addOption(DURATION.option())
+                                .addOption(UNCERT_ERR.option()))
                 .addOption(UNCERT_MIN.option())
                 .addOption(UNCERT_MAX.option())
                 ;

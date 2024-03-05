@@ -21,6 +21,7 @@ package org.apache.cassandra.stress.settings;
 import org.apache.commons.cli.AlreadySelectedException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
@@ -34,7 +35,7 @@ public class SettingsRateTests
 
     SettingsCommand getSettingsCommand(Command type) throws ParseException
     {
-        String[] args = {"-n", "5"};
+        String[] args = {SettingsCommand.COUNT.key(), "5"};
         return SettingsCommandTests.getInstance(type, SettingsCommand.getOptions(), args);
     }
 
@@ -42,8 +43,9 @@ public class SettingsRateTests
     public void defaultTest() throws ParseException
     {
         String[] args = {};
-        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
-        SettingsRate underTest = new SettingsRate(commandLine, getSettingsCommand(Command.HELP));
+        Options options = SettingsRate.getOptions();
+        CommandLine commandLine = DefaultParser.builder().build().parse(options, args);
+        SettingsRate underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.HELP));
 
         assertFalse( underTest.auto);
         assertFalse( underTest.isFixed );
@@ -60,18 +62,18 @@ public class SettingsRateTests
 
 
         // with override forcing command
-        underTest = new SettingsRate(commandLine, getSettingsCommand(Command.WRITE));
+        underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.WRITE));
         assertFalse( underTest.auto);
         assertFalse( underTest.isFixed );
         assertEquals(-1 ,underTest.minThreads);
         assertEquals(-1,underTest.maxThreads);
-        assertEquals(200, underTest.threadCount);
+        assertEquals(0, underTest.threadCount);
         assertEquals(0, underTest.opsPerSecond);
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
         logger.assertEndsWith("Auto: false");
-        logger.assertEndsWith("Thread Count: 200");
+        logger.assertEndsWith("Thread Count: 0");
         logger.assertEndsWith("OpsPer Sec: 0");
 
     }
@@ -79,9 +81,10 @@ public class SettingsRateTests
     @Test
     public void autoTest() throws ParseException
     {
-        String[] args = {"-rate-auto"};
-        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
-        SettingsRate underTest = new SettingsRate(commandLine, getSettingsCommand(Command.HELP));
+        String[] args = {SettingsRate.RATE_AUTO.key()};
+        Options options = SettingsRate.getOptions();
+        CommandLine commandLine = DefaultParser.builder().build().parse(options, args);
+        SettingsRate underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.HELP));
 
         assertTrue( underTest.auto);
         assertFalse( underTest.isFixed );
@@ -97,7 +100,7 @@ public class SettingsRateTests
         logger.assertEndsWith("Max Threads: 1000");
 
         // with override forcing command
-        underTest = underTest = new SettingsRate(commandLine, getSettingsCommand(Command.WRITE));
+        underTest = underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.WRITE));
 
         assertTrue( underTest.auto);
         assertFalse( underTest.isFixed );
@@ -117,9 +120,10 @@ public class SettingsRateTests
     @Test
     public void fixedTest() throws ParseException
     {
-        String[] args = {"-rate-fixed", "5"};
-        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
-        SettingsRate underTest = new SettingsRate(commandLine, getSettingsCommand(Command.HELP));
+        String[] args = {SettingsRate.RATE_FIXED.key(), "5"};
+        Options options = SettingsRate.getOptions();
+        CommandLine commandLine = DefaultParser.builder().build().parse(options, args);
+        SettingsRate underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.HELP));
 
 
         assertFalse( underTest.auto);
@@ -136,27 +140,29 @@ public class SettingsRateTests
         logger.assertEndsWith("OpsPer Sec: 5");
 
         // with override forcing command
-        underTest = new SettingsRate(commandLine, getSettingsCommand(Command.WRITE));
+        underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.WRITE));
 
         assertFalse( underTest.auto);
         assertTrue( underTest.isFixed );
         assertEquals(-1 ,underTest.minThreads);
         assertEquals(-1,underTest.maxThreads);
-        assertEquals(0, underTest.threadCount);
+        assertEquals(200, underTest.threadCount);
         assertEquals(5, underTest.opsPerSecond);
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
         logger.assertEndsWith("Auto: false");
-        logger.assertEndsWith("Thread Count: 0");
+        logger.assertEndsWith("Thread Count: 200");
         logger.assertEndsWith("OpsPer Sec: 5");
 
         // test with negative value
-        args = new String[] {"-rate-fixed", "-1"};
-        commandLine = DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
+        // have to regen options as they are chagned during parsing.
+        args = new String[] {SettingsRate.RATE_FIXED.key(), "-1"};
+        options = SettingsRate.getOptions();
+        commandLine = DefaultParser.builder().build().parse(options, args);
         try
         {
-            underTest = new SettingsRate(commandLine, getSettingsCommand(Command.HELP));
+            underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.HELP));
             fail("Should have thrown ParseException");
         } catch (RuntimeException expected) {
             assertEquals(ParseException.class, expected.getCause().getClass());
@@ -166,7 +172,7 @@ public class SettingsRateTests
     @Test
     public void conflictingOptionsTest() throws ParseException
     {
-        String[] args =  {"-rate-throttle", "3", "-rate-fixed", "5", "-rate-auto"};
+        String[] args =  {SettingsRate.RATE_THROTTLE.key(), "3", SettingsRate.RATE_FIXED.key(), "5", SettingsRate.RATE_AUTO.key()};
         try
         {
             DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
@@ -175,7 +181,7 @@ public class SettingsRateTests
             // do nothing.
         }
 
-        args = new String[] {"-rate-throttle", "3", "-rate-fixed", "5"};
+        args = new String[] {SettingsRate.RATE_THROTTLE.key(), "3", SettingsRate.RATE_FIXED.key(), "5"};
         try
         {
             DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
@@ -185,7 +191,7 @@ public class SettingsRateTests
         }
 
 
-        args = new String[] {"-rate-throttle", "3", "-rate-auto"};
+        args = new String[] {SettingsRate.RATE_THROTTLE.key(), "3", SettingsRate.RATE_AUTO.key()};
         try
         {
             DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
@@ -194,7 +200,7 @@ public class SettingsRateTests
             // do nothing.
         }
 
-        args = new String[] {"-rate-fixed", "5", "-rate-auto"};
+        args = new String[] {SettingsRate.RATE_FIXED.key(), "5", SettingsRate.RATE_AUTO.key()};
         try
         {
             DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
@@ -208,9 +214,10 @@ public class SettingsRateTests
     public void minClientTest() throws ParseException
     {
 
-        String[] args = {"-rate-auto", "-rate-min-clients", "10"};
-        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
-        SettingsRate underTest = new SettingsRate(commandLine, getSettingsCommand(Command.HELP));
+        String[] args = {SettingsRate.RATE_AUTO.key(), SettingsRate.RATE_MIN_CLIENTS.key(), "10"};
+        Options options = SettingsRate.getOptions();
+        CommandLine commandLine = DefaultParser.builder().build().parse(options, args);
+        SettingsRate underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.HELP));
 
         assertTrue( underTest.auto);
         assertFalse( underTest.isFixed );
@@ -226,7 +233,7 @@ public class SettingsRateTests
         logger.assertEndsWith("Max Threads: 1000");
 
         // with override forcing command
-        underTest = new SettingsRate(commandLine, getSettingsCommand(Command.WRITE));
+        underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.WRITE));
 
         assertTrue( underTest.auto);
         assertFalse( underTest.isFixed );
@@ -242,9 +249,11 @@ public class SettingsRateTests
         logger.assertEndsWith("Max Threads: 1000");
 
         // no effect for non-auto
-        args = new String[] {"-rate-min-clients", "10"};
-        commandLine = DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
-        underTest = new SettingsRate(commandLine, getSettingsCommand(Command.HELP));
+        // have to regen options as they are modified by parse
+        args = new String[] {SettingsRate.RATE_MIN_CLIENTS.key(), "10"};
+        options = SettingsRate.getOptions();
+        commandLine = DefaultParser.builder().build().parse(options, args);
+        underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.HELP));
 
         assertFalse( underTest.auto);
         assertFalse( underTest.isFixed );
@@ -262,9 +271,10 @@ public class SettingsRateTests
         // test negative value
         try
         {
-            args = new String[]{ "-rate-auto", "-rate-min-clients", "-1" };
-            commandLine = DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
-            underTest = new SettingsRate(commandLine, getSettingsCommand(Command.HELP));
+            args = new String[]{ SettingsRate.RATE_AUTO.key(), SettingsRate.RATE_MIN_CLIENTS.key(), "-1" };
+            options = SettingsRate.getOptions();
+            commandLine = DefaultParser.builder().build().parse(options, args);
+            underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.HELP));
             fail("Should have thrown ParseException");
         } catch (RuntimeException expected)
         {
@@ -274,9 +284,10 @@ public class SettingsRateTests
     @Test
     public void maxClientTest() throws ParseException
     {
-        String[] args = {"-rate-auto", "-rate-max-clients", "10",};
-        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
-        SettingsRate underTest = new SettingsRate(commandLine, getSettingsCommand(Command.HELP));
+        String[] args = {SettingsRate.RATE_AUTO.key(), SettingsRate.RATE_MAX_CLIENTS.key(), "10",};
+        Options options = SettingsRate.getOptions();
+        CommandLine commandLine = DefaultParser.builder().build().parse(options, args);
+        SettingsRate underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.HELP));
 
 
         assertTrue( underTest.auto);
@@ -293,7 +304,7 @@ public class SettingsRateTests
         logger.assertEndsWith("Max Threads: 10");
 
         // with override forcing command
-        underTest = new SettingsRate(commandLine, getSettingsCommand(Command.WRITE));
+        underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.WRITE));
 
         assertTrue( underTest.auto);
         assertFalse( underTest.isFixed );
@@ -309,9 +320,10 @@ public class SettingsRateTests
         logger.assertEndsWith("Max Threads: 10");
 
         // no effect for non-auto
-        args = new String[] {"-rate-min-clients", "10"};
-        commandLine = DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
-        underTest = new SettingsRate(commandLine, getSettingsCommand(Command.HELP));
+        args = new String[] {SettingsRate.RATE_MIN_CLIENTS.key(), "10"};
+        options = SettingsRate.getOptions();
+        commandLine = DefaultParser.builder().build().parse(options, args);
+        underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.HELP));
 
 
         assertFalse( underTest.auto);
@@ -330,9 +342,10 @@ public class SettingsRateTests
         // test negative value
         try
         {
-            args = new String[]{ "-rate-auto", "-rate-max-clients", "-1" };
-            commandLine = DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
-            underTest = new SettingsRate(commandLine, getSettingsCommand(Command.HELP));
+            args = new String[]{ SettingsRate.RATE_AUTO.key(), SettingsRate.RATE_MAX_CLIENTS.key(), "-1" };
+            options = SettingsRate.getOptions();
+            commandLine = DefaultParser.builder().build().parse(options, args);
+            underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.HELP));
             fail("Should have thrown ParseException");
         } catch (RuntimeException expected)
         {
@@ -343,9 +356,10 @@ public class SettingsRateTests
     @Test
     public void throttleTest() throws ParseException
     {
-        String[] args = {"-rate-throttle", "100" };
-        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
-        SettingsRate underTest = new SettingsRate(commandLine, getSettingsCommand(Command.HELP));
+        String[] args = {SettingsRate.RATE_THROTTLE.key(), "100" };
+        Options options = SettingsRate.getOptions();
+        CommandLine commandLine = DefaultParser.builder().build().parse(options, args);
+        SettingsRate underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.HELP));
 
 
         assertFalse( underTest.auto);
@@ -363,27 +377,28 @@ public class SettingsRateTests
 
 
         // with override forcing command
-        underTest = new SettingsRate(commandLine, getSettingsCommand(Command.WRITE));
+        underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.WRITE));
 
         assertFalse( underTest.auto);
         assertFalse( underTest.isFixed );
         assertEquals(-1 ,underTest.minThreads);
         assertEquals(-1,underTest.maxThreads);
-        assertEquals(0, underTest.threadCount);
+        assertEquals(200, underTest.threadCount);
         assertEquals(100, underTest.opsPerSecond);
 
         logger = new TestingResultLogger();
         underTest.printSettings(logger);
         logger.assertEndsWith("Auto: false");
-        logger.assertEndsWith("Thread Count: 0");
+        logger.assertEndsWith("Thread Count: 200");
         logger.assertEndsWith("OpsPer Sec: 100");
 
         // test with negative value
-        args = new String[] {"-rate-throttle", "-1"};
-        commandLine = DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
+        args = new String[] {SettingsRate.RATE_THROTTLE.key(), "-1"};
+        options = SettingsRate.getOptions();
+        commandLine = DefaultParser.builder().build().parse(options, args);
         try
         {
-            underTest = new SettingsRate(commandLine, getSettingsCommand(Command.HELP));
+            underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.HELP));
             fail("Should have thrown ParseException");
         } catch (RuntimeException expected) {
             assertEquals(ParseException.class, expected.getCause().getClass());
@@ -394,10 +409,10 @@ public class SettingsRateTests
     @Test
     public void clientsTest() throws ParseException
     {
-        String[] args = {"-rate-throttle", "100", "-rate-clients", "500" };
-        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
-        SettingsRate underTest = new SettingsRate(commandLine, getSettingsCommand(Command.HELP));
-
+        String[] args = {SettingsRate.RATE_THROTTLE.key(), "100", SettingsRate.RATE_THREADS.key(), "500" };
+        Options options = SettingsRate.getOptions();
+        CommandLine commandLine = DefaultParser.builder().build().parse(options, args);
+        SettingsRate underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.HELP));
 
         assertFalse( underTest.auto);
         assertFalse( underTest.isFixed );
@@ -414,7 +429,7 @@ public class SettingsRateTests
 
 
         // with override forcing command
-        underTest = new SettingsRate(commandLine, getSettingsCommand(Command.WRITE));
+        underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.WRITE));
 
         assertFalse( underTest.auto);
         assertFalse( underTest.isFixed );
@@ -430,20 +445,36 @@ public class SettingsRateTests
         logger.assertEndsWith("OpsPer Sec: 100");
 
         // test with negative value
-        args = new String[] {"-rate-throttle", "100", "-rate-clients", "-1" };
-        commandLine = DefaultParser.builder().build().parse(SettingsRate.getOptions(), args);
+        args = new String[] {SettingsRate.RATE_THROTTLE.key(), "100", SettingsRate.RATE_THREADS.key(), "-1" };
+        options = SettingsRate.getOptions();
+        commandLine = DefaultParser.builder().build().parse(options, args);
         try
         {
-            underTest = new SettingsRate(commandLine, getSettingsCommand(Command.HELP));
+            underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.HELP));
             fail("Should have thrown ParseException");
         } catch (RuntimeException expected) {
             assertEquals(ParseException.class, expected.getCause().getClass());
         }
     }
 
+    /*
+        Override only applies with WRITE or COUNTER_WRITE commands where command.count > 0 and
+        one of   RATE_AUTO, RATE_FIXED, or RATE_THROTTLE is set.  This test should override the
+        -rate-threads 500 with 200.
+     */
     @Test
-    public void overrideThreadCounterTest()
+    public void overrideThreadCounterTest() throws ParseException
     {
-        fail("not implemented");
+        String[] args = {SettingsRate.RATE_THROTTLE.key(), "100" };
+        Options options = SettingsRate.getOptions();
+        CommandLine commandLine = DefaultParser.builder().build().parse(options, args);
+        SettingsRate underTest = new SettingsRate(commandLine, options, getSettingsCommand(Command.WRITE));
+
+        assertFalse( underTest.auto);
+        assertFalse( underTest.isFixed );
+        assertEquals(-1 ,underTest.minThreads);
+        assertEquals(-1,underTest.maxThreads);
+        assertEquals(200, underTest.threadCount);
+        assertEquals(100, underTest.opsPerSecond);
     }
 }

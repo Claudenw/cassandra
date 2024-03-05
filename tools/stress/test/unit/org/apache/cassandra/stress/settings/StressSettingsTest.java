@@ -86,8 +86,6 @@ public class StressSettingsTest
     @Test
     public void printHelpTest() throws Exception
     {
-        // Map<String, String[]> args = new HashMap<>();
-        // args.put("write", new String[] {});
         StressSettings settings = new StressSettings( new String[] {"write", "--help"});
         TestingResultLogger logger = new TestingResultLogger();
         settings.printHelp();

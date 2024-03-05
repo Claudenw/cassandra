@@ -19,6 +19,8 @@
 package org.apache.cassandra.stress.settings;
 
 
+import java.io.IOException;
+
 import org.apache.commons.cli.AlreadySelectedException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -104,9 +106,23 @@ public class SettingsPopulationTest
     }
 
     @Test
-    public void defaultsTestCommandUser() throws ParseException
+    public void defaultsTestCommandUser() throws ParseException, IOException
     {
-        fail("not implemeented");
+        // settings command that is a count.
+        String[] args = {};
+        CommandLine commandLine = DefaultParser.builder().build().parse(SettingsPopulation.getOptions(), args);
+        SettingsPopulation underTest = new SettingsPopulation(commandLine, SettingsCommandUserTest.getMinimalConfig());
+        assertNull(underTest.sequence);
+        assertNull(underTest.readlookback);
+        assertEquals("Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667",underTest.distribution.getConfigAsString());
+        assertEquals(PartitionGenerator.Order.ARBITRARY,underTest.order);
+        assertFalse(underTest.wrap);
+
+        TestingResultLogger logger = new TestingResultLogger();
+        underTest.printSettings(logger);
+        logger.assertEndsWith("Distribution: Gaussian:  min=1,max=5,mean=3.000000,stdev=0.666667");
+        logger.assertEndsWith("Order: " + PartitionGenerator.Order.ARBITRARY);
+        logger.assertEndsWith("Wrap: false");
     }
 
     @Test

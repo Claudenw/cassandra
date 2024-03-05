@@ -27,7 +27,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Converter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
@@ -84,9 +83,7 @@ public class SettingsSchema extends AbstractSettings implements Serializable
             for (Option option : getOptions().getOptions())
             {
                 if (commandLine.hasOption(option))
-                {
-                    throw new IllegalArgumentException(String.format("Shema option %s can not be used with the 'user' Command", option.getKey()));
-                }
+                    throw new IllegalArgumentException(String.format("Schema option %s can not be used with the 'user' Command", option.getKey()));
             }
             keyspace = null; //this should never be used - StressProfile passes keyspace name directly
         } else
@@ -101,6 +98,8 @@ public class SettingsSchema extends AbstractSettings implements Serializable
         compression = SCHEMA_COMPRESSION.extract(commandLine);
         compactionStrategy = SCHEMA_COMPACTION_STRATEGY.extract(commandLine);
         compactionStrategyOptions = SCHEMA_COMPACTION_ARGS.extractMap(commandLine);
+        if (!compactionStrategyOptions.isEmpty() && compactionStrategy == null)
+            throw new IllegalArgumentException(String.format("Schema option %s can not be used without the %s option.", SCHEMA_COMPACTION_ARGS.key(), SCHEMA_COMPACTION_STRATEGY.key()));
     }
 
     /**
@@ -135,6 +134,13 @@ public class SettingsSchema extends AbstractSettings implements Serializable
         }
     }
 
+    private String classAndOptions(String className, Map<String,String> options)
+    {
+        if (options.isEmpty())
+            return formatOption("class", className);
+        return String.join(", ", formatOption("class", className), optionsAsString(options));
+    }
+
     String createKeyspaceStatementCQL3()
     {
         StringBuilder b = new StringBuilder();
@@ -142,10 +148,8 @@ public class SettingsSchema extends AbstractSettings implements Serializable
         //Create Keyspace
         b.append("CREATE KEYSPACE IF NOT EXISTS \"")
          .append(keyspace)
-         .append("\" WITH replication = {'class': '")
-         .append(replicationStrategy.getName())
-         .append("', ")
-         .append(optionsAsString(replicationStrategyOptions))
+         .append("\" WITH replication = {")
+         .append(classAndOptions(replicationStrategy.getName(),replicationStrategyOptions))
          .append("}  AND durable_writes = true;\n");
 
         return b.toString();
@@ -176,15 +180,15 @@ public class SettingsSchema extends AbstractSettings implements Serializable
         //Compression
         b.append(") WITH compression = {");
         if (compression != null)
-            b.append("'class' : '").append(compression).append("'");
+            b.append(formatOption("class",compression));
 
         b.append("}");
 
         //Compaction
         if (compactionStrategy != null)
         {
-            b.append(" AND compaction = { 'class' : '").append(compactionStrategy.getName()).append("', ")
-            .append(optionsAsString(compactionStrategyOptions))
+            b.append(" AND compaction = {")
+            .append(classAndOptions(compactionStrategy.getName(), compactionStrategyOptions))
             .append("}");
         }
 
@@ -199,7 +203,7 @@ public class SettingsSchema extends AbstractSettings implements Serializable
         StringBuilder b = new StringBuilder();
 
         b.append("CREATE TABLE IF NOT EXISTS ")
-         .append("counter1 (key blob PRIMARY KEY,");
+         .append("counter1 (key blob PRIMARY KEY ");
 
         try
         {
@@ -226,14 +230,18 @@ public class SettingsSchema extends AbstractSettings implements Serializable
                .addOption(SCHEMA_KEYSPACE.option());
     }
 
+    private String formatOption(String key, String value) {
+        return String.format("'%s' : '%s'", key, value);
+    }
+
     private String optionsAsString(Map<String,String> options) {
-        return String.join(", ", options.entrySet().stream().map( e -> String.format("'%s' : '%s'", e.getKey(), e.getValue())).collect(Collectors.toSet()));
+        return String.join(", ", options.entrySet().stream().map( e -> formatOption(e.getKey(), e.getValue())).collect(Collectors.toSet()));
     }
 
     // CLI Utility Methods
     public void printSettings(ResultLogger out)
     {
-        out.println("  Keyspace: " + keyspace);
+        out.println("  Keyspace: " + PrintUtils.printNull(keyspace));
         out.println("  Replication Strategy: " + replicationStrategy);
         out.println("  Replication Strategy Options: " + optionsAsString(replicationStrategyOptions));
 
