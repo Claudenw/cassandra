@@ -66,18 +66,17 @@ public class OptionDistribution
     public static Options argumentOptions() {
         return new Options()
             .addOption(Option.builder(null).longOpt("EXP(min..max)").desc("An exponential ratio distribution over the range [min..max].").build())
-        .addOption(Option.builder(null).longOpt("EXTREME(min..max,shape)").desc("An extreme value (Weibull) distribution over the range [min..max].").build())
-        .addOption(Option.builder(null).longOpt("QEXTREME(min..max,shape,quantas)").desc( "An extreme value, split into quantas, within which the chance of selection is uniform.").build())
-            .addOption(Option.builder(null).longOpt("GAUSSIAN(min..max,stdvrng)").desc("A gaussian/normal distribution, where mean=(min+max)/2, and stdev is (mean-min)/stdvrng.").build())
-            .addOption(Option.builder(null).longOpt("GAUSSIAN(min..max,mean,stdev)").desc("A gaussian/normal distribution, with explicitly defined mean and stdev.").build())
+            .addOption(Option.builder(null).longOpt("EXTREME(min..max,shape)").desc("An extreme value (Weibull) distribution over the range [min..max]. (alias: extr,  weibull)").build())
+            .addOption(Option.builder(null).longOpt("QEXTREME(min..max,shape,quantas)").desc( "An extreme value, split into quantas, within which the chance of selection is uniform. (alias: qestr)").build())
+            .addOption(Option.builder(null).longOpt("GAUSSIAN(min..max,stdvrng)").desc("A gaussian/normal distribution, where mean=(min+max)/2, and stdev is (mean-min)/stdvrng. (alias: normal, gauss, norm)").build())
+            .addOption(Option.builder(null).longOpt("GAUSSIAN(min..max,mean,stdev)").desc("A gaussian/normal distribution, with explicitly defined mean and stdev. (alias: normal, gauss, norm)").build())
             .addOption(Option.builder(null).longOpt("UNIFORM(min..max)").desc("A uniform distribution over the range [min, max].").build())
             .addOption(Option.builder(null).longOpt("FIXED(val)").desc("A fixed distribution, always returning the same value.").build())
             .addOption(Option.builder(null).longOpt("SEQ(min..max)").desc("A fixed sequence, returning values in the range min to max sequentially (starting based on seed), wrapping if necessary.").build());
     }
 
     public static List<String> argumentNotes() {
-        return Arrays.asList("Preceding the name with ~ will invert the distribution, e.g. ~exp(1..10) will yield 10 most, instead of least, often.",
-                             "Aliases: extr, qextr, gauss, normal, norm, weibull");
+        return Arrays.asList("Preceding the name with ~ will invert the distribution, e.g. ~exp(1..10) will yield 10 most, instead of least, often.");
     }
 
 
@@ -90,7 +89,7 @@ public class OptionDistribution
         lookup.put("qextr", new QuantizedExtremeImpl());
         lookup.put("extreme", lookup.get("extr"));
         lookup.put("qextreme", lookup.get("qextr"));
-        lookup.put("weibull", lookup.get("weibull"));
+        lookup.put("weibull", lookup.get("extr"));
         lookup.put("gaussian", new GaussianImpl());
         lookup.put("normal", lookup.get("gaussian"));
         lookup.put("gauss", lookup.get("gaussian"));

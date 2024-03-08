@@ -57,7 +57,7 @@ public class StressSettingsTest
         // Will throw if not all settings are Serializable
         new ObjectOutputStream(new ByteArrayOutputStream()).writeObject(settings);
     }
-    
+
     @Test
     public void printSettingsTest() throws Exception
     {

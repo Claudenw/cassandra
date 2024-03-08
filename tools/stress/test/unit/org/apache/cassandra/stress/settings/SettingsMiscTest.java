@@ -18,12 +18,16 @@
 
 package org.apache.cassandra.stress.settings;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Collections;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.output.NullPrintStream;
 import org.junit.Test;
 
 import static java.lang.String.format;
@@ -32,7 +36,7 @@ import static org.junit.Assert.*;
 public class SettingsMiscTest
 {
     @Test
-    public void testHelp() throws ParseException
+    public void testHelp() throws ParseException, IOException
     {
         String[] args = { "help" };
         CommandLine commandLine = DefaultParser.builder().build().parse(SettingsMisc.getOptions(), args);
@@ -42,9 +46,18 @@ public class SettingsMiscTest
         if (cmds.length>1)
             throw new IllegalArgumentException(format("Too many commands specified: %s", String.join(",", cmds)));
         Command cmd = Command.valueOf(cmds[0].toUpperCase());
-        SettingsMisc.printHelp(cmd);
-
+        PrintStream outStream = System.out;
+        ByteArrayOutputStream capturedStream = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(capturedStream));
+        try
+        {
+            SettingsMisc.printHelp(cmd);
+        } finally {
+            System.setOut(outStream);
+        }
+        System.out.write(capturedStream.toByteArray());
     }
+
 //    @Test
 //    public void versionTriggersSpecialOption() throws Exception
 //    {
