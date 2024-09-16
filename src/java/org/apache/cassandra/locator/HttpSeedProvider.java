@@ -22,7 +22,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -31,8 +30,13 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
-import static org.apache.cassandra.locator.HttpServiceConnector.resolveMetadataUrl;
+import static org.apache.cassandra.locator.HttpServiceConnector.DEFAULT_METADATA_REQUEST_TIMEOUT;
+import static org.apache.cassandra.locator.HttpServiceConnector.METADATA_REQUEST_TIMEOUT_PROPERTY;
+import static org.apache.cassandra.locator.HttpServiceConnector.METADATA_URL_PROPERTY;
+import static org.apache.cassandra.locator.HttpServiceConnector.resolveAllMetadataUrls;
+import static org.apache.cassandra.locator.HttpServiceConnector.resolveHeaders;
 import static org.apache.cassandra.locator.HttpServiceConnector.resolveRequestTimeoutMs;
 
 public class HttpSeedProvider implements SeedProvider
@@ -40,34 +44,43 @@ public class HttpSeedProvider implements SeedProvider
     private static final Logger logger = LoggerFactory.getLogger(HttpSeedProvider.class);
     private static final Pattern NEW_LINES_PATTERN = Pattern.compile("\\n");
 
-    static final String SEEDS_URL_PROPERTY = "seeds_url";
-    static final String REQUEST_HEADERS_PROPERTY = "request_headers";
-    static final String REQUEST_TIMEOUT_PROPERTY = "request_timeout";
-    static final String DEFAULT_REQUEST_TIMEOUT = "30s";
-
-    private final HttpServiceConnector serviceConnector;
-    private final Map<String, String> headers;
+    private final List<HttpServiceConnector> serviceConnectors = new ArrayList<>();
 
     public HttpSeedProvider(Map<String, String> parameters)
     {
         this(getProperties(parameters));
     }
 
-    public HttpSeedProvider(Properties properties)
+    HttpSeedProvider(Properties properties)
     {
-        serviceConnector = new HttpServiceConnector(resolveMetadataUrl(properties, SEEDS_URL_PROPERTY),
-                                                    resolveRequestTimeoutMs(properties,
-                                                                            REQUEST_TIMEOUT_PROPERTY,
-                                                                            DEFAULT_REQUEST_TIMEOUT));
-        headers = resolveHeaders(properties);
+        int timeout = resolveRequestTimeoutMs(properties,
+                                              METADATA_REQUEST_TIMEOUT_PROPERTY,
+                                              DEFAULT_METADATA_REQUEST_TIMEOUT);
+
+        Map<String, String> headers = resolveHeaders(properties);
+
+        for (String url : resolveAllMetadataUrls(properties, METADATA_URL_PROPERTY))
+            serviceConnectors.add(new HttpServiceConnector(url, timeout, headers));
     }
 
     @Override
     public List<InetAddressAndPort> getSeeds()
     {
+        for (HttpServiceConnector serviceConnector : serviceConnectors)
+        {
+            List<InetAddressAndPort> seedsInternal = getSeedsInternal(serviceConnector);
+            if (!seedsInternal.isEmpty())
+                return seedsInternal;
+        }
+
+        return Collections.emptyList();
+    }
+
+    private List<InetAddressAndPort> getSeedsInternal(HttpServiceConnector serviceConnector)
+    {
         try
         {
-            String response = serviceConnector.apiCall("", headers);
+            String response = serviceConnector.apiCall("");
 
             List<String> lines = Arrays.stream(NEW_LINES_PATTERN.split(response))
                                        .map(String::trim)
@@ -93,34 +106,11 @@ public class HttpSeedProvider implements SeedProvider
         }
         catch (Exception e)
         {
-            logger.error("Exception occured while resolving seeds, returning empty seeds list.", e);
+            logger.error(format("Exception occured while resolving seeds agains URL %s, returning empty seeds list.",
+                                serviceConnector.metadataServiceUrl),
+                         e);
             return Collections.emptyList();
         }
-    }
-
-    private Map<String, String> resolveHeaders(Properties properties)
-    {
-        String rawRequestHeaders = properties.getProperty(REQUEST_HEADERS_PROPERTY);
-
-        if (rawRequestHeaders == null || rawRequestHeaders.isBlank())
-            return Collections.emptyMap();
-
-        Map<String, String> headersMap = new HashMap<>();
-
-        for (String rawHeaderPair : rawRequestHeaders.split(","))
-        {
-            String[] header = rawHeaderPair.trim().split("=");
-            if (header.length != 2)
-                continue;
-
-            String headerKey = header[0].trim();
-            String headerValue = header[1].trim();
-
-            if (headerKey.length() != 0 && headerValue.length() != 0)
-                headersMap.put(headerKey, headerValue);
-        }
-
-        return Collections.unmodifiableMap(headersMap);
     }
 
     private static Properties getProperties(Map<String, String> args)

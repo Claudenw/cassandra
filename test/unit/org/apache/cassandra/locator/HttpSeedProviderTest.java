@@ -32,12 +32,21 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.apache.cassandra.locator.HttpServiceConnector.METADATA_REQUEST_HEADERS_PROPERTY;
+import static org.apache.cassandra.locator.HttpServiceConnector.METADATA_URL_PROPERTY;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class HttpSeedProviderTest
 {
     @Rule
     public final WireMockRule service = new WireMockRule(wireMockConfig().bindAddress("127.0.0.1").port(8080));
+
+    @Rule
+    public final WireMockRule service2 = new WireMockRule(wireMockConfig().bindAddress("127.0.0.1").port(8081));
+
+    @Rule
+    public final WireMockRule service3 = new WireMockRule(wireMockConfig().bindAddress("127.0.0.1").port(8082));
 
     @Test
     public void testProvider()
@@ -49,12 +58,12 @@ public class HttpSeedProviderTest
                                                .withStatus(200)));
 
         Properties p = new Properties();
-        p.setProperty(HttpSeedProvider.SEEDS_URL_PROPERTY, "http://127.0.0.1:8080/seeds");
+        p.setProperty(METADATA_URL_PROPERTY, "http://127.0.0.1:8080/seeds");
         assertEquals(3, new HttpSeedProvider(p).getSeeds().size());
 
         assertEquals(3, new HttpSeedProvider(new HashMap<>()
         {{
-            put(HttpSeedProvider.SEEDS_URL_PROPERTY, "http://127.0.0.1:8080/seeds");
+            put(METADATA_URL_PROPERTY, "http://127.0.0.1:8080/seeds");
         }}).getSeeds().size());
     }
 
@@ -68,7 +77,7 @@ public class HttpSeedProviderTest
                                                .withStatus(200)));
 
         Properties p = new Properties();
-        p.setProperty(HttpSeedProvider.SEEDS_URL_PROPERTY, "http://127.0.0.1:8080/seeds");
+        p.setProperty(METADATA_URL_PROPERTY, "http://127.0.0.1:8080/seeds");
 
         List<InetAddressAndPort> seeds = new HttpSeedProvider(p).getSeeds();
         assertEquals(3, seeds.size());
@@ -90,8 +99,8 @@ public class HttpSeedProviderTest
                                                .withStatus(200)));
 
         Properties p = new Properties();
-        p.setProperty(HttpSeedProvider.SEEDS_URL_PROPERTY, "http://127.0.0.1:8080/seeds");
-        p.setProperty(HttpSeedProvider.REQUEST_HEADERS_PROPERTY, "myheader=myheadervalue,anotherheader=anothervalue");
+        p.setProperty(METADATA_URL_PROPERTY, "http://127.0.0.1:8080/seeds");
+        p.setProperty(METADATA_REQUEST_HEADERS_PROPERTY, "myheader=myheadervalue,anotherheader=anothervalue");
 
         assertEquals(3, new HttpSeedProvider(p).getSeeds().size());
     }
@@ -107,7 +116,36 @@ public class HttpSeedProviderTest
 
         assertEquals(0, new HttpSeedProvider(new HashMap<>()
         {{
-            put(HttpSeedProvider.SEEDS_URL_PROPERTY, "http://127.0.0.1:8080/seeds");
+            put(METADATA_URL_PROPERTY, "http://127.0.0.1:8080/seeds");
         }}).getSeeds().size());
+    }
+
+    @Test
+    public void testMultipleUrls() throws Exception
+    {
+        String response = "127.0.0.2\n127.0.0.3  \n127.0.0.3\n127.0.0.4\n \n";
+        String response2 = "127.0.0.5\n127.0.0.6\nthisissomenonexistingurl";
+
+        service.stubFor(get(urlEqualTo("/seeds"))
+                        .willReturn(aResponse().withBody(response)
+                                               .withStatus(404)));
+
+        service2.stubFor(get(urlEqualTo("/seeds2"))
+                         .willReturn(aResponse().withBody(response2)
+                                                .withStatus(200)));
+
+        service3.stubFor(get(urlEqualTo("/seeds3"))
+                         .willReturn(aResponse().withBody(response)
+                                                .withStatus(200)));
+
+        Properties p = new Properties();
+        p.setProperty(METADATA_URL_PROPERTY, "http://127.0.0.1:8080/seeds,http://127.0.0.1:8083/seeds,http://127.0.0.1:8081/seeds2,http://127.0.0.1:8082/seeds3");
+
+        List<InetAddressAndPort> seeds = new HttpSeedProvider(p).getSeeds();
+
+        assertEquals(2, seeds.size());
+
+        assertTrue(seeds.contains(InetAddressAndPort.getByName("127.0.0.5")));
+        assertTrue(seeds.contains(InetAddressAndPort.getByName("127.0.0.6")));
     }
 }
